@@ -1,0 +1,254 @@
+@page "/login"
+@layout LoginLayout
+@inject AuthService AuthService
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Nav
+@inject NotificationService NotificationService
+
+<PageTitle>Iniciar Sesión - RRHH Objetivos</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <RadzenIcon Icon="assessment" Style="font-size: 3rem; color: var(--rz-primary);" />
+            <h1>RRHH Objetivos</h1>
+            <p>Sistema de Evaluación de Desempeño</p>
+        </div>
+
+        @if (!mostrarCambioPassword && !mostrarRecuperacion)
+        {
+            <!-- Login Form -->
+            <RadzenTemplateForm TItem="LoginModel" Data="@loginModel" Submit="@OnLogin">
+                <RadzenStack Gap="1.5rem">
+                    <RadzenFormField Text="Email" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="loginModel.Email" Name="Email" Placeholder="nombre@permaquim.com" Style="width: 100%;" />
+                        <RadzenRequiredValidator Component="Email" Text="Debe ingresar su email" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Contraseña" Variant="Variant.Outlined">
+                        <RadzenPassword @bind-Value="loginModel.Password" Name="Password" Placeholder="••••••••" Style="width: 100%;" />
+                        <RadzenRequiredValidator Component="Password" Text="Debe ingresar su contraseña" />
+                    </RadzenFormField>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                            @errorMessage
+                        </RadzenAlert>
+                    }
+
+                    <RadzenButton Text="Iniciar Sesión" ButtonType="ButtonType.Submit" Style="width: 100%;" 
+                                  IsBusy="@isLoading" BusyText="Verificando..." />
+
+                    <RadzenLink Text="¿Olvidaste tu contraseña?" Style="text-align: center; display: block;" 
+                                @onclick="@(() => mostrarRecuperacion = true)" />
+                </RadzenStack>
+            </RadzenTemplateForm>
+        }
+        else if (mostrarCambioPassword)
+        {
+            <!-- Change Password Form -->
+            <RadzenStack Gap="1rem">
+                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                    Debe cambiar su contraseña antes de continuar.
+                </RadzenAlert>
+
+                <RadzenTemplateForm TItem="CambioPasswordModel" Data="@cambioModel" Submit="@OnCambiarPassword">
+                    <RadzenStack Gap="1.5rem">
+                        <RadzenFormField Text="Nueva Contraseña" Variant="Variant.Outlined">
+                            <RadzenPassword @bind-Value="cambioModel.NuevaPassword" Name="NuevaPassword" Style="width: 100%;" />
+                            <RadzenRequiredValidator Component="NuevaPassword" Text="Debe ingresar una nueva contraseña" />
+                        </RadzenFormField>
+
+                        <RadzenFormField Text="Confirmar Contraseña" Variant="Variant.Outlined">
+                            <RadzenPassword @bind-Value="cambioModel.ConfirmarPassword" Name="ConfirmarPassword" Style="width: 100%;" />
+                            <RadzenRequiredValidator Component="ConfirmarPassword" Text="Debe confirmar la contraseña" />
+                            <RadzenCompareValidator Value="@cambioModel.NuevaPassword" Component="ConfirmarPassword" Text="Las contraseñas no coinciden" />
+                        </RadzenFormField>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                                @errorMessage
+                            </RadzenAlert>
+                        }
+
+                        <RadzenButton Text="Cambiar Contraseña" ButtonType="ButtonType.Submit" Style="width: 100%;"
+                                      IsBusy="@isLoading" BusyText="Guardando..." />
+                    </RadzenStack>
+                </RadzenTemplateForm>
+            </RadzenStack>
+        }
+        else if (mostrarRecuperacion)
+        {
+            <!-- Password Recovery Form -->
+            <RadzenStack Gap="1rem">
+                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                    Ingrese su email y se le generará una nueva contraseña provisional.
+                </RadzenAlert>
+
+                <RadzenTemplateForm TItem="RecuperacionModel" Data="@recuperacionModel" Submit="@OnRecuperar">
+                    <RadzenStack Gap="1.5rem">
+                        <RadzenFormField Text="Email" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="recuperacionModel.Email" Name="RecupEmail" Placeholder="nombre@permaquim.com" Style="width: 100%;" />
+                            <RadzenRequiredValidator Component="RecupEmail" Text="Debe ingresar su email" />
+                        </RadzenFormField>
+
+                        @if (!string.IsNullOrEmpty(passwordRecuperado))
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                                Su nueva contraseña provisional es: <strong>@passwordRecuperado</strong><br/>
+                                Anote esta contraseña, se le pedirá cambiarla al iniciar sesión.
+                            </RadzenAlert>
+                        }
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                                @errorMessage
+                            </RadzenAlert>
+                        }
+
+                        <RadzenButton Text="Recuperar Contraseña" ButtonType="ButtonType.Submit" Style="width: 100%;"
+                                      IsBusy="@isLoading" BusyText="Procesando..." />
+
+                        <RadzenLink Text="Volver al inicio de sesión" Style="text-align: center; display: block;"
+                                    @onclick="@(() => { mostrarRecuperacion = false; errorMessage = null; passwordRecuperado = null; })" />
+                    </RadzenStack>
+                </RadzenTemplateForm>
+            </RadzenStack>
+        }
+    </div>
+</div>
+
+@code {
+    LoginModel loginModel = new();
+    CambioPasswordModel cambioModel = new();
+    RecuperacionModel recuperacionModel = new();
+    string? errorMessage;
+    string? passwordRecuperado;
+    bool isLoading;
+    bool mostrarCambioPassword;
+    bool mostrarRecuperacion;
+    int loginUserId;
+    bool loginEsJefe;
+
+    class LoginModel { public string Email { get; set; } = ""; public string Password { get; set; } = ""; }
+    class CambioPasswordModel { public string NuevaPassword { get; set; } = ""; public string ConfirmarPassword { get; set; } = ""; }
+    class RecuperacionModel { public string Email { get; set; } = ""; }
+
+    async Task OnLogin()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            var result = await AuthService.LoginAsync(loginModel.Email, loginModel.Password);
+            if (!result.Exitoso)
+            {
+                errorMessage = result.MensajeError;
+                return;
+            }
+
+            if (result.DebeCambiarPassword)
+            {
+                loginUserId = result.UsuarioId;
+                loginEsJefe = result.EsJefe;
+                mostrarCambioPassword = true;
+                return;
+            }
+
+            await CurrentUser.SetUsuarioAsync(result.UsuarioId, result.NombreCompleto, result.Email, result.Rol, result.AreaId, result.EsJefe, false, result.EsSuperusuario);
+            Nav.NavigateTo("dashboard");
+        }
+        finally { isLoading = false; }
+    }
+
+    async Task OnCambiarPassword()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            if (cambioModel.NuevaPassword != cambioModel.ConfirmarPassword)
+            {
+                errorMessage = "Las contraseñas no coinciden";
+                return;
+            }
+            if (cambioModel.NuevaPassword.Length < 4)
+            {
+                errorMessage = "La contraseña debe tener al menos 4 caracteres";
+                return;
+            }
+
+            var ok = await AuthService.CambiarPasswordAsync(loginUserId, loginEsJefe, cambioModel.NuevaPassword);
+            if (!ok)
+            {
+                errorMessage = "Error al cambiar la contraseña";
+                return;
+            }
+
+            // Re-login with new credentials
+            var result = await AuthService.LoginAsync(loginModel.Email, cambioModel.NuevaPassword);
+            if (result.Exitoso)
+            {
+                await CurrentUser.SetUsuarioAsync(result.UsuarioId, result.NombreCompleto, result.Email, result.Rol, result.AreaId, result.EsJefe, false, result.EsSuperusuario);
+                NotificationService.Notify(NotificationSeverity.Success, "Contraseña actualizada", "Su contraseña ha sido cambiada exitosamente.");
+                Nav.NavigateTo("dashboard");
+            }
+        }
+        finally { isLoading = false; }
+    }
+
+    async Task OnRecuperar()
+    {
+        isLoading = true;
+        errorMessage = null;
+        passwordRecuperado = null;
+        try
+        {
+            var newPass = await AuthService.RecuperarPasswordAsync(recuperacionModel.Email);
+            if (newPass == null)
+            {
+                errorMessage = "No se encontró un usuario con ese email";
+                return;
+            }
+            passwordRecuperado = newPass;
+        }
+        finally { isLoading = false; }
+    }
+}
+
+<style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        padding: 1rem;
+    }
+    .login-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .login-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0.5rem 0 0.25rem;
+        color: #1a1a2e;
+    }
+    .login-header p {
+        color: #666;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+</style>

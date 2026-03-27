@@ -1,0 +1,337 @@
+@page "/seguimientos/{EmpleadoId:int}/objetivo/{ObjetivoId:int}"
+@inject AppDbContext Db
+@inject ObjetivoService ObjetivoService
+@inject BitacoraService BitacoraService
+@inject ChatService ChatService
+@inject ICurrentUserService CurrentUser
+@inject NotificationService NotificationService
+@inject IJSRuntime JS
+
+@if (objetivo == null)
+{
+    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Style="margin-bottom: 2rem;">
+        <RadzenButton Icon="arrow_back" Click="@(async () => await JS.InvokeVoidAsync("history.back"))" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" />
+        <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Detalle de Objetivo</RadzenText>
+    </RadzenStack>
+
+    <div class="row mb-4">
+        <div class="col-md-7">
+            <RadzenCard>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenText TextStyle="TextStyle.H5">@objetivo.Nombre</RadzenText>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                         @if (CurrentUser.EsSuperusuario) {
+                             <RadzenButton Icon="edit" Text="Editar" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@OnEditClick" />
+                         }
+                         @if (CanCancel()) {
+                             <RadzenButton Icon="delete" Text="Cancelar" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@OnCancelClick" />
+                         }
+                         <EstadoBadge EstadoObj="@objetivo.Estado" />
+                    </RadzenStack>
+                </RadzenStack>
+                <RadzenText TextStyle="TextStyle.Body1" Style="margin-top: 1rem;">@objetivo.Descripcion</RadzenText>
+                
+                <hr />
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <RadzenText TextStyle="TextStyle.Caption">Pilar</RadzenText>
+                        <RadzenBadge Text="@objetivo.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {objetivo.Pilar.ColorHex}; color: white;")" />
+                    </div>
+                    <div class="col-md-6">
+                        <RadzenText TextStyle="TextStyle.Caption">Vencimiento (Deadline)</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">@objetivo.Deadline.ToString("dd/MM/yyyy")</RadzenText>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <RadzenText TextStyle="TextStyle.Caption">Soft Skill 1</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">@objetivo.SoftSkill1.Nombre</RadzenText>
+                    </div>
+                    <div class="col-md-6">
+                        <RadzenText TextStyle="TextStyle.Caption">Soft Skill 2</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">@objetivo.SoftSkill2.Nombre</RadzenText>
+                    </div>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard Style="margin-top: 1.5rem;">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="margin-bottom: 1rem;">
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Bitácora de Seguimiento</RadzenText>
+                    @if (IsOwnObjetivo())
+                    {
+                        <RadzenButton Text="Nueva Entrada" Icon="add_circle" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@OnNuevaBitacora" />
+                    }
+                </RadzenStack>
+                @if (!bitacora.Any())
+                {
+                    <EmptyState Message="Sin entradas de bitácora" />
+                }
+                else
+                {
+                    <RadzenStack Gap="1.5rem">
+                        @foreach (var entry in bitacora)
+                        {
+                            <RadzenCard Variant="Variant.Outlined">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                                    <RadzenText TextStyle="TextStyle.Caption">@entry.Fecha.ToString("dd/MM/yyyy HH:mm")</RadzenText>
+                                    <EstadoBadge EstadoBit="@entry.Estado" />
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin-top: 0.5rem;">@entry.Texto</RadzenText>
+                                
+                                @if (entry.Estado == EstadoBitacora.PENDIENTE_REVISION && CanManageBitacora())
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 1rem;">
+                                        <RadzenButton Text="Comentar" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" Click="@(() => OnComentar(entry))" />
+                                        <RadzenButton Text="Requiere Ajuste" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Click="@(() => OnAjuste(entry))" />
+                                        <RadzenButton Text="Cerrar" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Click="@(() => OnCerrar(entry))" />
+                                    </RadzenStack>
+                                }
+                                else if (entry.FeedbackJefe != null)
+                                {
+                                    <div class="p-2 mt-2" style="background-color: var(--rz-base-background-color); border-radius: 4px; border-left: 4px solid var(--rz-primary);">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold;">Feedback del Jefe:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption">@entry.FeedbackJefe</RadzenText>
+                                    </div>
+                                }
+                            </RadzenCard>
+                        }
+                    </RadzenStack>
+                }
+            </RadzenCard>
+        </div>
+
+        <div class="col-md-5">
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Evolución del Objetivo</RadzenText>
+                <RadzenChart Style="height: 250px;">
+                    <RadzenLineSeries Data="@evolucion" CategoryProperty="Periodo" ValueProperty="Puntaje" Title="Puntaje (1-5)">
+                        <ChildContent>
+                            <RadzenMarkers Visible="true" MarkerType="MarkerType.Circle" />
+                        </ChildContent>
+                    </RadzenLineSeries>
+                    <RadzenCategoryAxis>
+                        <RadzenAxisTitle Text="Revisión" />
+                    </RadzenCategoryAxis>
+                    <RadzenValueAxis Min="0" Max="5">
+                        <RadzenAxisTitle Text="Score" />
+                    </RadzenValueAxis>
+                </RadzenChart>
+            </RadzenCard>
+
+            <RadzenCard Style="margin-top: 1.5rem;">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="margin-bottom: 1rem;">
+                    <RadzenText TextStyle="TextStyle.H6">Chat con Colaborador</RadzenText>
+                    <RadzenIcon Icon="chat" Style="opacity: 0.5;" />
+                </RadzenStack>
+                <div style="height: 300px; overflow-y: auto; border: 1px solid var(--rz-border-color); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;" id="chat-container">
+                    @if (!mensajes.Any())
+                    {
+                        <EmptyState Message="Inicia la conversación" />
+                    }
+                    else
+                    {
+                        <RadzenStack Gap="0.5rem">
+                            @foreach (var msg in mensajes)
+                            {
+                                <div class="@(msg.RemitenteEsJefe ? "align-self-end text-end" : "align-self-start")" style="max-width: 80%;">
+                                    <div class="p-2" style="@(msg.RemitenteEsJefe ? "background-color: var(--rz-primary); color: white;" : "background-color: var(--rz-base-background-color); border: 1px solid var(--rz-border-color); color: var(--rz-text-color);") border-radius: 8px;">
+                                        <RadzenText TextStyle="TextStyle.Body2">@msg.Texto</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="@(msg.RemitenteEsJefe ? "color: rgba(255,255,255,0.7); font-size: 0.7rem;" : "opacity: 0.5; font-size: 0.7rem;")">@msg.Fecha.ToString("HH:mm")</RadzenText>
+                                    </div>
+                                </div>
+                            }
+                        </RadzenStack>
+                    }
+                </div>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenTextBox @bind-Value="@nuevoMensaje" Style="flex: 1;" Placeholder="Escribe un mensaje..." @onkeyup="@(async e => { if (e.Key == "Enter") await OnSendChat(); })" />
+                    <RadzenButton Icon="send" Click="@OnSendChat" ButtonStyle="ButtonStyle.Primary" />
+                </RadzenStack>
+            </RadzenCard>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int EmpleadoId { get; set; }
+    [Parameter] public int ObjetivoId { get; set; }
+
+    Objetivo? objetivo;
+    List<BitacoraEntrada> bitacora = new();
+    List<MensajeChat> mensajes = new();
+    List<EvolucionItem> evolucion = new();
+    string nuevoMensaje = "";
+
+    [Inject] NavigationManager Nav { get; set; } = null!;
+    [Inject] DialogService DialogService { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        objetivo = await ObjetivoService.GetByIdAsync(ObjetivoId);
+        if (objetivo != null)
+        {
+            // H-02: Validar acceso por URL
+            bool isOwnObjetivo = !CurrentUser.EsJefe && objetivo.EmpleadoId == CurrentUser.UsuarioId;
+            bool isDirectReport = CurrentUser.EsJefe && objetivo.Empleado.JefeId == CurrentUser.UsuarioId;
+            bool isAreaDirector = CurrentUser.Rol == "DIRECTOR" && objetivo.Empleado.AreaId == CurrentUser.AreaId;
+            bool isHighLevel = CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario;
+
+            if (!isOwnObjetivo && !isDirectReport && !isAreaDirector && !isHighLevel)
+            {
+                Nav.NavigateTo("dashboard");
+                return;
+            }
+
+            bitacora = await BitacoraService.GetByObjetivoAsync(ObjetivoId);
+            
+            // H-04: Usar el JefeId del objetivo para la conversación, no el del usuario actual (si es colaborador)
+            int conversationJefeId = objetivo.Empleado.JefeId;
+            mensajes = await ChatService.GetConversacionAsync(conversationJefeId, EmpleadoId);
+            
+            evolucion = objetivo.Revisiones
+                .Where(r => r.Completada && r.Puntaje.HasValue)
+                .Select(r => new EvolucionItem { Periodo = r.Periodo.ToString().Split('_')[0], Puntaje = r.Puntaje!.Value })
+                .ToList();
+        }
+    }
+
+    async Task OnComentar(BitacoraEntrada entry)
+    {
+        var result = await DialogService.OpenAsync<PromptDialog>("Comentar Bitácora", 
+            new Dictionary<string, object?> { { "Message", "Escribe tu comentario de feedback:" } });
+        
+        if (result is string comment && !string.IsNullOrWhiteSpace(comment))
+        {
+            await BitacoraService.ComentarAsync(entry.Id, comment);
+            await LoadData();
+            NotificationService.Notify(NotificationSeverity.Info, "Bitácora", "Comentario agregado");
+        }
+    }
+
+    async Task OnAjuste(BitacoraEntrada entry)
+    {
+        var result = await DialogService.OpenAsync<PromptDialog>("Requiere Ajuste", 
+            new Dictionary<string, object?> { { "Message", "Escribe la razón del ajuste requerido:" } });
+            
+        if (result is string reason && !string.IsNullOrWhiteSpace(reason))
+        {
+            await BitacoraService.RequiereAjusteAsync(entry.Id, reason, EmpleadoId);
+            await LoadData();
+            NotificationService.Notify(NotificationSeverity.Warning, "Bitácora", "Ajuste solicitado al colaborador");
+        }
+    }
+
+    async Task OnCerrar(BitacoraEntrada entry)
+    {
+        var confirm = await DialogService.Confirm("¿Deseas cerrar esta entrada de bitácora?", "Cerrar Entrada", new ConfirmOptions { OkButtonText = "Cerrar", CancelButtonText = "Cancelar" });
+        if (confirm == true)
+        {
+            await BitacoraService.CerrarAsync(entry.Id);
+            await LoadData();
+            NotificationService.Notify(NotificationSeverity.Success, "Bitácora", "Entrada cerrada");
+        }
+    }
+
+    async Task OnSendChat()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoMensaje)) return;
+
+        var msg = new MensajeChat
+        {
+            JefeId = CurrentUser.EsJefe ? CurrentUser.UsuarioId : objetivo!.Empleado.JefeId,
+            DestinatarioEmpleadoId = EmpleadoId,
+            RemitenteId = CurrentUser.UsuarioId,
+            RemitenteEsJefe = CurrentUser.EsJefe,
+            Texto = nuevoMensaje,
+            Fecha = DateTime.UtcNow
+        };
+
+        await ChatService.EnviarMensajeAsync(msg);
+        nuevoMensaje = "";
+        await LoadData();
+    }
+
+    bool IsOwnObjetivo()
+    {
+        if (objetivo == null) return false;
+        return !CurrentUser.EsJefe && objetivo.EmpleadoId == CurrentUser.UsuarioId;
+    }
+
+    async Task OnNuevaBitacora()
+    {
+        var result = await DialogService.OpenAsync<BitacoraNuevaDialog>("Nueva Entrada de Bitácora",
+            new Dictionary<string, object?> { 
+                { "ObjetivoId", ObjetivoId },
+                { "EmpleadoId", EmpleadoId }
+            },
+            new DialogOptions { Width = "600px" });
+
+        if (result == true)
+        {
+            await LoadData();
+            NotificationService.Notify(NotificationSeverity.Success, "Bitácora", "Entrada guardada correctamente");
+        }
+    }
+
+    bool CanManageBitacora()
+    {
+        if (objetivo == null) return false;
+        // Super, RRHH or Direct Boss
+        return CurrentUser.EsSuperusuario || CurrentUser.Rol == "RRHH" || (CurrentUser.EsJefe && objetivo.Empleado.JefeId == CurrentUser.UsuarioId);
+    }
+
+    bool CanCancel()
+    {
+        if (objetivo == null) return false;
+        if (objetivo.Estado == EstadoObjetivo.COMPLETADO || objetivo.Estado == EstadoObjetivo.CANCELADO) return false;
+        if (CurrentUser.EsSuperusuario) return true;
+        // Boss can cancel
+        return CurrentUser.EsJefe && objetivo.Empleado.JefeId == CurrentUser.UsuarioId;
+    }
+
+    async Task OnCancelClick()
+    {
+        var confirm = await DialogService.Confirm("¿Deseas cancelar definitivamente este objetivo?", "Confirmar Cancelación", new ConfirmOptions { OkButtonText = "Confirmar", CancelButtonText = "No" });
+        if (confirm == true)
+        {
+            var result = await DialogService.OpenAsync<PromptDialog>("Motivo de Cancelación", 
+                new Dictionary<string, object?> { { "Message", "Explique brevemente el motivo de la cancelación (será revisado por RRHH):" } });
+            
+            if (result is string reason && !string.IsNullOrWhiteSpace(reason))
+            {
+                await ObjetivoService.CancelarObjetivoAsync(ObjetivoId, reason);
+                await LoadData();
+                NotificationService.Notify(NotificationSeverity.Warning, "Objetivo Cancelado", "El objetivo ha sido marcado como CANCELADO.");
+            }
+        }
+    }
+
+    async Task OnEditClick()
+    {
+        if (objetivo == null) return;
+        var result = await DialogService.OpenAsync<EditarObjetivoDialog>($"Editar Objetivo: {objetivo.Nombre}", 
+            new Dictionary<string, object?> { { "Objetivo", objetivo } }, 
+            new DialogOptions { Width = "700px", Resizable = true, Draggable = true });
+
+        if (result == true) {
+            await LoadData();
+        }
+    }
+
+    class EvolucionItem
+    {
+        public string Periodo { get; set; } = "";
+        public int Puntaje { get; set; }
+    }
+}

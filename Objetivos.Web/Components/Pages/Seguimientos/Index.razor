@@ -1,0 +1,149 @@
+@page "/seguimientos"
+@inject AppDbContext Db
+@inject ICurrentUserService CurrentUser
+@inject RendimientoService Rendimiento
+
+<RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Seguimientos</RadzenText>
+
+@if (loading)
+{
+    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    @if (CurrentUser.EsJefe || CurrentUser.Rol == "RRHH" || CurrentUser.EsSuperusuario)
+    {
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="@(GetEquipoTabText())">
+                    @RenderEquipo()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Mi Rendimiento">
+                    @RenderPersonal()
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    }
+    else
+    {
+        @RenderPersonal()
+    }
+}
+
+@code {
+    List<Empleado>? empleadosEquipo;
+    Empleado? empleadoPersonal;
+    Dictionary<int, double> promedios = new();
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Fetch Personal
+        empleadoPersonal = await Db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == CurrentUser.Email.ToLower() && e.Activo);
+        if (empleadoPersonal != null)
+        {
+            promedios[empleadoPersonal.Id] = await Rendimiento.PromedioGeneralAsync(empleadoPersonal.Id, DateTime.Now.Year);
+        }
+
+        // 2. Fetch Equipo / Org
+        bool canSeeAll = CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.Rol == "RRHH" || CurrentUser.EsSuperusuario;
+        
+        if (canSeeAll)
+        {
+            empleadosEquipo = await Db.Empleados.Where(e => e.Activo).ToListAsync();
+        }
+        else if (CurrentUser.Rol == "DIRECTOR")
+        {
+            empleadosEquipo = await Db.Empleados.Where(e => e.AreaId == CurrentUser.AreaId && e.Activo).ToListAsync();
+        }
+        else if (CurrentUser.EsJefe)
+        {
+            empleadosEquipo = await Db.Empleados.Where(e => e.JefeId == CurrentUser.UsuarioId && e.Activo).ToListAsync();
+        }
+
+        if (empleadosEquipo != null)
+        {
+            foreach (var emp in empleadosEquipo)
+            {
+                if (!promedios.ContainsKey(emp.Id))
+                {
+                    promedios[emp.Id] = await Rendimiento.PromedioGeneralAsync(emp.Id, DateTime.Now.Year);
+                }
+            }
+        }
+
+        loading = false;
+    }
+
+    string GetEquipoTabText() 
+    {
+        if (CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario) return "Toda la Organización";
+        if (CurrentUser.Rol == "DIRECTOR") return "Mi Área / Dirección";
+        return "Mi Equipo";
+    }
+
+    double GetPromedio(int id) => promedios.ContainsKey(id) ? promedios[id] : 0;
+
+    [Inject] NavigationManager Nav { get; set; } = null!;
+
+    void OnViewDetalle(int id)
+    {
+        Nav.NavigateTo($"seguimientos/{id}");
+    }
+
+    private RenderFragment RenderEquipo() => __builder =>
+    {
+        if (empleadosEquipo == null || !empleadosEquipo.Any())
+        {
+            <EmptyState Message="No hay empleados asignados a su equipo o bajo su mando." />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@empleadosEquipo" TItem="Empleado" AllowPaging="true" PageSize="10" Responsive="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Empleado" Property="Nombre" Title="Nombre">
+                            <Template Context="emp">
+                                @emp.Nombre @emp.Apellido
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Empleado" Property="Puesto" Title="Puesto" />
+                        <RadzenDataGridColumn TItem="Empleado" Title="Rendimiento General" Width="200px">
+                            <Template Context="emp">
+                                <SemaforoIndicador Promedio="@GetPromedio(emp.Id)" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Empleado" Context="emp" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="100px">
+                            <Template Context="emp">
+                                <RadzenButton Icon="visibility" Text="Ver Detalle" ButtonStyle="ButtonStyle.Info" Variant="Variant.Flat" Size="ButtonSize.Small" 
+                                              Click="@(() => OnViewDetalle(emp.Id))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+
+    private RenderFragment RenderPersonal() => __builder =>
+    {
+        if (empleadoPersonal == null)
+        {
+            <EmptyState Message="No se ha encontrado tu información de empleado." />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenCard>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenStack>
+                            <RadzenText TextStyle="TextStyle.H6">Mi Rendimiento General</RadzenText>
+                            <SemaforoIndicador Promedio="@GetPromedio(empleadoPersonal.Id)" />
+                        </RadzenStack>
+                        <RadzenButton Icon="visibility" Text="Ver Mi Detalle Completo" ButtonStyle="ButtonStyle.Primary" Click="@(() => OnViewDetalle(empleadoPersonal.Id))" />
+                    </RadzenStack>
+                </RadzenCard>
+            </div>
+        }
+    };
+}

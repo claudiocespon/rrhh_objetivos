@@ -1,0 +1,85 @@
+@inject ObjetivoService ObjetivoService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<RadzenTemplateForm TItem="Objetivo" Data="@Objetivo" Submit="@OnSubmit">
+    <RadzenStack Gap="1.5rem" Style="padding: 1rem;">
+        <RadzenFormField Text="Nombre del Objetivo" Style="width: 100%;">
+            <RadzenTextBox @bind-Value="Objetivo.Nombre" Style="width: 100%;" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="Descripción" Style="width: 100%;">
+            <RadzenTextArea @bind-Value="Objetivo.Descripcion" Style="width: 100%;" Rows="3" />
+        </RadzenFormField>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Pilar" Style="width: 100%;">
+                    <RadzenDropDown TValue="int" Data="@pilares" TextProperty="Nombre" ValueProperty="Id" @bind-Value="Objetivo.PilarId" Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Fecha Cierre (Deadline)" Style="width: 100%;">
+                    <RadzenDatePicker @bind-Value="Objetivo.Deadline" Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Soft Skill 1" Style="width: 100%;">
+                    <RadzenDropDown TValue="int" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id" @bind-Value="Objetivo.SoftSkill1Id" Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Soft Skill 2" Style="width: 100%;">
+                    <RadzenDropDown TValue="int" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id" @bind-Value="Objetivo.SoftSkill2Id" Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Estado" Style="width: 100%;">
+                    <RadzenDropDown TValue="EstadoObjetivo" Data="@Enum.GetValues(typeof(EstadoObjetivo))" @bind-Value="Objetivo.Estado" Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Progreso (%)" Style="width: 100%;">
+                    <RadzenNumeric @bind-Value="Objetivo.Progreso" Min="0" Max="100" Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+            <RadzenButton Text="Cancelar" Click="@(() => DialogService.Close(false))" ButtonStyle="ButtonStyle.Light" />
+            <RadzenButton Text="Guardar Cambios" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public Objetivo Objetivo { get; set; } = null!;
+    
+    List<Pilar> pilares = new();
+    List<SoftSkill> softSkills = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        pilares = await db.Pilares.ToListAsync();
+        softSkills = await db.SoftSkills.ToListAsync();
+    }
+
+    async Task OnSubmit()
+    {
+        var ok = await ObjetivoService.UpdateObjetivoAsync(Objetivo);
+        if (ok) {
+            NotificationService.Notify(NotificationSeverity.Success, "Objetivo actualizado", "Los cambios han sido guardados por Superusuario.");
+            DialogService.Close(true);
+        } else {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo guardar los cambios.");
+        }
+    }
+}

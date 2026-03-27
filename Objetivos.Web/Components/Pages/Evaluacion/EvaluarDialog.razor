@@ -1,0 +1,107 @@
+@inject RevisionService RevisionService
+@inject AppDbContext Db
+@inject DialogService DialogService
+
+<RadzenTemplateForm TItem="EvaluationModel" Data="@model" Submit="@OnSubmit">
+    <RadzenStack Gap="1.5rem">
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Puntaje (1-5 estrellas)</RadzenText>
+                <RadzenRating @bind-Value="@model.Puntaje" Stars="5" Name="Puntaje" />
+                <RadzenRequiredValidator Component="Puntaje" Text="Debe calificar con al menos 1 estrella" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Resultado</RadzenText>
+                <RadzenDropDown @bind-Value="@model.Resultado" Data="@resultados" 
+                                Placeholder="Seleccione resultado" Style="width: 100%;" Name="Resultado" />
+                <RadzenRequiredValidator Component="Resultado" Text="El resultado es obligatorio" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Comentario del Jefe</RadzenText>
+                <RadzenTextArea @bind-Value="@model.Comentario" Style="width: 100%;" Rows="3" Name="Comentario" />
+                <RadzenRequiredValidator Component="Comentario" Text="El comentario es obligatorio" Style="position: absolute" />
+                <RadzenLengthValidator Component="Comentario" Min="10" Text="El comentario debe tener al menos 10 caracteres" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Evidencias Verificadas</RadzenText>
+                <RadzenCheckBoxList @bind-Value="@model.EvidenciasSeleccionadas" TValue="string" Orientation="Orientation.Vertical" Name="Evidencias">
+                    <Items>
+                        @foreach (var ev in evidenciasDisponibles)
+                        {
+                            <RadzenCheckBoxListItem Text="@ev" Value="@ev" />
+                        }
+                    </Items>
+                </RadzenCheckBoxList>
+                @if (submitted && RequiereEvidencia() && !model.EvidenciasSeleccionadas.Any())
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger)">Debe marcar al menos una evidencia para este puntaje</RadzenText>
+                }
+            </RadzenColumn>
+        </RadzenRow>
+
+        @if (errorMsg != null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">@errorMsg</RadzenAlert>
+        }
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Confirmar Evaluación" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public int RevisionId { get; set; }
+    
+    EvaluationModel model = new();
+    List<ResultadoEval> resultados = Enum.GetValues<ResultadoEval>().ToList();
+    List<string> evidenciasDisponibles = new() { "Reporte de avance", "Documentación técnica", "Presentación de resultados", "Feedback de pares", "Métricas de sistema" };
+    string? errorMsg;
+    bool submitted = false;
+
+    bool RequiereEvidencia()
+    {
+        // VAL-10: Solo obligatorio si puntaje <= 2 o == 5
+        return model.Puntaje <= 2 || model.Puntaje == 5;
+    }
+
+    async Task OnSubmit()
+    {
+        submitted = true;
+        errorMsg = null;
+
+        if (RequiereEvidencia() && !model.EvidenciasSeleccionadas.Any())
+        {
+            return;
+        }
+
+        var success = await RevisionService.CompletarRevisionAsync(RevisionId, model.Puntaje, model.Comentario, model.Resultado!.Value, model.EvidenciasSeleccionadas.ToList());
+        
+        if (success)
+        {
+            DialogService.Close(true);
+        }
+        else
+        {
+            errorMsg = "No se pudo completar la revisión. Verifique que el período anterior esté cerrado.";
+        }
+    }
+
+    class EvaluationModel
+    {
+        public int Puntaje { get; set; } = 0;
+        public ResultadoEval? Resultado { get; set; }
+        public string Comentario { get; set; } = "";
+        public IEnumerable<string> EvidenciasSeleccionadas { get; set; } = new List<string>();
+    }
+}

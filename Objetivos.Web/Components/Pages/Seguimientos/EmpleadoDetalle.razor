@@ -1,0 +1,145 @@
+@page "/seguimientos/{EmpleadoId:int}"
+@inject AppDbContext Db
+@inject RendimientoService Rendimiento
+@inject ICurrentUserService CurrentUser
+
+@if (empleado == null)
+{
+    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Style="margin-bottom: 2rem;">
+        <RadzenButton Icon="arrow_back" Click="@(() => Nav.NavigateTo("seguimientos"))" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" />
+        <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Detalle de Colaborador</RadzenText>
+    </RadzenStack>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenAvatar Text="@($"{(string.IsNullOrEmpty(empleado.Nombre) ? "" : empleado.Nombre[0].ToString())}{(string.IsNullOrEmpty(empleado.Apellido) ? "" : empleado.Apellido[0].ToString())}".ToUpper())" Style="width: 80px; height: 80px; font-size: 2rem;" />
+                    <RadzenStack Gap="0" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">@empleado.Nombre @empleado.Apellido</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">@empleado.Puesto</RadzenText>
+                    </RadzenStack>
+                    <RadzenBadge Text="@empleado.Area.Nombre" BadgeStyle="BadgeStyle.Secondary" />
+                </RadzenStack>
+                <hr />
+                <RadzenStack Gap="0.5rem">
+                    <div class="d-flex justify-content-between">
+                        <RadzenText TextStyle="TextStyle.Caption">Email:</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">@empleado.Email</RadzenText>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <RadzenText TextStyle="TextStyle.Caption">Ingreso:</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">@empleado.FechaIngreso.ToString("dd/MM/yyyy")</RadzenText>
+                    </div>
+                </RadzenStack>
+            </RadzenCard>
+        </div>
+        <div class="col-md-8">
+            <RadzenCard Style="height: 100%;">
+                <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Rendimiento por Pilar</RadzenText>
+                <RadzenChart Style="height: 250px;">
+                    <RadzenRadarSeries Data="@radarData" CategoryProperty="Pilar" ValueProperty="Score" Title="Rendimiento" />
+                    <RadzenValueAxis Min="0" Max="5" />
+                </RadzenChart>
+            </RadzenCard>
+        </div>
+    </div>
+
+    <RadzenCard>
+        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Objetivos del Año (@DateTime.Now.Year)</RadzenText>
+        @if (!empleado.Objetivos.Any(o => o.Anio == DateTime.Now.Year))
+        {
+            <EmptyState Message="Este empleado no tiene objetivos asignados" />
+        }
+        else
+        {
+            <RadzenDataGrid Data="@empleado.Objetivos.Where(o => o.Anio == DateTime.Now.Year)" TItem="Objetivo">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar">
+                        <Template Context="obj">
+                            <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Objetivo" Title="Progreso" Width="150px">
+                        <Template Context="obj">
+                            <RadzenProgressBar Value="@obj.Progreso" Max="100" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Objetivo" Title="Semaforo" Width="120px">
+                        <Template Context="obj">
+                            <SemaforoIndicador Promedio="@GetPonderado(obj.Id)" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="100px">
+                        <Template Context="obj">
+                            <RadzenButton Icon="search" Text="Ver" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                                          Click="@(() => Nav.NavigateTo($"seguimientos/{EmpleadoId}/objetivo/{obj.Id}"))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        }
+    </RadzenCard>
+}
+
+@code {
+    [Parameter] public int EmpleadoId { get; set; }
+    Empleado? empleado;
+    List<RadarItem> radarData = new();
+    Dictionary<int, double> ponderados = new();
+
+    [Inject] NavigationManager Nav { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        empleado = await Db.Empleados
+            .Include(e => e.Area)
+            .Include(e => e.Objetivos)
+                .ThenInclude(o => o.Pilar)
+            .Include(e => e.Objetivos)
+                .ThenInclude(o => o.Revisiones)
+            .Include(e => e.Objetivos)
+                .ThenInclude(o => o.EvaluacionFinal)
+            .FirstOrDefaultAsync(e => e.Id == EmpleadoId);
+
+        if (empleado != null)
+        {
+            // H-01: Validar acceso por URL
+            bool isOwnProfile = !CurrentUser.EsJefe && empleado.Id == CurrentUser.UsuarioId;
+            bool isDirectReport = CurrentUser.EsJefe && empleado.JefeId == CurrentUser.UsuarioId;
+            bool isAreaDirector = CurrentUser.Rol == "DIRECTOR" && empleado.AreaId == CurrentUser.AreaId;
+            bool isHighLevel = CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario;
+
+            if (!isOwnProfile && !isDirectReport && !isAreaDirector && !isHighLevel)
+            {
+                Nav.NavigateTo("dashboard");
+                return;
+            }
+
+            var pilares = await Db.Pilares.ToListAsync();
+            foreach (var pilar in pilares)
+            {
+                var score = await Rendimiento.RendimientoPorPilarAsync(EmpleadoId, pilar.Id, DateTime.Now.Year);
+                radarData.Add(new RadarItem { Pilar = pilar.Nombre.Replace("_", " "), Score = score });
+            }
+
+            foreach (var obj in empleado.Objetivos)
+            {
+                ponderados[obj.Id] = await Rendimiento.CalcularPonderadoAsync(obj.Id);
+            }
+        }
+    }
+
+    double GetPonderado(int id) => ponderados.ContainsKey(id) ? ponderados[id] : 0;
+
+    class RadarItem
+    {
+        public string Pilar { get; set; } = "";
+        public double Score { get; set; }
+    }
+}

@@ -1,0 +1,185 @@
+@inject ObjetivoService ObjetivoService
+@inject ICurrentUserService CurrentUser
+@inject NotificationService NotificationService
+@inject AppDbContext Db
+@inject DialogService DialogService
+
+<RadzenTemplateForm TItem="Objetivo" Data="@objetivo" Submit="@OnSubmit">
+    <RadzenStack Gap="1rem">
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Colaborador</RadzenText>
+                <RadzenDropDown @bind-Value="@objetivo.EmpleadoId" Data="@empleados" TextProperty="NombreCompleto" ValueProperty="Id" 
+                                Style="width: 100%;" Name="Empleado" 
+                                AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />
+                <RadzenRequiredValidator Component="Empleado" Text="Este campo es obligatorio" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Pilar Estratégico</RadzenText>
+                <RadzenDropDown @bind-Value="@objetivo.PilarId" Data="@pilares" TextProperty="Nombre" ValueProperty="Id" 
+                                Style="width: 100%;" Name="Pilar" />
+                <RadzenRequiredValidator Component="Pilar" Text="Este campo es obligatorio" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Nombre del Objetivo</RadzenText>
+                <RadzenTextBox @bind-Value="@objetivo.Nombre" Style="width: 100%;" Name="Nombre" />
+                <RadzenRequiredValidator Component="Nombre" Text="Este campo es obligatorio" Style="position: absolute" />
+                <RadzenLengthValidator Component="Nombre" Min="5" Max="100" Text="El nombre debe tener entre 5 y 100 caracteres" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Descripción</RadzenText>
+                <RadzenTextArea @bind-Value="@objetivo.Descripcion" Style="width: 100%;" Name="Descripcion" Rows="3" />
+                <RadzenRequiredValidator Component="Descripcion" Text="Este campo es obligatorio" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Fecha de Cierre (Deadline)</RadzenText>
+                <RadzenDatePicker @bind-Value="@objetivo.Deadline" Style="width: 100%;" Name="Deadline" DateFormat="dd/MM/yyyy" Min="@DateTime.Today" />
+                <RadzenRequiredValidator Component="Deadline" Text="Este campo es obligatorio" Style="position: absolute" />
+                @if (objetivo.Deadline <= DateTime.Today && objetivo.Deadline != default)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger)">La fecha de cierre debe ser posterior a hoy</RadzenText>
+                }
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Soft Skill 1</RadzenText>
+                <RadzenDropDown @bind-Value="@objetivo.SoftSkill1Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id" 
+                                Style="width: 100%;" Name="SS1" />
+                <RadzenRequiredValidator Component="SS1" Text="Este campo es obligatorio" Style="position: absolute" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Soft Skill 2</RadzenText>
+                <RadzenDropDown @bind-Value="@objetivo.SoftSkill2Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id" 
+                                Style="width: 100%;" Name="SS2" />
+                <RadzenRequiredValidator Component="SS2" Text="Este campo es obligatorio" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        @if (errorMsg != null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+                @errorMsg
+            </RadzenAlert>
+        }
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Crear Objetivo" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    Objetivo objetivo = new() { Deadline = DateTime.Today.AddMonths(6) };
+    List<EmpleadoItem> empleados = new();
+    List<Pilar> pilares = new();
+    List<SoftSkill> softSkills = new();
+    string? errorMsg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        pilares = await Db.Pilares.ToListAsync();
+        softSkills = await Db.SoftSkills.ToListAsync();
+        
+        IQueryable<Empleado> query = Db.Empleados;
+        
+        bool canSeeAll = CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario;
+
+        if (canSeeAll)
+        {
+            // RRHH, Director General, Superusuario → all employees
+        }
+        else if (CurrentUser.Rol == "DIRECTOR")
+        {
+            // Directors see all employees in their area
+            query = query.Where(e => e.AreaId == CurrentUser.AreaId);
+        }
+        else
+        {
+            // Standard bosses see only direct subordinates
+            query = query.Where(e => e.JefeId == CurrentUser.UsuarioId);
+        }
+
+        var rawEmpleados = await query.OrderBy(e => e.Apellido).ToListAsync();
+        if (rawEmpleados.Count == 0)
+        {
+            errorMsg = "No hay empleados asignados a su área. Contacte a RRHH.";
+        }
+        empleados = rawEmpleados.Select(e => new EmpleadoItem { Id = e.Id, NombreCompleto = $"{e.Apellido}, {e.Nombre}" }).ToList();
+    }
+
+    async Task OnSubmit()
+    {
+        errorMsg = null;
+
+        // VAL-03
+        if (objetivo.SoftSkill1Id == objetivo.SoftSkill2Id)
+        {
+            errorMsg = "Las dos soft skills deben ser diferentes";
+            return;
+        }
+
+        // VAL-04
+        if (objetivo.Deadline <= DateTime.Today)
+        {
+            errorMsg = "La fecha de cierre debe ser posterior a hoy";
+            return;
+        }
+
+        // VAL-05: Límite de 10 objetivos
+        int count = await Db.Objetivos.CountAsync(o => o.EmpleadoId == objetivo.EmpleadoId && o.Anio == DateTime.Now.Year && o.Estado != EstadoObjetivo.CANCELADO);
+        if (count >= 10)
+        {
+            errorMsg = "El empleado ya ha alcanzado el límite de 10 objetivos para este año.";
+            return;
+        }
+
+        // VAL-01 Check duplicate
+        bool exists = await Db.Objetivos.AnyAsync(o => o.PilarId == objetivo.PilarId 
+                                                   && o.EmpleadoId == objetivo.EmpleadoId 
+                                                   && o.Anio == DateTime.Now.Year);
+        if (exists)
+        {
+            var confirm = await DialogService.Confirm($"Ya existe un objetivo de este pilar para el empleado en {DateTime.Now.Year}. ¿Desea reemplazarlo?", 
+                "Objetivo Duplicado", new ConfirmOptions { OkButtonText = "Sí, reemplazar", CancelButtonText = "No" });
+            
+            if (confirm != true) return;
+            
+            // If replace, find and cancel old objective
+            var old = await Db.Objetivos.FirstAsync(o => o.PilarId == objetivo.PilarId 
+                                                   && o.EmpleadoId == objetivo.EmpleadoId 
+                                                   && o.Anio == DateTime.Now.Year);
+            await ObjetivoService.CancelarObjetivoAsync(old.Id, "Reemplazado por nuevo objetivo");
+        }
+
+        var success = await ObjetivoService.CrearObjetivoAsync(objetivo);
+        if (success)
+        {
+            DialogService.Close(true);
+        }
+        else
+        {
+            errorMsg = "Error al crear el objetivo. Por favor intente nuevamente.";
+        }
+    }
+
+    class EmpleadoItem
+    {
+        public int Id { get; set; }
+        public string NombreCompleto { get; set; } = "";
+    }
+}

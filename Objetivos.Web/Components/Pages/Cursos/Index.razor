@@ -1,0 +1,32 @@
+@page "/cursos"
+@inject CursoService CursoService
+
+<RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Cursos y Capacitaciones</RadzenText>
+
+<RadzenDataGrid Data="@cursos" TItem="Curso" AllowPaging="true" PageSize="10" AllowSorting="true">
+    <Columns>
+        <RadzenDataGridColumn TItem="Curso" Property="Nombre" Title="Curso" />
+        <RadzenDataGridColumn TItem="Curso" Property="Categoria" Title="Categoría" Width="150px" />
+        <RadzenDataGridColumn TItem="Curso" Property="DuracionHoras" Title="Duración (h)" Width="120px" />
+        <RadzenDataGridColumn TItem="Curso" Title="Obligatorio" Width="120px">
+            <Template Context="c">
+                <RadzenBadge Text="@(c.EsObligatorio ? "SÍ" : "NO")" 
+                             BadgeStyle="@(c.EsObligatorio ? BadgeStyle.Warning : BadgeStyle.Info)" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Curso" Title="Acción" Width="150px">
+            <Template Context="c">
+                <RadzenButton Text="Ver Curso" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    List<Curso> cursos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        cursos = await CursoService.GetCursosAsync();
+    }
+}

@@ -1,0 +1,151 @@
+@inject UsuarioService UsuarioService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<RadzenTemplateForm TItem="UsuarioDto" Data="@Usuario" Submit="@OnSubmit">
+    <RadzenStack Gap="1.5rem" Style="padding: 1rem;">
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Nombre" Style="width: 100%;">
+                    <RadzenTextBox @bind-Value="Usuario.Nombre" Name="Nombre" Style="width: 100%;" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="Nombre" Text="Requerido" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Apellido" Style="width: 100%;">
+                    <RadzenTextBox @bind-Value="Usuario.Apellido" Name="Apellido" Style="width: 100%;" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="Apellido" Text="Requerido" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Email" Style="width: 100%;">
+                    <RadzenTextBox @bind-Value="Usuario.Email" Name="Email" Style="width: 100%;" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="Email" Text="Requerido" />
+                <RadzenEmailValidator Component="Email" Text="Email inválido" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Legajo" Style="width: 100%;">
+                    <RadzenTextBox @bind-Value="Usuario.Legajo" Name="Legajo" Style="width: 100%;" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="Legajo" Text="Requerido" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Centro de Costos" Style="width: 100%;">
+                    <RadzenDropDown TValue="int" Data="@areas" TextProperty="Nombre" ValueProperty="Id" @bind-Value="Usuario.AreaId" Name="Area" Style="width: 100%;" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="Area" Text="Requerido" DefaultValue="0" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="País" Style="width: 100%;">
+                    <RadzenDropDown TValue="int" Data="@paises" TextProperty="Nombre" ValueProperty="Id" @bind-Value="Usuario.PaisId" Name="Pais" Style="width: 100%;" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="Pais" Text="Requerido" DefaultValue="0" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Es Jefe / Manager?" Style="width: 100%;">
+                    <RadzenCheckBox @bind-Value="@Usuario.EsJefe" Disabled="@IsEdit" Name="EsJefe" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Rol / Cargo" Style="width: 100%;">
+                    @if (Usuario.EsJefe) {
+                        <RadzenDropDown TValue="string" Data="@roles" @bind-Value="Usuario.Rol" Style="width: 100%;" />
+                    } else {
+                        <RadzenTextBox Value="COLABORADOR" Disabled="true" Style="width: 100%;" />
+                    }
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Sector / Puesto" Style="width: 100%;">
+                    <RadzenTextBox @bind-Value="Usuario.Sector" Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                @if (!Usuario.EsJefe) {
+                    <RadzenFormField Text="Responsable de Evaluación" Style="width: 100%;">
+                        <RadzenDropDown TValue="int?" @bind-Value="Usuario.JefeId" Data="@jefes" TextProperty="NombreCompleto" ValueProperty="Id" 
+                                        AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Name="Jefe" Style="width: 100%;" />
+                    </RadzenFormField>
+                    <RadzenRequiredValidator Component="Jefe" Text="Requerido" />
+                }
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenCheckBox @bind-Value="@Usuario.Activo" Name="Activo" />
+                    <RadzenLabel Text="Usuario Activo" Component="Activo" />
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenCheckBox @bind-Value="@Usuario.EsSuperusuario" Name="EsSuper" />
+                    <RadzenLabel Text="Superusuario" Component="EsSuper" Style="color: darkred; font-weight: bold;" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+            <RadzenButton Text="Cancelar" Click="@(() => DialogService.Close(false))" ButtonStyle="ButtonStyle.Light" />
+            <RadzenButton Text="Guardar" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public UsuarioDto Usuario { get; set; } = new();
+    [Parameter] public bool IsEdit { get; set; }
+    
+    List<Area> areas = new();
+    List<Pais> paises = new();
+    List<string> roles = new() { "JEFE", "GERENTE", "DIRECTOR", "DIRECTOR_GENERAL", "RRHH" };
+    List<JefeDto> jefes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        areas = await db.Areas.OrderBy(a => a.Nombre).ToListAsync();
+        paises = await db.Paises.OrderBy(p => p.Nombre).ToListAsync();
+        jefes = await db.Jefes.Select(j => new JefeDto { Id = j.Id, NombreCompleto = $"{j.Apellido}, {j.Nombre}" }).OrderBy(j => j.NombreCompleto).ToListAsync();
+        
+        if (!IsEdit && Usuario.Rol == "") Usuario.Rol = "JEFE";
+    }
+
+    async Task OnSubmit()
+    {
+        bool ok;
+        if (IsEdit)
+        {
+            ok = await UsuarioService.UpdateUsuarioAsync(Usuario);
+            if (ok) NotificationService.Notify(NotificationSeverity.Success, "Usuario actualizado", "Los cambios han sido guardados.");
+        }
+        else
+        {
+            ok = await UsuarioService.CreateUsuarioAsync(Usuario);
+            if (ok) NotificationService.Notify(NotificationSeverity.Success, "Usuario creado", "El usuario ha sido creado correctamente.");
+        }
+
+        if (ok) {
+            DialogService.Close(true);
+        } else {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo guardar los cambios.");
+        }
+    }
+
+    class JefeDto { public int Id { get; set; } public string NombreCompleto { get; set; } = ""; }
+}

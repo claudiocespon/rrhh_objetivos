@@ -1,0 +1,15 @@
+@inject DialogService DialogService
+
+<RadzenStack Gap="1.5rem">
+    <RadzenText TextStyle="TextStyle.Body1">@Message</RadzenText>
+    <RadzenTextArea @bind-Value="@Value" Style="width: 100%;" Rows="3" />
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancelar" Click="@(() => DialogService.Close(null))" ButtonStyle="ButtonStyle.Light" />
+        <RadzenButton Text="Enviar" Click="@(() => DialogService.Close(Value))" ButtonStyle="ButtonStyle.Primary" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public string Value { get; set; } = "";
+}

@@ -1,0 +1,109 @@
+@page "/admin/usuarios"
+@inject UsuarioService UsuarioService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Nav
+
+<PageTitle>Administración de Usuarios - RRHH Objetivos</PageTitle>
+
+@if (CurrentUser.EstaAutenticado && CurrentUser.EsSuperusuario)
+{
+    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="6">
+                <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1" Style="margin: 0;">Administración de Usuarios</RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="6" Style="text-align: right;">
+                <RadzenButton Icon="add" Text="Nuevo Usuario" Click="@(() => NuevoUsuarioSub())" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenDataGrid Data="@usuarios" TItem="UsuarioDto" AllowFiltering="true" AllowColumnResize="true" AllowPaging="true" PageSize="15" AllowSorting="true" 
+                        FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        IsLoading="@isLoading">
+            <Columns>
+                <RadzenDataGridColumn TItem="UsuarioDto" Property="Legajo" Title="Legajo" Width="100px" />
+                <RadzenDataGridColumn TItem="UsuarioDto" Property="NombreCompleto" Title="Apellido y Nombre" />
+                <RadzenDataGridColumn TItem="UsuarioDto" Property="Email" Title="Email" />
+                <RadzenDataGridColumn TItem="UsuarioDto" Property="Area" Title="Centro de Costos" />
+                <RadzenDataGridColumn TItem="UsuarioDto" Property="Rol" Title="Rol" Width="140px">
+                    <Template Context="u">
+                        <RadzenBadge BadgeStyle="@(u.Rol == "RRHH" ? BadgeStyle.Warning : (u.EsJefe && u.Rol != "COLABORADOR" ? BadgeStyle.Info : BadgeStyle.Secondary))" 
+                                     Text="@u.Rol" />
+                        @if (u.EsSuperusuario) {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Super" Style="margin-left: 4px;" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UsuarioDto" Property="Responsable" Title="Responsable" />
+                <RadzenDataGridColumn TItem="UsuarioDto" Property="Activo" Title="Activo" TextAlign="TextAlign.Center" Width="80px">
+                    <Template Context="u">
+                        <RadzenIcon Icon="@(u.Activo ? "check_circle" : "cancel")" Style="@(u.Activo ? "color: green;" : "color: red;")" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UsuarioDto" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" Title="Acciones">
+                    <Template Context="u">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => EditarSub(u))" />
+                        <RadzenButton Icon="key" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" Click="@(() => ResetPassSub(u))" Style="margin-left: 4px;" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenStack>
+}
+
+@code {
+    List<UsuarioDto> usuarios = new();
+    bool isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.EsSuperusuario) 
+        {
+            Nav.NavigateTo("dashboard");
+            return;
+        }
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        isLoading = true;
+        usuarios = await UsuarioService.GetUsuariosAsync();
+        isLoading = false;
+    }
+
+    async Task EditarSub(UsuarioDto u)
+    {
+        var result = await DialogService.OpenAsync<EditarUsuarioDialog>($"Editar Usuario: {u.NombreCompleto}", 
+            new Dictionary<string, object?> { { "Usuario", u }, { "IsEdit", true } }, 
+            new DialogOptions { Width = "650px", Resizable = true, Draggable = true });
+
+        if (result == true) {
+            await LoadData();
+        }
+    }
+    async Task NuevoUsuarioSub()
+    {
+        var result = await DialogService.OpenAsync<EditarUsuarioDialog>("Nuevo Usuario", 
+            new Dictionary<string, object?> { { "Usuario", new UsuarioDto { Activo = true, EsJefe = true } }, { "IsEdit", false } }, 
+            new DialogOptions { Width = "650px", Resizable = true, Draggable = true });
+
+        if (result == true) {
+            await LoadData();
+        }
+    }
+
+    async Task ResetPassSub(UsuarioDto u)
+    {
+        var result = await DialogService.Confirm($"¿Desea resetear la contraseña del usuario {u.NombreCompleto}? Se usará el Legajo como contraseña inicial.", "Resetear Contraseña", 
+            new ConfirmOptions { OkButtonText = "Sí", CancelButtonText = "No" });
+
+        if (result == true) {
+            var ok = await UsuarioService.ResetPasswordAsync(u.Id, u.EsJefe);
+            if (ok) NotificationService.Notify(NotificationSeverity.Success, "Contraseña reseteada", $"La contraseña de {u.NombreCompleto} se reseteó al Legajo ({u.Legajo}).");
+            else NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo resetear la contraseña.");
+        }
+    }
+}

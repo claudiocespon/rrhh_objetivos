@@ -1,0 +1,145 @@
+@page "/misobjetivos"
+@inject Objetivos.Web.Services.ObjetivoService ObjetivoService
+@inject Objetivos.Web.Services.ICurrentUserService CurrentUser
+@inject Radzen.DialogService DialogService
+@inject Radzen.NotificationService NotificationService
+@inject Objetivos.Web.Services.ExportService ExportService
+@inject IJSRuntime JS
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 1.5rem;">
+    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Objetivos y Competencias</RadzenText>
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+        <RadzenButton Icon="download" Text="Exportar CSV" Click="@OnExportClick" ButtonStyle="ButtonStyle.Success" Visible="@(CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario)" />
+        <RadzenButton Icon="add" Text="Nuevo Objetivo" Click="@OnCreateClick" ButtonStyle="ButtonStyle.Primary" Visible="@(CurrentUser.EsJefe)" />
+    </RadzenStack>
+</RadzenStack>
+
+@if (roleData == null)
+{
+    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    @if (roleData.Equipo != null && roleData.Personal != null)
+    {
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Objetivos de mi Equipo">
+                    @RenderObjetivos(roleData.Equipo, true)
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Mis Objetivos">
+                    @RenderObjetivos(roleData.Personal, false)
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    }
+    else if (roleData.Equipo != null)
+    {
+        @RenderObjetivos(roleData.Equipo, true)
+    }
+    else if (roleData.Personal != null)
+    {
+        @RenderObjetivos(roleData.Personal, false)
+    }
+    else
+    {
+        <EmptyState Message="Aún no has creado objetivos. ¡Comienza agregando uno con el botón +" />
+    }
+}
+
+@code {
+    Objetivos.Web.Services.RoleObjetivosData? roleData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        roleData = await ObjetivoService.GetObjetivosRoleAsync(DateTime.Now.Year);
+    }
+
+    [Inject] NavigationManager Nav { get; set; } = null!;
+
+    void OnViewClick(int id, int empleadoId)
+    {
+        Nav.NavigateTo($"seguimientos/{empleadoId}/objetivo/{id}");
+    }
+
+    async Task OnCreateClick()
+    {
+        var result = await DialogService.OpenAsync<CrearObjetivoDialog>("Crear Nuevo Objetivo",
+            new Dictionary<string, object?>(),
+            new DialogOptions { Width = "700px", Resizable = true, Draggable = true });
+
+        if (result != null && (bool)result)
+        {
+            await LoadData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Objetivo creado correctamente");
+        }
+    }
+
+    async Task OnExportClick()
+    {
+        if (roleData?.Equipo == null || !roleData.Equipo.Any())
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Sin Datos", "No hay objetivos de equipo para exportar.");
+            return;
+        }
+        
+        var content = ExportService.ExportObjetivosToCsv(roleData.Equipo);
+        var base64 = Convert.ToBase64String(content);
+        var fileName = $"Objetivos_{DateTime.Now:yyyyMMdd}.csv";
+        
+        await JS.InvokeVoidAsync("antigravityDownloadFile", fileName, base64);
+    }
+
+    private RenderFragment RenderObjetivos(List<Objetivos.Web.Domain.Entities.Objetivo> objetivosLista, bool showEmployee) => __builder =>
+    {
+        if (objetivosLista == null || !objetivosLista.Any())
+        {
+            <EmptyState Message="Aún no has creado objetivos. ¡Comienza agregando uno con el botón +" />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@objetivosLista" TItem="Objetivos.Web.Domain.Entities.Objetivo" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Pilar.Nombre" Title="Pilar">
+                            <Template Context="obj">
+                                <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        @if (showEmployee)
+                        {
+                            <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Empleado.Nombre" Title="Empleado">
+                                <Template Context="obj">
+                                    @obj.Empleado.Nombre @obj.Empleado.Apellido
+                                </Template>
+                            </RadzenDataGridColumn>
+                        }
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Estado" Width="120px">
+                            <Template Context="obj">
+                                <EstadoBadge EstadoObj="@obj.Estado" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Progreso" Width="100px">
+                            <Template Context="obj">
+                                <RadzenProgressBar Value="@obj.Progreso" ShowValue="true" Max="100" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="100px">
+                            <Template Context="obj">
+                                <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" 
+                                              Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+}

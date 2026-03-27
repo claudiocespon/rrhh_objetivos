@@ -1,0 +1,17 @@
+﻿@inject NavigationManager Nav
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>No encontrado</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Style="height: 100%;" Gap="2rem">
+                <RadzenIcon Icon="error_outline" Style="font-size: 5rem; color: var(--rz-danger);" />
+                <RadzenText TextStyle="TextStyle.H4">Lo sentimos, no hay nada en esta dirección.</RadzenText>
+                <RadzenButton Text="Volver al Dashboard" Click="@(() => Nav.NavigateTo("dashboard"))" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </LayoutView>
+    </NotFound>
+</Router>

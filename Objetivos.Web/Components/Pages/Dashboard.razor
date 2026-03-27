@@ -1,0 +1,132 @@
+@page "/dashboard"
+@inject DashboardService DashboardService
+@inject ICurrentUserService CurrentUser
+
+<RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Dashboard</RadzenText>
+
+@if (roleData == null)
+{
+    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    @if (roleData.Equipo != null && roleData.Personal != null)
+    {
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Mi Equipo / Área">
+                    @RenderDashboard(roleData.Equipo, "Estado de Objetivos del Equipo")
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Mis Objetivos">
+                    @RenderDashboard(roleData.Personal, "Mi Estado Personal")
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    }
+    else if (roleData.Equipo != null)
+    {
+        @RenderDashboard(roleData.Equipo, "Estado de Objetivos del Equipo")
+    }
+    else if (roleData.Personal != null)
+    {
+        @RenderDashboard(roleData.Personal, "Mi Estado Personal")
+    }
+    else
+    {
+        <EmptyState Message="Sin datos de dashboard disponibles." />
+    }
+}
+
+@code {
+    RoleDashboardData? roleData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        roleData = await DashboardService.GetDashboardDataAsync(CurrentUser);
+    }
+
+    private RenderFragment RenderDashboard(DashboardData data, string title) => __builder =>
+    {
+        var donutData = new List<DonutItem>
+        {
+            new DonutItem { Estado = "Activo", Cantidad = data.EnCurso },
+            new DonutItem { Estado = "Vencen Pronto", Cantidad = data.VencenPronto },
+            new DonutItem { Estado = "Pendientes", Cantidad = data.PendientesRevision }
+        };
+
+        <div class="row mb-4 pt-3">
+            <div class="col-md-3">
+                <RadzenCard Style="background-color: var(--rz-primary); color: white;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenIcon Icon="assignment" Style="font-size: 2.5rem; opacity: 0.8;" />
+                        <RadzenStack Gap="0">
+                            <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.TotalObjetivos</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Total Objetivos</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </div>
+            <div class="col-md-3">
+                <RadzenCard Style="background-color: var(--rz-info); color: white;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenIcon Icon="trending_up" Style="font-size: 2.5rem; opacity: 0.8;" />
+                        <RadzenStack Gap="0">
+                            <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.EnCurso</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">En Curso</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </div>
+            <div class="col-md-3">
+                <RadzenCard Style="background-color: var(--rz-warning); color: white;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; opacity: 0.8;" />
+                        <RadzenStack Gap="0">
+                            <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.VencenPronto</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Vencen Pronto</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </div>
+            <div class="col-md-3">
+                <RadzenCard Style="background-color: var(--rz-danger); color: white;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenIcon Icon="rule" Style="font-size: 2.5rem; opacity: 0.8;" />
+                        <RadzenStack Gap="0">
+                            <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.PendientesRevision</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Pendientes Revisión</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">@title</RadzenText>
+                    @if (data.TotalObjetivos == 0)
+                    {
+                        <EmptyState Message="No hay objetivos creados aún" />
+                    }
+                    else
+                    {
+                        <RadzenChart>
+                            <RadzenDonutSeries Data="@donutData" CategoryProperty="Estado" ValueProperty="Cantidad" Title="Objetivos">
+                                <ChildContent>
+                                    <RadzenSeriesDataLabels Visible="true" />
+                                </ChildContent>
+                            </RadzenDonutSeries>
+                        </RadzenChart>
+                    }
+                </RadzenCard>
+            </div>
+        </div>
+    };
+
+    class DonutItem
+    {
+        public string Estado { get; set; } = "";
+        public int Cantidad { get; set; }
+    }
+}

@@ -1,0 +1,98 @@
+@inherits LayoutComponentBase
+@using Microsoft.EntityFrameworkCore
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Nav
+@inject AppDbContext Db
+
+@if (!CurrentUser.EstaAutenticado)
+{
+    <RadzenLayout>
+        <RadzenBody>
+            <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Style="min-height: 100vh;">
+                <RadzenText TextStyle="TextStyle.H6">Redirigiendo al inicio de sesión...</RadzenText>
+            </RadzenStack>
+        </RadzenBody>
+    </RadzenLayout>
+}
+else
+{
+    <RadzenLayout Style="grid-template-areas: 'rz-header rz-header' 'rz-sidebar rz-body';">
+        <RadzenHeader>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="padding: 0 1rem; width: 100%; height: 100%;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; font-weight: bold; color: white;">RRHH Objetivos</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenBadge Text="@unreadCount.ToString()" BadgeStyle="BadgeStyle.Danger" IsPill="true" Visible="@(unreadCount > 0)" />
+                    <RadzenIcon Icon="notifications" Style="color: white; cursor: pointer;" @onclick="@OnNotificationsClick" />
+                    <RadzenText Style="color: white; margin: 0;">
+                        Bienvenido, <b>@CurrentUser.NombreCompleto</b>
+                    </RadzenText>
+                    <RadzenButton Text="Cerrar Sesión" Icon="logout" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                                  Click="@CerrarSesion" Variant="Variant.Text" Style="color: white;" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenHeader>
+        <RadzenSidebar @bind-Expanded="@sidebarExpanded">
+            <NavMenu />
+        </RadzenSidebar>
+        <RadzenBody>
+            <RadzenStack Style="padding: 2rem;">
+                @Body
+            </RadzenStack>
+        </RadzenBody>
+    </RadzenLayout>
+
+    <RadzenComponents />
+    <RadzenNotification />
+    <RadzenDialog />
+    <RadzenTooltip />
+    <RadzenContextMenu />
+}
+
+@code {
+    bool sidebarExpanded = true;
+    int unreadCount = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CurrentUser.InitializeAsync();
+            
+            if (!CurrentUser.EstaAutenticado && !Nav.Uri.Contains("/login"))
+            {
+                Nav.NavigateTo("login");
+            }
+            else if (CurrentUser.EstaAutenticado)
+            {
+                await LoadNotifications();
+            }
+            StateHasChanged();
+        }
+    }
+
+    async Task LoadNotifications()
+    {
+        unreadCount = await Db.Notificaciones
+            .Where(n => n.UsuarioId == CurrentUser.UsuarioId && !n.Leida)
+            .CountAsync();
+    }
+
+    async Task OnNotificationsClick()
+    {
+        await Db.Notificaciones
+            .Where(n => n.UsuarioId == CurrentUser.UsuarioId && !n.Leida)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.Leida, true));
+        
+        unreadCount = 0;
+        StateHasChanged();
+    }
+
+    async Task CerrarSesion()
+    {
+        await CurrentUser.CerrarSesionAsync();
+        Nav.NavigateTo("login", forceLoad: true);
+    }
+}

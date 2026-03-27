@@ -1,0 +1,233 @@
+@page "/evaluacion"
+@inject AppDbContext Db
+@inject ICurrentUserService CurrentUser
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@using Microsoft.EntityFrameworkCore
+
+<RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Evaluaciones</RadzenText>
+
+@if (loading)
+{
+    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    @if (CurrentUser.EsJefe)
+    {
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Revisiones Cuatrimestrales (Equipo)">
+                    @RenderPendientes()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Evaluaciones Finales Pendientes">
+                    @RenderFinalesPendientes()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Mis Evaluaciones Recibidas">
+                    @RenderRecibidas()
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    }
+    else
+    {
+        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Mis Evaluaciones Recibidas</RadzenText>
+        @RenderRecibidas()
+    }
+}
+
+@code {
+    List<RevisionCuatrimestral>? pendientes;
+    List<Objetivo>? finalesPendientes;
+    List<RevisionCuatrimestral>? recibidas;
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        loading = true;
+        var empleadoPropio = await Db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == CurrentUser.Email.ToLower() && e.Activo);
+
+        // 1. Fetch Mis Evaluaciones Recibidas (Completadas)
+        if (empleadoPropio != null)
+        {
+            recibidas = await Db.RevisionesCuatrimestrales
+                .Include(r => r.Objetivo)
+                    .ThenInclude(o => o.Empleado)
+                .Where(r => r.Completada && r.Objetivo.EmpleadoId == empleadoPropio.Id)
+                .OrderByDescending(r => r.FechaEvaluacion)
+                .ToListAsync();
+        }
+        else
+        {
+            recibidas = new List<RevisionCuatrimestral>();
+        }
+
+        // 2. Fetch Pendientes (Solo Jefes)
+        if (CurrentUser.EsJefe)
+        {
+            // Revisiones Cuatrimestrales
+            var queryRev = Db.RevisionesCuatrimestrales
+                .Include(r => r.Objetivo)
+                    .ThenInclude(o => o.Empleado)
+                .Where(r => !r.Completada && r.Objetivo.Empleado.Activo);
+
+            // Objetivos para Evaluación Final (RN-03)
+            var queryFinal = Db.Objetivos
+                .Include(o => o.Empleado)
+                .Include(o => o.Revisiones)
+                .Include(o => o.EvaluacionFinal)
+                .Where(o => o.Estado == EstadoObjetivo.ACTIVO 
+                         && o.Empleado.Activo 
+                         && o.EvaluacionFinal == null
+                         && o.Revisiones.Count(r => r.Completada) >= 3
+                         && DateTime.Today >= o.Deadline);
+
+            bool canSeeAll = CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.Rol == "RRHH" || CurrentUser.EsSuperusuario;
+            
+            if (!canSeeAll)
+            {
+                if (CurrentUser.Rol == "DIRECTOR")
+                {
+                    queryRev = queryRev.Where(r => r.Objetivo.Empleado.AreaId == CurrentUser.AreaId);
+                    queryFinal = queryFinal.Where(o => o.Empleado.AreaId == CurrentUser.AreaId);
+                }
+                else
+                {
+                    queryRev = queryRev.Where(r => r.Objetivo.Empleado.JefeId == CurrentUser.UsuarioId);
+                    queryFinal = queryFinal.Where(o => o.Empleado.JefeId == CurrentUser.UsuarioId);
+                }
+            }
+
+            pendientes = await queryRev.OrderBy(r => r.Periodo).ToListAsync();
+            finalesPendientes = await queryFinal.ToListAsync();
+        }
+
+        loading = false;
+    }
+
+    async Task OnEvaluarClick(RevisionCuatrimestral rev)
+    {
+        var result = await DialogService.OpenAsync<EvaluarDialog>($"Evaluar: {rev.Periodo.ToString().Replace("_", " ")}",
+            new Dictionary<string, object?> { { "RevisionId", rev.Id } },
+            new DialogOptions { Width = "600px" });
+
+        if (result == true)
+        {
+            await LoadData();
+            NotificationService.Notify(NotificationSeverity.Success, "Evaluación", "Revisión completada con éxito");
+        }
+    }
+
+    async Task OnEvaluarFinalClick(Objetivo obj)
+    {
+        var result = await DialogService.OpenAsync<EvaluarFinalDialog>($"Evaluación Final: {obj.Nombre}",
+            new Dictionary<string, object?> { { "ObjetivoId", obj.Id } },
+            new DialogOptions { Width = "600px" });
+
+        if (result == true)
+        {
+            await LoadData();
+            NotificationService.Notify(NotificationSeverity.Success, "Evaluación Final", "Evaluación final completada. El objetivo ha sido cerrado.");
+        }
+    }
+
+    private RenderFragment RenderPendientes() => __builder =>
+    {
+        if (pendientes == null || !pendientes.Any())
+        {
+            <EmptyState Message="Todas las revisiones del período están completas ✅" />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@pendientes" TItem="RevisionCuatrimestral" AllowPaging="true" PageSize="10" Responsive="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Empleado.Nombre" Title="Colaborador">
+                            <Template Context="rev">
+                                @rev.Objetivo.Empleado.Nombre @rev.Objetivo.Empleado.Apellido
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Período" Width="150px">
+                            <Template Context="rev">
+                                <RadzenBadge Text="@rev.Periodo.ToString().Replace("_", " ")" BadgeStyle="BadgeStyle.Info" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Anio" Title="Año" Width="80px" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Context="rev" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="140px">
+                            <Template Context="rev">
+                                <RadzenButton Text="Evaluar" Icon="assignment_turned_in" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
+                                              Click="@(() => OnEvaluarClick(rev))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+
+    private RenderFragment RenderFinalesPendientes() => __builder =>
+    {
+        if (finalesPendientes == null || !finalesPendientes.Any())
+        {
+            <EmptyState Message="No hay objetivos pendientes de evaluación final." />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@finalesPendientes" TItem="Objetivo" AllowPaging="true" PageSize="10" Responsive="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Empleado.Nombre" Title="Colaborador">
+                            <Template Context="obj">
+                                @obj.Empleado.Nombre @obj.Empleado.Apellido
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                        <RadzenDataGridColumn TItem="Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="180px">
+                            <Template Context="obj">
+                                <RadzenButton Text="Evaluar Final" Icon="task_alt" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
+                                              Click="@(() => OnEvaluarFinalClick(obj))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+
+    private RenderFragment RenderRecibidas() => __builder =>
+    {
+        if (recibidas == null || !recibidas.Any())
+        {
+            <EmptyState Message="Aún no has recibido evaluaciones formales finalizadas." />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@recibidas" TItem="RevisionCuatrimestral" AllowPaging="true" PageSize="10" Responsive="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Período" Width="150px">
+                            <Template Context="rev">
+                                <RadzenBadge Text="@rev.Periodo.ToString().Replace("_", " ")" BadgeStyle="BadgeStyle.Success" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Puntuación" Width="120px">
+                            <Template Context="rev">
+                                <RadzenRating Value="@(rev.Puntaje ?? 0)" ReadOnly="true" Stars="5" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="ComentarioJefe" Title="Resumen de Evaluación" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="FechaEvaluacion" Title="Fecha" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+}

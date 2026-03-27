@@ -1,0 +1,131 @@
+@page "/autoevaluacion"
+@using System.Text.Json
+@inject AppDbContext Db
+@inject ICurrentUserService CurrentUser
+
+<RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Autoevaluaciones</RadzenText>
+
+@if (loading)
+{
+    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    @if (CurrentUser.EsJefe)
+    {
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="@(CurrentUser.Rol == "DIRECTOR_GENERAL" ? "Autoevaluaciones de la Organización" : "Autoevaluaciones de mi Equipo")">
+                    @RenderAutoevaluaciones(autoevaluacionesEquipo, true)
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Mis Autoevaluaciones">
+                    @RenderAutoevaluaciones(autoevaluacionesPersonal, false)
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    }
+    else
+    {
+        @RenderAutoevaluaciones(autoevaluacionesPersonal, false)
+    }
+}
+
+@code {
+    List<Autoevaluacion>? autoevaluacionesPersonal;
+    List<Autoevaluacion>? autoevaluacionesEquipo;
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var empleadoPropio = await Db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == CurrentUser.Email.ToLower() && e.Activo);
+
+        // 1. Fetch Personal
+        if (empleadoPropio != null)
+        {
+            autoevaluacionesPersonal = await Db.Autoevaluaciones
+                .Include(ae => ae.Objetivo)
+                    .ThenInclude(o => o.Empleado)
+                .Where(ae => ae.Objetivo.EmpleadoId == empleadoPropio.Id)
+                .OrderByDescending(ae => ae.FechaAutoevaluacion)
+                .ToListAsync();
+        }
+        else
+        {
+            autoevaluacionesPersonal = new List<Autoevaluacion>();
+        }
+
+        // 2. Fetch Equipo
+        if (CurrentUser.EsJefe)
+        {
+            var query = Db.Autoevaluaciones
+                .Include(ae => ae.Objetivo)
+                    .ThenInclude(o => o.Empleado)
+                .AsQueryable();
+
+            if (CurrentUser.EsSuperusuario || CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL")
+            {
+                // No extra filter
+            }
+            else if (CurrentUser.Rol == "DIRECTOR")
+            {
+                query = query.Where(ae => ae.Objetivo.Empleado.AreaId == CurrentUser.AreaId);
+            }
+            else
+            {
+                query = query.Where(ae => ae.Objetivo.Empleado.JefeId == CurrentUser.UsuarioId);
+            }
+
+            autoevaluacionesEquipo = await query
+                .OrderByDescending(ae => ae.FechaAutoevaluacion)
+                .ToListAsync();
+        }
+
+        loading = false;
+    }
+
+    private RenderFragment RenderAutoevaluaciones(List<Autoevaluacion>? lista, bool showEmployee) => __builder =>
+    {
+        if (lista == null || !lista.Any())
+        {
+            <EmptyState Message="El empleado aún no ha realizado autoevaluaciones" />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@lista" TItem="Autoevaluacion" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                    <Columns>
+                        @if (showEmployee)
+                        {
+                            <RadzenDataGridColumn TItem="Autoevaluacion" Property="Objetivo.Empleado.Nombre" Title="Colaborador">
+                                <Template Context="ae">
+                                    @ae.Objetivo.Empleado.Nombre @ae.Objetivo.Empleado.Apellido
+                                </Template>
+                            </RadzenDataGridColumn>
+                        }
+                        <RadzenDataGridColumn TItem="Autoevaluacion" Property="Objetivo.Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="Autoevaluacion" Title="Score (1-5)" Width="120px">
+                            <Template Context="ae">
+                                <RadzenRating Value="@ae.Score" ReadOnly="true" Stars="5" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Autoevaluacion" Property="Comentario" Title="Comentario" />
+                        <RadzenDataGridColumn TItem="Autoevaluacion" Title="Evidencias" Width="200px">
+                            <Template Context="ae">
+                                @{
+                                    var evidencias = JsonSerializer.Deserialize<List<string>>(ae.EvidenciasMencionadasJson) ?? new();
+                                }
+                                <RadzenStack Gap="0.2rem">
+                                    @foreach (var ev in evidencias)
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">• @ev</RadzenText>
+                                    }
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Autoevaluacion" Property="FechaAutoevaluacion" Title="Fecha" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+}

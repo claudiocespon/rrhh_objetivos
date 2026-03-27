@@ -1,0 +1,17 @@
+[Bb]in/
+[Oo]bj/
+[Tt]est[Rr]esults/
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.doccache
+.DS_Store
+*.db
+*.db-shm
+*.db-wal
+.gemini/
+.agent/
+.agents/
+brain/
+node_modules/

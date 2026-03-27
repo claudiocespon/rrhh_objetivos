@@ -1,0 +1,39 @@
+@inject BitacoraService BitacoraService
+@inject DialogService DialogService
+
+<RadzenTemplateForm TItem="BitacoraEntrada" Data="@entrada" Submit="@OnSubmit">
+    <RadzenStack Gap="1.5rem">
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Avance / Comentario</RadzenText>
+                <RadzenTextArea @bind-Value="@entrada.Texto" Name="Texto" Style="width: 100%;" Rows="5" Placeholder="Describe tu avance de hoy (mínimo 20 caracteres)..." />
+                <RadzenRequiredValidator Component="Texto" Text="Debe ingresar un texto descriptivo" Style="position: absolute" />
+                <RadzenLengthValidator Component="Texto" Min="20" Text="El texto debe tener al menos 20 caracteres" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar Entrada" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public int ObjetivoId { get; set; }
+    [Parameter] public int EmpleadoId { get; set; }
+
+    BitacoraEntrada entrada = new();
+
+    protected override void OnInitialized()
+    {
+        entrada.ObjetivoId = ObjetivoId;
+        entrada.EmpleadoId = EmpleadoId;
+    }
+
+    async Task OnSubmit()
+    {
+        await BitacoraService.CrearEntradaAsync(entrada);
+        DialogService.Close(true);
+    }
+}

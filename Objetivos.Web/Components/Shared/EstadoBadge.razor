@@ -1,0 +1,33 @@
+
+@if (EstadoObj != null)
+{
+    <RadzenBadge BadgeStyle="@GetStyle(EstadoObj.Value)" Text="@EstadoObj.ToString()" />
+}
+else if (EstadoBit != null)
+{
+    <RadzenBadge BadgeStyle="@GetStyle(EstadoBit!.Value)" Text="@(EstadoBit.Value.ToString().Replace("_", " "))" />
+}
+
+@code {
+    [Parameter] public EstadoObjetivo? EstadoObj { get; set; }
+    [Parameter] public EstadoBitacora? EstadoBit { get; set; }
+
+    private BadgeStyle GetStyle(EstadoObjetivo estado) => estado switch
+    {
+        EstadoObjetivo.ACTIVO => BadgeStyle.Success,
+        EstadoObjetivo.BORRADOR => BadgeStyle.Info,
+        EstadoObjetivo.EN_RIESGO => BadgeStyle.Warning,
+        EstadoObjetivo.COMPLETADO => BadgeStyle.Primary,
+        EstadoObjetivo.CANCELADO => BadgeStyle.Danger,
+        _ => BadgeStyle.Secondary
+    };
+
+    private BadgeStyle GetStyle(EstadoBitacora estado) => estado switch
+    {
+        EstadoBitacora.CERRADO => BadgeStyle.Success,
+        EstadoBitacora.PENDIENTE_REVISION => BadgeStyle.Warning,
+        EstadoBitacora.COMENTADO_JEFE => BadgeStyle.Info,
+        EstadoBitacora.REQUIERE_AJUSTE => BadgeStyle.Danger,
+        _ => BadgeStyle.Secondary
+    };
+}
