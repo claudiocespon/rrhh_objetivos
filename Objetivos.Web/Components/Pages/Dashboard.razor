@@ -42,7 +42,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        roleData = await DashboardService.GetDashboardDataAsync(CurrentUser);
+        roleData = await DashboardService.GetDashboardDataAsync();
     }
 
     private RenderFragment RenderDashboard(DashboardData data, string title) => __builder =>

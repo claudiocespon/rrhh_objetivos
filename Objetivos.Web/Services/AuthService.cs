@@ -31,8 +31,28 @@ public class AuthService
 
     public static string HashPassword(string password)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-        return Convert.ToHexStringLower(bytes);
+        const int iterations = 100000;
+        const int saltSize = 16;
+        const int hashSize = 32;
+
+        var salt = RandomNumberGenerator.GetBytes(saltSize);
+        var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, hashSize);
+
+        return $"{iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
+    }
+
+    public static bool VerifyPassword(string password, string hashedPassword)
+    {
+        var parts = hashedPassword.Split('.');
+        if (parts.Length != 3) return false;
+
+        var iterations = int.Parse(parts[0]);
+        var salt = Convert.FromBase64String(parts[1]);
+        var hash = Convert.FromBase64String(parts[2]);
+
+        var testHash = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, hash.Length);
+
+        return CryptographicOperations.FixedTimeEquals(hash, testHash);
     }
 
     public async Task<AuthResult> LoginAsync(string email, string password)
@@ -40,7 +60,6 @@ public class AuthService
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             return new AuthResult { Exitoso = false, MensajeError = "Debe ingresar email y contraseña" };
 
-        var hash = HashPassword(password);
         email = email.Trim().ToLowerInvariant();
 
         // Check Jefe first
@@ -50,7 +69,7 @@ public class AuthService
 
         if (jefe != null)
         {
-            if (jefe.PasswordHash != hash)
+            if (!VerifyPassword(password, jefe.PasswordHash))
                 return new AuthResult { Exitoso = false, MensajeError = "Contraseña incorrecta" };
 
             return new AuthResult
@@ -74,7 +93,7 @@ public class AuthService
 
         if (empleado != null)
         {
-            if (empleado.PasswordHash != hash)
+            if (!VerifyPassword(password, empleado.PasswordHash))
                 return new AuthResult { Exitoso = false, MensajeError = "Contraseña incorrecta" };
 
             return new AuthResult
@@ -96,7 +115,13 @@ public class AuthService
 
     public async Task<bool> CambiarPasswordAsync(int usuarioId, bool esJefe, string nuevaPassword)
     {
-        if (string.IsNullOrWhiteSpace(nuevaPassword) || nuevaPassword.Length < 4)
+        if (string.IsNullOrWhiteSpace(nuevaPassword) || nuevaPassword.Length < 8)
+            return false;
+
+        bool hasLetter = nuevaPassword.Any(char.IsLetter);
+        bool hasNumber = nuevaPassword.Any(char.IsDigit);
+
+        if (!hasLetter || !hasNumber)
             return false;
 
         var hash = HashPassword(nuevaPassword);
@@ -120,7 +145,7 @@ public class AuthService
         return true;
     }
 
-    public async Task<string?> RecuperarPasswordAsync(string email)
+    public async Task<bool> RecuperarPasswordAsync(string email)
     {
         email = email.Trim().ToLowerInvariant();
         var randomPassword = GenerarPasswordAleatorio();
@@ -132,8 +157,9 @@ public class AuthService
             jefe.PasswordHash = hash;
             jefe.DebeCambiarPassword = true;
             await _db.SaveChangesAsync();
-            // In production, send email. For now, return the password for display/log.
-            return randomPassword;
+            // TODO: Integrar envío por email (SendGrid/SMTP) — ver SEC-01 en AUDITORIA_TECNICA.md
+            // For now, we only log it for development if needed, but we don't return it.
+            return true;
         }
 
         var empleado = await _db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
@@ -142,10 +168,11 @@ public class AuthService
             empleado.PasswordHash = hash;
             empleado.DebeCambiarPassword = true;
             await _db.SaveChangesAsync();
-            return randomPassword;
+            // TODO: Integrar envío por email (SendGrid/SMTP) — ver SEC-01 en AUDITORIA_TECNICA.md
+            return true;
         }
 
-        return null; // Email not found
+        return false; // Email not found
     }
 
     private static string GenerarPasswordAleatorio()

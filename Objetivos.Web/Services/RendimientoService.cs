@@ -1,4 +1,5 @@
 using Objetivos.Web.Data;
+using Objetivos.Web.Domain.Entities;
 using Objetivos.Web.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,14 +14,8 @@ public class RendimientoService
         _db = db;
     }
 
-    // Puntaje ponderado de un objetivo (1-5) - RN-07
-    public async Task<double> CalcularPonderadoAsync(int objetivoId)
+    private static double CalcularPonderadoInterno(Objetivo? objetivo)
     {
-        var objetivo = await _db.Objetivos
-            .Include(o => o.Revisiones)
-            .Include(o => o.EvaluacionFinal)
-            .FirstOrDefaultAsync(o => o.Id == objetivoId);
-
         if (objetivo == null) return 0;
 
         double q1 = objetivo.Revisiones.FirstOrDefault(r => r.Periodo == PeriodoRevision.Q1_ABRIL)?.Puntaje ?? 0;
@@ -31,35 +26,46 @@ public class RendimientoService
         return (q1 * 0.2) + (q2 * 0.3) + (q3 * 0.3) + (fin * 0.2);
     }
 
+    // Puntaje ponderado de un objetivo (1-5) - RN-07
+    public async Task<double> CalcularPonderadoAsync(int objetivoId)
+    {
+        var objetivo = await _db.Objetivos
+            .Include(o => o.Revisiones)
+            .Include(o => o.EvaluacionFinal)
+            .FirstOrDefaultAsync(o => o.Id == objetivoId);
+
+        return CalcularPonderadoInterno(objetivo);
+    }
+
     // Rendimiento de empleado por pilar (0-5) - RN-07
     public async Task<double> RendimientoPorPilarAsync(int empleadoId, int pilarId, int anio)
     {
         var objetivo = await _db.Objetivos
+            .Include(o => o.Revisiones)
+            .Include(o => o.EvaluacionFinal)
             .FirstOrDefaultAsync(o => o.EmpleadoId == empleadoId 
                                    && o.PilarId == pilarId 
                                    && o.Anio == anio);
         
         if (objetivo == null) return 0;
         
-        return await CalcularPonderadoAsync(objetivo.Id);
+        return CalcularPonderadoInterno(objetivo);
     }
 
     // Promedio general del empleado (0-5) - RN-07
     public async Task<double> PromedioGeneralAsync(int empleadoId, int anio)
     {
         var objetivos = await _db.Objetivos
+            .Include(o => o.Revisiones)
+            .Include(o => o.EvaluacionFinal)
             .Where(o => o.EmpleadoId == empleadoId && o.Anio == anio && o.Estado != EstadoObjetivo.CANCELADO)
             .ToListAsync();
 
         if (!objetivos.Any()) return 0;
 
-        var scores = new List<double>();
-        foreach(var obj in objetivos)
-        {
-            scores.Add(await CalcularPonderadoAsync(obj.Id));
-        }
+        var scores = objetivos.Select(CalcularPonderadoInterno).ToList();
 
-        var objetivosConDatos = scores.Where(v => v > 0);
+        var objetivosConDatos = scores.Where(v => v > 0).ToList();
         if (!objetivosConDatos.Any()) return 0;
         
         return objetivosConDatos.Average();

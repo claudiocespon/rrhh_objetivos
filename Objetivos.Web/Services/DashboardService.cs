@@ -8,20 +8,24 @@ namespace Objetivos.Web.Services;
 public class DashboardService
 {
     private readonly AppDbContext _db;
+    private readonly ICurrentUserService _currentUser;
+    private readonly DataScopeService _dataScope;
 
-    public DashboardService(AppDbContext db)
+    public DashboardService(AppDbContext db, ICurrentUserService currentUser, DataScopeService dataScope)
     {
         _db = db;
+        _currentUser = currentUser;
+        _dataScope = dataScope;
     }
 
-    public async Task<RoleDashboardData> GetDashboardDataAsync(ICurrentUserService currentUser)
+    public async Task<RoleDashboardData> GetDashboardDataAsync()
     {
         var result = new RoleDashboardData();
         var hoy = DateTime.Today;
         var en30Dias = hoy.AddDays(30);
 
         // 1. Fetch Personal Data (for Colaborador, or for Jefe/Gerente's own objectives)
-        var empleadoPropio = await _db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == currentUser.Email.ToLower() && e.Activo);
+        var empleadoPropio = await _db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == _currentUser.Email.ToLower() && e.Activo);
         if (empleadoPropio != null)
         {
             var misObjetivos = await _db.Objetivos
@@ -38,28 +42,14 @@ public class DashboardService
             };
         }
 
-        // 2. Fetch Team/Org Data
-        bool canSeeAll = currentUser.Rol == "DIRECTOR_GENERAL" || currentUser.Rol == "RRHH" || currentUser.EsSuperusuario;
-        
-        if (canSeeAll || currentUser.Rol == "DIRECTOR" || currentUser.EsJefe)
+        // 2. Fetch Team/Org Data using centralized scope
+        if (_currentUser.EsJefe || _dataScope.PuedeVerTodo(_currentUser))
         {
             IQueryable<Objetivo> query = _db.Objetivos.Include(o => o.Empleado).Where(o => o.Anio == hoy.Year);
             IQueryable<RevisionCuatrimestral> revisionQuery = _db.RevisionesCuatrimestrales.Where(r => r.Anio == hoy.Year && r.Objetivo.Estado != EstadoObjetivo.CANCELADO && !r.Completada);
 
-            if (canSeeAll)
-            {
-                // Sees everything
-            }
-            else if (currentUser.Rol == "DIRECTOR")
-            {
-                query = query.Where(o => o.Empleado.AreaId == currentUser.AreaId);
-                revisionQuery = revisionQuery.Where(r => r.Objetivo.Empleado.AreaId == currentUser.AreaId);
-            }
-            else if (currentUser.EsJefe)
-            {
-                query = query.Where(o => o.Empleado.JefeId == currentUser.UsuarioId);
-                revisionQuery = revisionQuery.Where(r => r.Objetivo.Empleado.JefeId == currentUser.UsuarioId);
-            }
+            query = _dataScope.AplicarScope(query, _currentUser);
+            revisionQuery = _dataScope.AplicarScope(revisionQuery, _currentUser);
 
             var teamObjetivos = await query.ToListAsync();
             var pendingTeamRevision = await revisionQuery.CountAsync();

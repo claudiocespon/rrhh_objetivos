@@ -33,6 +33,8 @@ builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<ExportService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<CursoService>();
+builder.Services.AddScoped<EvaluacionService>();
+builder.Services.AddScoped<DataScopeService>();
 
 var app = builder.Build();
 
@@ -42,7 +44,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     // H-10: Estrategia de inicialización robusta (Garantiza creación de esquema si no existe)
     await db.Database.EnsureCreatedAsync();
-    await SeedData.InitializeAsync(db, app.Environment);
+    await SeedData.InitializeAsync(db, app.Environment, app.Configuration);
 }
 
 

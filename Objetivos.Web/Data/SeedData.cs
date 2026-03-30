@@ -9,7 +9,7 @@ namespace Objetivos.Web.Data;
 
 public static class SeedData
 {
-    public static async Task InitializeAsync(AppDbContext db, IWebHostEnvironment env)
+    public static async Task InitializeAsync(AppDbContext db, IWebHostEnvironment env, IConfiguration config)
     {
         if (await db.Paises.AnyAsync()) return;
 
@@ -18,6 +18,10 @@ public static class SeedData
         var paisChile = new Pais { Id = 2, Nombre = "Chile" };
         var paisUruguay = new Pais { Id = 3, Nombre = "Uruguay" };
         db.Paises.AddRange(paisArgentina, paisChile, paisUruguay);
+
+        // ─── SuperUsers from Config ───
+        var superUserEmailsConfig = config.GetSection("SuperUsers:Emails").Get<string[]>() ?? Array.Empty<string>();
+        var superUserEmails = new HashSet<string>(superUserEmailsConfig, StringComparer.OrdinalIgnoreCase);
 
         // ─── Read CSV ───
         var csvPath = Path.Combine(env.ContentRootPath, "Data", "Nomina.csv");
@@ -98,19 +102,24 @@ public static class SeedData
             db.SoftSkills.Add(new SoftSkill { Id = i + 1, Nombre = $"SS{i + 1:D2}-{skillNames[i]}" });
         }
 
+        // ─── Cursos ───
+        if (!await db.Cursos.AnyAsync())
+        {
+            var cursos = new List<Curso>
+            {
+                new Curso { Nombre = "Liderazgo Efectivo", Categoria = "Soft Skills", DuracionHoras = 20, EsObligatorio = true, UrlImagen = "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=400", Descripcion = "Desarrolla habilidades para guiar equipos de alto rendimiento." },
+                new Curso { Nombre = "Gestión del Tiempo", Categoria = "Productividad", DuracionHoras = 10, EsObligatorio = false, UrlImagen = "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=400", Descripcion = "Optimiza tu jornada laboral con técnicas avanzadas." },
+                new Curso { Nombre = "Excel Avanzado", Categoria = "Técnica", DuracionHoras = 30, EsObligatorio = true, UrlImagen = "https://images.unsplash.com/photo-1596495573105-d14658ce6091?q=80&w=400", Descripcion = "Domina tablas dinámicas y macros." }
+            };
+            db.Cursos.AddRange(cursos);
+        }
+
         await db.SaveChangesAsync();
 
         // ─── Classify people: Jefes vs Empleados ───
         // Roles that imply management: "Jefe", "Gerente", "Director", "Director General"
         var jefeRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "Jefe", "Gerente", "Director", "Director General", "RRHH" };
-
-        var superUserEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "ccespon@permaquim.com",
-            "ptripodi@permaquim.com",
-            "scrosio@permaquim.com"
-        };
 
         // First pass: create Jefes
         var jefeMap = new Dictionary<string, Jefe>(StringComparer.OrdinalIgnoreCase);
@@ -198,7 +207,9 @@ public static class SeedData
                 }
             }
 
-            return jefeMap.Values.FirstOrDefault()?.Id ?? 1;
+            var fallbackJefeId = jefeMap.Values.FirstOrDefault()?.Id ?? 1;
+            Console.WriteLine($"[SeedData WARNING] No se pudo resolver jefe para: '{responsable}'. Se asignó fallback ID={fallbackJefeId}");
+            return fallbackJefeId;
         }
 
         // Second pass: create Empleados (Colaboradores)

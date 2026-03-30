@@ -52,7 +52,7 @@ public class Empleado {
     public bool Activo { get; set; } = true;
     public bool EsSuperusuario { get; set; } = false;
     public DateTime FechaIngreso { get; set; }
-    public List<Objetivo> Objetivos { get; set; } = new();
+    public List<Objetivo> Objetivos { get; set; } = [];
 }
 
 public class Pilar {
@@ -87,9 +87,9 @@ public class Objetivo {
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public int CreadoPorId { get; set; }
     // Nav
-    public List<RevisionCuatrimestral> Revisiones { get; set; } = new();
+    public List<RevisionCuatrimestral> Revisiones { get; set; } = [];
     public EvaluacionFinal? EvaluacionFinal { get; set; }
-    public List<BitacoraEntrada> Bitacora { get; set; } = new();
+    public List<BitacoraEntrada> Bitacora { get; set; } = [];
     public Autoevaluacion? Autoevaluacion { get; set; }
 }
 

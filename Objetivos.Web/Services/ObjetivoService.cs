@@ -2,6 +2,7 @@ using Objetivos.Web.Data;
 using Objetivos.Web.Domain.Entities;
 using Objetivos.Web.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace Objetivos.Web.Services;
 
@@ -9,11 +10,13 @@ public class ObjetivoService
 {
     private readonly AppDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly DataScopeService _dataScope;
 
-    public ObjetivoService(AppDbContext db, ICurrentUserService currentUser)
+    public ObjetivoService(AppDbContext db, ICurrentUserService currentUser, DataScopeService dataScope)
     {
         _db = db;
         _currentUser = currentUser;
+        _dataScope = dataScope;
     }
 
     public async Task<RoleObjetivosData> GetObjetivosRoleAsync(int anio)
@@ -32,35 +35,13 @@ public class ObjetivoService
                 .ToListAsync();
         }
 
-        // 2. Fetch Team/Org Data
-        bool canSeeAll = _currentUser.Rol == "DIRECTOR_GENERAL" || _currentUser.Rol == "RRHH" || _currentUser.EsSuperusuario;
-        
-        if (canSeeAll)
-        {
-            result.Equipo = await _db.Objetivos
-                .Include(o => o.Empleado)
-                .Include(o => o.Pilar)
-                .Where(o => o.Anio == anio)
-                .ToListAsync();
-        }
-        else if (_currentUser.Rol == "DIRECTOR")
-        {
-            // Directors see everyone in their area (full center of cost)
-            result.Equipo = await _db.Objetivos
-                .Include(o => o.Empleado)
-                .Include(o => o.Pilar)
-                .Where(o => o.Empleado.AreaId == _currentUser.AreaId && o.Anio == anio)
-                .ToListAsync();
-        }
-        else if (_currentUser.EsJefe)
-        {
-            // Standard bosses see their direct reports
-            result.Equipo = await _db.Objetivos
-                .Include(o => o.Empleado)
-                .Include(o => o.Pilar)
-                .Where(o => o.Empleado.JefeId == _currentUser.UsuarioId && o.Anio == anio)
-                .ToListAsync();
-        }
+        // 2. Fetch Team/Org Data using centralized scope
+        var query = _db.Objetivos
+            .Include(o => o.Empleado)
+            .Include(o => o.Pilar)
+            .Where(o => o.Anio == anio);
+
+        result.Equipo = await _dataScope.AplicarScope(query, _currentUser).ToListAsync();
 
         return result;
     }
@@ -144,10 +125,10 @@ public class ObjetivoService
             {
                 Entidad = "Objetivo",
                 EntidadId = id,
-                Accion = "DELETE", 
+                Accion = "CANCEL", 
                 UsuarioId = _currentUser.UsuarioId,
                 Fecha = DateTime.UtcNow,
-                CambiosJson = $"{{\"razon\": \"{razon}\"}}"
+                CambiosJson = JsonSerializer.Serialize(new { razon, estadoAnterior = "ACTIVO", estadoNuevo = "CANCELADO" })
             });
 
             await _db.SaveChangesAsync();

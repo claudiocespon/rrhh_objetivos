@@ -3,9 +3,8 @@ using Objetivos.Web.Domain.Entities;
 
 namespace Objetivos.Web.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Pais> Paises => Set<Pais>();
     public DbSet<Area> Areas => Set<Area>();

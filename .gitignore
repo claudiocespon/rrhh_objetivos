@@ -10,6 +10,8 @@
 *.db
 *.db-shm
 *.db-wal
+Objetivos.Web/Data/*.csv
+Objetivos.Web/Data/*.xlsx
 .gemini/
 .agent/
 .agents/

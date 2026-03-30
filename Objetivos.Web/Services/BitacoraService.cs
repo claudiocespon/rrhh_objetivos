@@ -5,16 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Objetivos.Web.Services;
 
-public class BitacoraService
+public class BitacoraService(AppDbContext db, ICurrentUserService currentUser)
 {
-    private readonly AppDbContext _db;
-    private readonly ICurrentUserService _currentUser;
-
-    public BitacoraService(AppDbContext db, ICurrentUserService currentUser)
-    {
-        _db = db;
-        _currentUser = currentUser;
-    }
+    private readonly AppDbContext _db = db;
+    private readonly ICurrentUserService _currentUser = currentUser;
 
     public async Task<List<BitacoraEntrada>> GetByObjetivoAsync(int objetivoId)
     {

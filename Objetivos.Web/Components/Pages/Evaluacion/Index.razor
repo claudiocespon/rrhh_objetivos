@@ -1,9 +1,8 @@
 @page "/evaluacion"
-@inject AppDbContext Db
+@inject EvaluacionService EvaluacionService
 @inject ICurrentUserService CurrentUser
 @inject DialogService DialogService
 @inject NotificationService NotificationService
-@using Microsoft.EntityFrameworkCore
 
 <RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Evaluaciones</RadzenText>
 
@@ -50,62 +49,11 @@ else
     async Task LoadData()
     {
         loading = true;
-        var empleadoPropio = await Db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == CurrentUser.Email.ToLower() && e.Activo);
-
-        // 1. Fetch Mis Evaluaciones Recibidas (Completadas)
-        if (empleadoPropio != null)
-        {
-            recibidas = await Db.RevisionesCuatrimestrales
-                .Include(r => r.Objetivo)
-                    .ThenInclude(o => o.Empleado)
-                .Where(r => r.Completada && r.Objetivo.EmpleadoId == empleadoPropio.Id)
-                .OrderByDescending(r => r.FechaEvaluacion)
-                .ToListAsync();
-        }
-        else
-        {
-            recibidas = new List<RevisionCuatrimestral>();
-        }
-
-        // 2. Fetch Pendientes (Solo Jefes)
-        if (CurrentUser.EsJefe)
-        {
-            // Revisiones Cuatrimestrales
-            var queryRev = Db.RevisionesCuatrimestrales
-                .Include(r => r.Objetivo)
-                    .ThenInclude(o => o.Empleado)
-                .Where(r => !r.Completada && r.Objetivo.Empleado.Activo);
-
-            // Objetivos para Evaluación Final (RN-03)
-            var queryFinal = Db.Objetivos
-                .Include(o => o.Empleado)
-                .Include(o => o.Revisiones)
-                .Include(o => o.EvaluacionFinal)
-                .Where(o => o.Estado == EstadoObjetivo.ACTIVO 
-                         && o.Empleado.Activo 
-                         && o.EvaluacionFinal == null
-                         && o.Revisiones.Count(r => r.Completada) >= 3
-                         && DateTime.Today >= o.Deadline);
-
-            bool canSeeAll = CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.Rol == "RRHH" || CurrentUser.EsSuperusuario;
-            
-            if (!canSeeAll)
-            {
-                if (CurrentUser.Rol == "DIRECTOR")
-                {
-                    queryRev = queryRev.Where(r => r.Objetivo.Empleado.AreaId == CurrentUser.AreaId);
-                    queryFinal = queryFinal.Where(o => o.Empleado.AreaId == CurrentUser.AreaId);
-                }
-                else
-                {
-                    queryRev = queryRev.Where(r => r.Objetivo.Empleado.JefeId == CurrentUser.UsuarioId);
-                    queryFinal = queryFinal.Where(o => o.Empleado.JefeId == CurrentUser.UsuarioId);
-                }
-            }
-
-            pendientes = await queryRev.OrderBy(r => r.Periodo).ToListAsync();
-            finalesPendientes = await queryFinal.ToListAsync();
-        }
+        var data = await EvaluacionService.GetEvaluacionDataAsync(CurrentUser);
+        
+        pendientes = data.Pendientes;
+        finalesPendientes = data.FinalesPendientes;
+        recibidas = data.Recibidas;
 
         loading = false;
     }

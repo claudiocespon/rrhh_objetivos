@@ -50,7 +50,7 @@
             <!-- Change Password Form -->
             <RadzenStack Gap="1rem">
                 <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
-                    Debe cambiar su contraseña antes de continuar.
+                    Debe cambiar su contraseña antes de continuar. Mínimo 8 caracteres, incluyendo al menos una letra y un número.
                 </RadzenAlert>
 
                 <RadzenTemplateForm TItem="CambioPasswordModel" Data="@cambioModel" Submit="@OnCambiarPassword">
@@ -94,11 +94,10 @@
                             <RadzenRequiredValidator Component="RecupEmail" Text="Debe ingresar su email" />
                         </RadzenFormField>
 
-                        @if (!string.IsNullOrEmpty(passwordRecuperado))
+                        @if (recuperacionExitosa)
                         {
                             <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
-                                Su nueva contraseña provisional es: <strong>@passwordRecuperado</strong><br/>
-                                Anote esta contraseña, se le pedirá cambiarla al iniciar sesión.
+                                Si el email existe en el sistema, recibirá instrucciones para restablecer su contraseña.
                             </RadzenAlert>
                         }
 
@@ -113,7 +112,7 @@
                                       IsBusy="@isLoading" BusyText="Procesando..." />
 
                         <RadzenLink Text="Volver al inicio de sesión" Style="text-align: center; display: block;"
-                                    @onclick="@(() => { mostrarRecuperacion = false; errorMessage = null; passwordRecuperado = null; })" />
+                                    @onclick="@(() => { mostrarRecuperacion = false; errorMessage = null; recuperacionExitosa = false; })" />
                     </RadzenStack>
                 </RadzenTemplateForm>
             </RadzenStack>
@@ -126,7 +125,7 @@
     CambioPasswordModel cambioModel = new();
     RecuperacionModel recuperacionModel = new();
     string? errorMessage;
-    string? passwordRecuperado;
+    bool recuperacionExitosa;
     bool isLoading;
     bool mostrarCambioPassword;
     bool mostrarRecuperacion;
@@ -175,16 +174,16 @@
                 errorMessage = "Las contraseñas no coinciden";
                 return;
             }
-            if (cambioModel.NuevaPassword.Length < 4)
+            if (cambioModel.NuevaPassword.Length < 8 || !cambioModel.NuevaPassword.Any(char.IsLetter) || !cambioModel.NuevaPassword.Any(char.IsDigit))
             {
-                errorMessage = "La contraseña debe tener al menos 4 caracteres";
+                errorMessage = "La contraseña debe tener al menos 8 caracteres, incluyendo una letra y un número";
                 return;
             }
 
             var ok = await AuthService.CambiarPasswordAsync(loginUserId, loginEsJefe, cambioModel.NuevaPassword);
             if (!ok)
             {
-                errorMessage = "Error al cambiar la contraseña";
+                errorMessage = "Error al cambiar la contraseña o la contraseña no cumple con los requisitos";
                 return;
             }
 
@@ -204,16 +203,17 @@
     {
         isLoading = true;
         errorMessage = null;
-        passwordRecuperado = null;
+        recuperacionExitosa = false;
         try
         {
-            var newPass = await AuthService.RecuperarPasswordAsync(recuperacionModel.Email);
-            if (newPass == null)
+            var success = await AuthService.RecuperarPasswordAsync(recuperacionModel.Email);
+            if (!success)
             {
-                errorMessage = "No se encontró un usuario con ese email";
+                // We show success even if email not found to avoid account enumeration
+                recuperacionExitosa = true;
                 return;
             }
-            passwordRecuperado = newPass;
+            recuperacionExitosa = true;
         }
         finally { isLoading = false; }
     }
