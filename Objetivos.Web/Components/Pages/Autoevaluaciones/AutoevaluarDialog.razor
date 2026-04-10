@@ -1,0 +1,181 @@
+@using Objetivos.Web.Domain.Entities
+@using Objetivos.Web.Domain.Enums
+@using System.Text.Json
+@inject AppDbContext Db
+@inject ICurrentUserService CurrentUser
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<RadzenTemplateForm TItem="Autoevaluacion" Data="@autoevaluacion" Submit="@OnSubmit">
+    @if (objetivo == null)
+    {
+        <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <RadzenStack Gap="1.5rem">
+            <RadzenText TextStyle="TextStyle.Subtitle1">Objetivo: <b>@ObjetivoNombre</b></RadzenText>
+            
+            <RadzenRow>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Subtitle2">Puntaje (1-5)</RadzenText>
+                    <RadzenRating @bind-Value="@autoevaluacion.Score" Stars="5" Name="Score" />
+                    <RadzenRequiredValidator Component="Score" Text="*" DefaultValue="0" Style="position: absolute" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Subtitle2">@objetivo.SoftSkill1.Nombre</RadzenText>
+                    <RadzenRating @bind-Value="@autoevaluacion.SoftSkill1Score" Stars="5" Name="Skill1" />
+                    <RadzenRequiredValidator Component="Skill1" Text="*" DefaultValue="0" Style="position: absolute" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Subtitle2">@objetivo.SoftSkill2.Nombre</RadzenText>
+                    <RadzenRating @bind-Value="@autoevaluacion.SoftSkill2Score" Stars="5" Name="Skill2" />
+                    <RadzenRequiredValidator Component="Skill2" Text="*" DefaultValue="0" Style="position: absolute" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2">Comentario / Justificación</RadzenText>
+                    <div style="position: relative;">
+                        <RadzenTextArea @bind-Value="@autoevaluacion.Comentario" Style="width: 100%;" Rows="5" Name="Comentario" 
+                                       Placeholder="Rendí mas o menos..." />
+                        <div style="position: absolute; bottom: 10px; right: 10px;">
+                            <RadzenUpload Url="api/upload/autoevaluacion" Multiple="true" Accept="*/*" 
+                                          Complete=@OnUploadComplete Error=@OnUploadError 
+                                          Style="display: inline-block;">
+                                <ChildContent>
+                                    <RadzenButton Text="AGREGAR ARCHIVOS" Variant="Variant.Text" Size="ButtonSize.Small" Icon="attach_file" />
+                                </ChildContent>
+                            </RadzenUpload>
+                        </div>
+                    </div>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2">Evidencias Clave</RadzenText>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenTextBox @bind-Value="@nuevaEvidencia" Style="flex: 1" Placeholder="Escribe una evidencia y presiona +" 
+                                       @onkeydown="@(e => { if (e.Key == "Enter") AgregarEvidencia(); })" />
+                        <RadzenButton Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@AgregarEvidencia" />
+                    </RadzenStack>
+                    <RadzenStack Gap="0.5rem" Style="margin-top: 0.5rem;">
+                        @foreach (var ev in evidencias)
+                        {
+                            <RadzenAlert ShowIcon="false" Variant="Variant.Flat" Shade="Shade.Lighter" Size="AlertSize.Small" AllowClose="true" 
+                                         Close="@(() => evidencias.Remove(ev))">
+                                @ev
+                            </RadzenAlert>
+                        }
+                    </RadzenStack>
+
+                    @if (adjuntos.Any())
+                    {
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-top: 1rem;">Archivos Adjuntos</RadzenText>
+                        <RadzenStack Gap="0.5rem" Style="margin-top: 0.5rem;">
+                            @foreach (var file in adjuntos)
+                            {
+                                <RadzenAlert ShowIcon="true" Icon="description" Variant="Variant.Flat" Shade="Shade.Lighter" Size="AlertSize.Small" AllowClose="true" 
+                                             Close="@(() => adjuntos.Remove(file))">
+                                    @Path.GetFileName(file)
+                                </RadzenAlert>
+                            }
+                        </RadzenStack>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="CANCELAR" Click="@(() => DialogService.Close(false))" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="GUARDAR AUTOEVALUACIÓN" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public int ObjetivoId { get; set; }
+    [Parameter] public string ObjetivoNombre { get; set; } = "";
+
+    Objetivo? objetivo;
+    Autoevaluacion autoevaluacion = new();
+    List<string> evidencias = new();
+    List<string> adjuntos = new();
+    string nuevaEvidencia = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        objetivo = await Db.Objetivos
+            .Include(o => o.SoftSkill1)
+            .Include(o => o.SoftSkill2)
+            .FirstOrDefaultAsync(o => o.Id == ObjetivoId);
+
+        var existing = await Db.Autoevaluaciones.FirstOrDefaultAsync(ae => ae.ObjetivoId == ObjetivoId);
+        if (existing != null)
+        {
+            autoevaluacion = existing;
+            evidencias = JsonSerializer.Deserialize<List<string>>(existing.EvidenciasMencionadasJson) ?? new();
+            adjuntos = JsonSerializer.Deserialize<List<string>>(existing.ArchivosAdjuntosJson) ?? new();
+        }
+        else
+        {
+            autoevaluacion.ObjetivoId = ObjetivoId;
+            autoevaluacion.EmpleadoId = CurrentUser.UsuarioId;
+            autoevaluacion.FechaAutoevaluacion = DateTime.UtcNow;
+        }
+    }
+
+    void AgregarEvidencia()
+    {
+        if (!string.IsNullOrWhiteSpace(nuevaEvidencia))
+        {
+            evidencias.Add(nuevaEvidencia.Trim());
+            nuevaEvidencia = "";
+        }
+    }
+
+    void OnUploadComplete(UploadCompleteEventArgs args)
+    {
+        var response = JsonSerializer.Deserialize<UploadResponse>(args.RawResponse);
+        if (response?.urls != null)
+        {
+            adjuntos.AddRange(response.urls);
+            NotificationService.Notify(NotificationSeverity.Info, "Archivo subido", "El archivo se cargó correctamente.");
+        }
+    }
+
+    void OnUploadError(UploadErrorEventArgs args)
+    {
+        NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error al subir archivo: {args.Message}");
+    }
+
+    async Task OnSubmit()
+    {
+        try
+        {
+            autoevaluacion.EvidenciasMencionadasJson = JsonSerializer.Serialize(evidencias);
+            autoevaluacion.ArchivosAdjuntosJson = JsonSerializer.Serialize(adjuntos);
+            autoevaluacion.FechaAutoevaluacion = DateTime.UtcNow;
+            
+            if (autoevaluacion.Id == 0)
+            {
+                Db.Autoevaluaciones.Add(autoevaluacion);
+            }
+            else
+            {
+                Db.Entry(autoevaluacion).State = EntityState.Modified;
+            }
+
+            await Db.SaveChangesAsync();
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo guardar la autoevaluación: " + ex.Message);
+        }
+    }
+
+    class UploadResponse { public List<string> urls { get; set; } = new(); }
+}

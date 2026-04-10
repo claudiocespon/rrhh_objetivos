@@ -42,27 +42,31 @@ public class EvaluacionService
         // 2. Fetch Pendientes (Solo Jefes)
         if (currentUser.EsJefe)
         {
-            // Revisiones Cuatrimestrales
+            bool canSeeAll = currentUser.Rol == "DIRECTOR_GENERAL" || currentUser.Rol == "RRHH" || currentUser.EsSuperusuario;
+
+            // Revisiones Periodicas (Feedback)
             var queryRev = db.RevisionesCuatrimestrales
                 .Include(r => r.Objetivo)
                     .ThenInclude(o => o.Empleado)
                 .Where(r => !r.Completada && r.Objetivo.Empleado.Activo);
 
-            // Objetivos para Evaluación Final (RN-03)
+            // Objetivos para Evaluación Final
             var queryFinal = db.Objetivos
                 .Include(o => o.Empleado)
                 .Include(o => o.Revisiones)
                 .Include(o => o.EvaluacionFinal)
-                .Where(o => o.Estado == EstadoObjetivo.ACTIVO 
+                .Where(o => o.Estado != EstadoObjetivo.CANCELADO 
                          && o.Empleado.Activo 
                          && o.EvaluacionFinal == null
-                         && o.Revisiones.Count(r => r.Completada) >= 3
-                         && DateTime.Today >= o.Deadline);
+                         && o.Revisiones.Any(r => r.Completada)); // Show once any feedback is COMPLETED
+                     // Removed DateTime restriction as per user request to allow evaluation when feedback is done
 
-            bool canSeeAll = currentUser.Rol == "DIRECTOR_GENERAL" || currentUser.Rol == "RRHH" || currentUser.EsSuperusuario;
-            
             if (!canSeeAll)
             {
+                // Filter out CANCELADO for everyone is already handled above in queryFinal,
+                // but let's ensure it for queryRev too
+                queryRev = queryRev.Where(r => r.Objetivo.Estado != EstadoObjetivo.CANCELADO);
+
                 if (currentUser.Rol == "DIRECTOR")
                 {
                     queryRev = queryRev.Where(r => r.Objetivo.Empleado.AreaId == currentUser.AreaId);

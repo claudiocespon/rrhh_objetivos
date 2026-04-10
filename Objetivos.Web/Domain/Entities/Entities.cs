@@ -128,6 +128,14 @@ public class Autoevaluacion {
     public int Score { get; set; }              // 1-5
     public string Comentario { get; set; } = "";
     public string EvidenciasMencionadasJson { get; set; } = "[]";
+    public string ArchivosAdjuntosJson { get; set; } = "[]"; // List of relative file paths
+    
+    // Soft Skills Evaluation
+    public int SoftSkill1Score { get; set; }    // 1-5
+    public string SoftSkill1Comentario { get; set; } = "";
+    public int SoftSkill2Score { get; set; }    // 1-5
+    public string SoftSkill2Comentario { get; set; } = "";
+    
     public DateTime FechaAutoevaluacion { get; set; }
 }
 

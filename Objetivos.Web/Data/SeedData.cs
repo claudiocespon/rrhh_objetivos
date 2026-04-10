@@ -270,9 +270,16 @@ public static class SeedData
             var nombre = apellidoYNombre[(commaIdx + 1)..].Trim();
             return (nombre, apellido);
         }
+        else if (commaIdx == 0)
+        {
+            // Case ", Nombre"
+            var nombre = apellidoYNombre[1..].Trim();
+            return (nombre, "");
+        }
 
         // Otherwise split by space; first word = apellido, rest = nombre
         var parts = apellidoYNombre.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return ("", "");
         if (parts.Length == 1) return (parts[0], "");
         if (parts.Length == 2) return (parts[1], parts[0]);
 

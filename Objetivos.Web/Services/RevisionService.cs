@@ -31,17 +31,8 @@ public class RevisionService
 
         if (revision == null || revision.Completada) return false;
 
-        // Validar secuencia
-        if (revision.Periodo == PeriodoRevision.Q2_AGOSTO)
-        {
-            var q1 = revision.Objetivo.Revisiones.FirstOrDefault(r => r.Periodo == PeriodoRevision.Q1_ABRIL);
-            if (q1 != null && !q1.Completada) return false;
-        }
-        else if (revision.Periodo == PeriodoRevision.Q3_NOVIEMBRE)
-        {
-            var q2 = revision.Objetivo.Revisiones.FirstOrDefault(r => r.Periodo == PeriodoRevision.Q2_AGOSTO);
-            if (q2 != null && !q2.Completada) return false;
-        }
+        // RN-02: Completar Revisión de Feedback
+        // No longer need to validate sequence as there is only one period
 
         revision.Puntaje = puntaje;
         revision.ComentarioJefe = comentario;
@@ -80,7 +71,7 @@ public class RevisionService
         if (objetivo == null) return false;
 
         // Precondiciones
-        if (objetivo.Revisiones.Count(r => r.Completada) < 3) return false;
+        if (objetivo.Revisiones.Count(r => r.Completada) < 1) return false;
         if (DateTime.Today < objetivo.Deadline) return false;
         if (objetivo.EvaluacionFinal != null) return false;
 

@@ -67,6 +67,22 @@ else
         Nav.NavigateTo($"seguimientos/{empleadoId}/objetivo/{id}");
     }
 
+    async Task OnAutoevaluarClick(Objetivos.Web.Domain.Entities.Objetivo obj)
+    {
+        var result = await DialogService.OpenAsync<Autoevaluaciones.AutoevaluarDialog>("Mi Autoevaluación",
+            new Dictionary<string, object?> { 
+                { "ObjetivoId", obj.Id },
+                { "ObjetivoNombre", obj.Nombre }
+            },
+            new DialogOptions { Width = "600px" });
+
+        if (result == true)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Autoevaluación guardada correctamente");
+            await LoadData();
+        }
+    }
+
     async Task OnCreateClick()
     {
         var result = await DialogService.OpenAsync<CrearObjetivoDialog>("Crear Nuevo Objetivo",
@@ -131,10 +147,17 @@ else
                                 <RadzenProgressBar Value="@obj.Progreso" ShowValue="true" Max="100" />
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="100px">
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="180px">
                             <Template Context="obj">
-                                <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" 
-                                              Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                                    @if (!showEmployee && obj.Estado == EstadoObjetivo.ACTIVO)
+                                    {
+                                        <RadzenButton Icon="rate_review" Text="Autoevaluar" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Flat" Size="ButtonSize.Small" 
+                                                      Click="@(() => OnAutoevaluarClick(obj))" />
+                                    }
+                                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" 
+                                                  Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
+                                </RadzenStack>
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>

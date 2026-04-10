@@ -10,7 +10,7 @@ namespace Objetivos.Web.Services
         public bool EsJefe { get; set; }
         public string Nombre { get; set; } = "";
         public string Apellido { get; set; } = "";
-        public string NombreCompleto => $"{Apellido}, {Nombre}";
+        public string NombreCompleto => string.IsNullOrWhiteSpace(Apellido) ? Nombre : $"{Apellido}, {Nombre}";
         public string Email { get; set; } = "";
         public string Legajo { get; set; } = "";
         public string Sector { get; set; } = "";

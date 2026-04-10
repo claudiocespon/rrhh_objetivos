@@ -119,7 +119,10 @@
         {
             errorMsg = "No hay empleados asignados a su área. Contacte a RRHH.";
         }
-        empleados = rawEmpleados.Select(e => new EmpleadoItem { Id = e.Id, NombreCompleto = $"{e.Apellido}, {e.Nombre}" }).ToList();
+        empleados = rawEmpleados.Select(e => new EmpleadoItem { 
+            Id = e.Id, 
+            NombreCompleto = string.IsNullOrWhiteSpace(e.Apellido) ? e.Nombre : $"{e.Apellido}, {e.Nombre}" 
+        }).ToList();
     }
 
     async Task OnSubmit()

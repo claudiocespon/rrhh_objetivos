@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddControllers();
 
 // Radzen Services
 builder.Services.AddRadzenComponents();
@@ -35,6 +36,8 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<CursoService>();
 builder.Services.AddScoped<EvaluacionService>();
 builder.Services.AddScoped<DataScopeService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 var app = builder.Build();
 
@@ -42,8 +45,8 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // H-10: Estrategia de inicialización robusta (Garantiza creación de esquema si no existe)
-    await db.Database.EnsureCreatedAsync();
+    // H-10: Estrategia de inicialización robusta (Usa migraciones)
+    await db.Database.MigrateAsync();
     await SeedData.InitializeAsync(db, app.Environment, app.Configuration);
 }
 
@@ -64,6 +67,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.MapControllers();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 

@@ -18,12 +18,11 @@ public class RendimientoService
     {
         if (objetivo == null) return 0;
 
-        double q1 = objetivo.Revisiones.FirstOrDefault(r => r.Periodo == PeriodoRevision.Q1_ABRIL)?.Puntaje ?? 0;
-        double q2 = objetivo.Revisiones.FirstOrDefault(r => r.Periodo == PeriodoRevision.Q2_AGOSTO)?.Puntaje ?? 0;
-        double q3 = objetivo.Revisiones.FirstOrDefault(r => r.Periodo == PeriodoRevision.Q3_NOVIEMBRE)?.Puntaje ?? 0;
+        double feedback = objetivo.Revisiones.FirstOrDefault(r => r.Periodo == PeriodoRevision.FEEDBACK_MITAD_ANIO)?.Puntaje ?? 0;
         double fin = objetivo.EvaluacionFinal?.PuntajeFinal ?? 0;
 
-        return (q1 * 0.2) + (q2 * 0.3) + (q3 * 0.3) + (fin * 0.2);
+        // Revised weight: 50% mid-year feedback, 50% final evaluation
+        return (feedback * 0.5) + (fin * 0.5);
     }
 
     // Puntaje ponderado de un objetivo (1-5) - RN-07

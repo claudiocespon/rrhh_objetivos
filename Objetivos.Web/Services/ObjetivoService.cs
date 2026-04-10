@@ -73,12 +73,10 @@ public class ObjetivoService
             _db.Objetivos.Add(nuevo);
             await _db.SaveChangesAsync(); // Save to get Id
 
-            // Insert RevisionCuatrimestral x3
+            // Insert Revision (Mitad de Año)
             var revisiones = new List<RevisionCuatrimestral>
             {
-                new() { ObjetivoId = nuevo.Id, Periodo = PeriodoRevision.Q1_ABRIL,    Anio = nuevo.Anio, Completada = false },
-                new() { ObjetivoId = nuevo.Id, Periodo = PeriodoRevision.Q2_AGOSTO,   Anio = nuevo.Anio, Completada = false },
-                new() { ObjetivoId = nuevo.Id, Periodo = PeriodoRevision.Q3_NOVIEMBRE, Anio = nuevo.Anio, Completada = false }
+                new() { ObjetivoId = nuevo.Id, Periodo = PeriodoRevision.FEEDBACK_MITAD_ANIO, Anio = nuevo.Anio, Completada = false }
             };
             _db.RevisionesCuatrimestrales.AddRange(revisiones);
 

@@ -23,10 +23,12 @@ public class AuthResult
 public class AuthService
 {
     private readonly AppDbContext _db;
+    private readonly IEmailService _emailService;
 
-    public AuthService(AppDbContext db)
+    public AuthService(AppDbContext db, IEmailService emailService)
     {
         _db = db;
+        _emailService = emailService;
     }
 
     public static string HashPassword(string password)
@@ -157,8 +159,9 @@ public class AuthService
             jefe.PasswordHash = hash;
             jefe.DebeCambiarPassword = true;
             await _db.SaveChangesAsync();
-            // TODO: Integrar envío por email (SendGrid/SMTP) — ver SEC-01 en AUDITORIA_TECNICA.md
-            // For now, we only log it for development if needed, but we don't return it.
+            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - RRHH Objetivos", 
+                $"Hola {jefe.Nombre},<br/><br/>Tu nueva contraseña temporal es: <b>{randomPassword}</b><br/>" +
+                "Deberás cambiarla en tu próximo inicio de sesión.<br/><br/>Saludos,<br/>Equipo de RRHH");
             return true;
         }
 
@@ -168,7 +171,9 @@ public class AuthService
             empleado.PasswordHash = hash;
             empleado.DebeCambiarPassword = true;
             await _db.SaveChangesAsync();
-            // TODO: Integrar envío por email (SendGrid/SMTP) — ver SEC-01 en AUDITORIA_TECNICA.md
+            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - RRHH Objetivos", 
+                $"Hola {empleado.Nombre},<br/><br/>Tu nueva contraseña temporal es: <b>{randomPassword}</b><br/>" +
+                "Deberás cambiarla en tu próximo inicio de sesión.<br/><br/>Saludos,<br/>Equipo de RRHH");
             return true;
         }
 
