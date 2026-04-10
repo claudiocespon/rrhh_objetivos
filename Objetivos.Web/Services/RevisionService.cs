@@ -22,7 +22,8 @@ public class RevisionService
     }
 
     // RN-02: Completar Revisión Cuatrimestral
-    public async Task<bool> CompletarRevisionAsync(int revisionId, int puntaje, string comentario, ResultadoEval resultado, List<string> evidencias)
+    public async Task<bool> CompletarRevisionAsync(int revisionId, int puntaje, string comentario, ResultadoEval resultado, List<string> evidencias,
+        int? ss1Puntaje = null, string? ss1Comentario = null, int? ss2Puntaje = null, string? ss2Comentario = null)
     {
         var revision = await _db.RevisionesCuatrimestrales
             .Include(r => r.Objetivo)
@@ -31,9 +32,6 @@ public class RevisionService
 
         if (revision == null || revision.Completada) return false;
 
-        // RN-02: Completar Revisión de Feedback
-        // No longer need to validate sequence as there is only one period
-
         revision.Puntaje = puntaje;
         revision.ComentarioJefe = comentario;
         revision.Resultado = resultado;
@@ -41,6 +39,12 @@ public class RevisionService
         revision.Completada = true;
         revision.FechaEvaluacion = DateTime.UtcNow;
         revision.EvaluadorId = _currentUser.UsuarioId;
+
+        // Soft Skills
+        revision.SoftSkill1Puntaje = ss1Puntaje;
+        revision.SoftSkill1Comentario = ss1Comentario ?? "";
+        revision.SoftSkill2Puntaje = ss2Puntaje;
+        revision.SoftSkill2Comentario = ss2Comentario ?? "";
 
         _db.AuditoriaLogs.Add(new AuditoriaLog
         {
@@ -61,7 +65,8 @@ public class RevisionService
     }
 
     // RN-03: Evaluación Final
-    public async Task<bool> CompletarEvaluacionFinalAsync(int objetivoId, string comentario, ResultadoEval resultado)
+    public async Task<bool> CompletarEvaluacionFinalAsync(int objetivoId, string comentario, ResultadoEval resultado,
+        int? ss1Puntaje = null, string? ss1Comentario = null, int? ss2Puntaje = null, string? ss2Comentario = null)
     {
         var objetivo = await _db.Objetivos
             .Include(o => o.Revisiones)
@@ -85,7 +90,11 @@ public class RevisionService
             ComentarioJefe = comentario,
             ResultadoFinal = resultado,
             FechaEvaluacion = DateTime.UtcNow,
-            EvaluadorId = _currentUser.UsuarioId
+            EvaluadorId = _currentUser.UsuarioId,
+            SoftSkill1Puntaje = ss1Puntaje,
+            SoftSkill1Comentario = ss1Comentario ?? "",
+            SoftSkill2Puntaje = ss2Puntaje,
+            SoftSkill2Comentario = ss2Comentario ?? ""
         };
         _db.EvaluacionesFinales.Add(evalFinal);
 

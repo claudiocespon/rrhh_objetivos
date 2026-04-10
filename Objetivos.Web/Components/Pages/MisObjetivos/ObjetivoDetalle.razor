@@ -61,6 +61,92 @@ else
             </RadzenCard>
 
             <RadzenCard Style="margin-top: 1.5rem;">
+                <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Evaluaciones del Jefe</RadzenText>
+                @if (!objetivo.Revisiones.Any(r => r.Completada) && objetivo.EvaluacionFinal == null)
+                {
+                    <EmptyState Message="Aún no se han realizado evaluaciones para este objetivo." />
+                }
+                else
+                {
+                    <RadzenStack Gap="1rem">
+                        @foreach (var rev in objetivo.Revisiones.Where(r => r.Completada))
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="false">
+                                <RadzenStack>
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: bold;">Revisión: @rev.Periodo.ToString().Replace("_", " ")</RadzenText>
+                                        <RadzenRating Value="@(rev.Puntaje ?? 0)" ReadOnly="true" Stars="5" />
+                                    </RadzenStack>
+                                    
+                                    <RadzenRow>
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill1.Nombre</RadzenText>
+                                            <RadzenRating Value="@(rev.SoftSkill1Puntaje ?? 0)" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                            @if (!string.IsNullOrEmpty(rev.SoftSkill1Comentario))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@rev.SoftSkill1Comentario"</RadzenText>
+                                            }
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill2.Nombre</RadzenText>
+                                            <RadzenRating Value="@(rev.SoftSkill2Puntaje ?? 0)" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                            @if (!string.IsNullOrEmpty(rev.SoftSkill2Comentario))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@rev.SoftSkill2Comentario"</RadzenText>
+                                            }
+                                        </RadzenColumn>
+                                    </RadzenRow>
+
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin-top: 0.5rem;">@rev.ComentarioJefe</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="text-align: right; opacity: 0.6;">Fecha: @rev.FechaEvaluacion?.ToString("dd/MM/yyyy")</RadzenText>
+                                </RadzenStack>
+                            </RadzenAlert>
+                        }
+
+                        @if (objetivo.EvaluacionFinal != null)
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" ShowIcon="false">
+                                <RadzenStack>
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: bold;">EVALUACIÓN FINAL</RadzenText>
+                                        <RadzenBadge Text="@objetivo.EvaluacionFinal.ResultadoFinal.ToString()" BadgeStyle="BadgeStyle.Success" />
+                                    </RadzenStack>
+
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success)">Score: @objetivo.EvaluacionFinal.PuntajeFinal.ToString("N1")</RadzenText>
+                                        <RadzenRating Value="@((int)Math.Round(objetivo.EvaluacionFinal.PuntajeFinal))" ReadOnly="true" Stars="5" />
+                                    </div>
+
+                                    <RadzenRow>
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill1.Nombre (Final)</RadzenText>
+                                            <RadzenRating Value="@(objetivo.EvaluacionFinal.SoftSkill1Puntaje ?? 0)" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                            @if (!string.IsNullOrEmpty(objetivo.EvaluacionFinal.SoftSkill1Comentario))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@objetivo.EvaluacionFinal.SoftSkill1Comentario"</RadzenText>
+                                            }
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill2.Nombre (Final)</RadzenText>
+                                            <RadzenRating Value="@(objetivo.EvaluacionFinal.SoftSkill2Puntaje ?? 0)" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                            @if (!string.IsNullOrEmpty(objetivo.EvaluacionFinal.SoftSkill2Comentario))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@objetivo.EvaluacionFinal.SoftSkill2Comentario"</RadzenText>
+                                            }
+                                        </RadzenColumn>
+                                    </RadzenRow>
+
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin-top: 0.5rem; font-weight: bold;">Comentario de Cierre:</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2">@objetivo.EvaluacionFinal.ComentarioJefe</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="text-align: right; opacity: 0.6;">Fecha Cierre: @objetivo.EvaluacionFinal.FechaEvaluacion.ToString("dd/MM/yyyy")</RadzenText>
+                                </RadzenStack>
+                            </RadzenAlert>
+                        }
+                    </RadzenStack>
+                }
+            </RadzenCard>
+
+            <RadzenCard Style="margin-top: 1.5rem;">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="margin-bottom: 1rem;">
                     <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Bitácora de Seguimiento</RadzenText>
                     @if (IsOwnObjetivo())

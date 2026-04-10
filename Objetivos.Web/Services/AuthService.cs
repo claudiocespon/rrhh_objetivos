@@ -159,7 +159,7 @@ public class AuthService
             jefe.PasswordHash = hash;
             jefe.DebeCambiarPassword = true;
             await _db.SaveChangesAsync();
-            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - RRHH Objetivos", 
+            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - PQ-Talent", 
                 $"Hola {jefe.Nombre},<br/><br/>Tu nueva contraseña temporal es: <b>{randomPassword}</b><br/>" +
                 "Deberás cambiarla en tu próximo inicio de sesión.<br/><br/>Saludos,<br/>Equipo de RRHH");
             return true;
@@ -171,7 +171,7 @@ public class AuthService
             empleado.PasswordHash = hash;
             empleado.DebeCambiarPassword = true;
             await _db.SaveChangesAsync();
-            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - RRHH Objetivos", 
+            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - PQ-Talent", 
                 $"Hola {empleado.Nombre},<br/><br/>Tu nueva contraseña temporal es: <b>{randomPassword}</b><br/>" +
                 "Deberás cambiarla en tu próximo inicio de sesión.<br/><br/>Saludos,<br/>Equipo de RRHH");
             return true;
@@ -192,3 +192,4 @@ public class AuthService
         return sb.ToString();
     }
 }
+

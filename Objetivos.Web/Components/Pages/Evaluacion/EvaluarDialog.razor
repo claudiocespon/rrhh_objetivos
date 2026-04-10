@@ -6,11 +6,27 @@
     <RadzenStack Gap="1.5rem">
         <RadzenRow>
             <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2">Puntaje (1-5 estrellas)</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Puntaje General (1-5 estrellas)</RadzenText>
                 <RadzenRating @bind-Value="@model.Puntaje" Stars="5" Name="Puntaje" />
                 <RadzenRequiredValidator Component="Puntaje" Text="Debe calificar con al menos 1 estrella" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
+
+        @if (revision?.Objetivo != null)
+        {
+            <RadzenRow>
+                <RadzenColumn Size="6">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @revision.Objetivo.SoftSkill1.Nombre</RadzenText>
+                    <RadzenRating @bind-Value="@model.SoftSkill1Puntaje" Stars="5" Name="SS1Puntaje" />
+                    <RadzenTextArea @bind-Value="@model.SoftSkill1Comentario" Placeholder="Comentario sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
+                </RadzenColumn>
+                <RadzenColumn Size="6">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @revision.Objetivo.SoftSkill2.Nombre</RadzenText>
+                    <RadzenRating @bind-Value="@model.SoftSkill2Puntaje" Stars="5" Name="SS2Puntaje" />
+                    <RadzenTextArea @bind-Value="@model.SoftSkill2Comentario" Placeholder="Comentario sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
+                </RadzenColumn>
+            </RadzenRow>
+        }
 
         <RadzenRow>
             <RadzenColumn Size="12">
@@ -63,11 +79,22 @@
 @code {
     [Parameter] public int RevisionId { get; set; }
     
+    RevisionCuatrimestral? revision;
     EvaluationModel model = new();
     List<ResultadoEval> resultados = Enum.GetValues<ResultadoEval>().ToList();
     List<string> evidenciasDisponibles = new() { "Reporte de avance", "Documentación técnica", "Presentación de resultados", "Feedback de pares", "Métricas de sistema" };
     string? errorMsg;
     bool submitted = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        revision = await Db.RevisionesCuatrimestrales
+            .Include(r => r.Objetivo)
+                .ThenInclude(o => o.SoftSkill1)
+            .Include(r => r.Objetivo)
+                .ThenInclude(o => o.SoftSkill2)
+            .FirstOrDefaultAsync(r => r.Id == RevisionId);
+    }
 
     bool RequiereEvidencia()
     {
@@ -85,7 +112,17 @@
             return;
         }
 
-        var success = await RevisionService.CompletarRevisionAsync(RevisionId, model.Puntaje, model.Comentario, model.Resultado!.Value, model.EvidenciasSeleccionadas.ToList());
+        var success = await RevisionService.CompletarRevisionAsync(
+            RevisionId, 
+            model.Puntaje, 
+            model.Comentario, 
+            model.Resultado!.Value, 
+            model.EvidenciasSeleccionadas.ToList(),
+            model.SoftSkill1Puntaje,
+            model.SoftSkill1Comentario,
+            model.SoftSkill2Puntaje,
+            model.SoftSkill2Comentario
+        );
         
         if (success)
         {
@@ -103,5 +140,10 @@
         public ResultadoEval? Resultado { get; set; }
         public string Comentario { get; set; } = "";
         public IEnumerable<string> EvidenciasSeleccionadas { get; set; } = new List<string>();
+        
+        public int SoftSkill1Puntaje { get; set; }
+        public string SoftSkill1Comentario { get; set; } = "";
+        public int SoftSkill2Puntaje { get; set; }
+        public string SoftSkill2Comentario { get; set; } = "";
     }
 }

@@ -106,6 +106,12 @@ public class RevisionCuatrimestral {
     public bool Completada { get; set; } = false;
     public DateTime? FechaEvaluacion { get; set; }
     public int? EvaluadorId { get; set; }
+
+    // Habilidades Blandas
+    public int? SoftSkill1Puntaje { get; set; }
+    public string SoftSkill1Comentario { get; set; } = "";
+    public int? SoftSkill2Puntaje { get; set; }
+    public string SoftSkill2Comentario { get; set; } = "";
 }
 
 public class EvaluacionFinal {
@@ -118,6 +124,12 @@ public class EvaluacionFinal {
     public ResultadoEval ResultadoFinal { get; set; }
     public DateTime FechaEvaluacion { get; set; }
     public int EvaluadorId { get; set; }
+
+    // Habilidades Blandas
+    public int? SoftSkill1Puntaje { get; set; }
+    public string SoftSkill1Comentario { get; set; } = "";
+    public int? SoftSkill2Puntaje { get; set; }
+    public string SoftSkill2Comentario { get; set; } = "";
 }
 
 public class Autoevaluacion {
