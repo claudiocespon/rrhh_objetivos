@@ -77,7 +77,9 @@ public class RevisionService
 
         // Precondiciones
         if (objetivo.Revisiones.Count(r => r.Completada) < 1) return false;
-        if (DateTime.Today < objetivo.Deadline) return false;
+        // A-05: La restricción de deadline fue removida por solicitud explícita del usuario.
+        // EvaluacionService ya muestra objetivos para evaluar una vez completado el Feedback,
+        // sin verificar si el deadline pasó. Este servicio es consistente con esa decisión.
         if (objetivo.EvaluacionFinal != null) return false;
 
         double puntajeFinal = await _rendimiento.CalcularPonderadoAsync(objetivoId);

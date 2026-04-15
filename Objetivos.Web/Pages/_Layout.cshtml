@@ -38,6 +38,12 @@
             link.click();
             document.body.removeChild(link);
         };
+
+        // C-07: Auto-scroll al fondo del contenedor de chat
+        window.scrollToBottom = (id) => {
+            var el = document.getElementById(id);
+            if (el) el.scrollTop = el.scrollHeight;
+        };
     </script>
 </body>
 </html>
