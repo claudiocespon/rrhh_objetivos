@@ -14,6 +14,22 @@ public class RendimientoService
         _db = db;
     }
 
+    /// <summary>
+    /// Calcula el puntaje ponderado de un objetivo según el modelo simplificado (1 revisión).
+    ///
+    /// Fórmula: (feedback * 0.5) + (evaluaciónFinal * 0.5)
+    ///
+    /// NOTA — comportamiento durante el flujo:
+    ///   1. Al completar el Feedback de Mitad de Año: EvaluacionFinal aún no existe → fin = 0.
+    ///      El resultado en ese momento es feedback * 0.5 (la mitad del puntaje máximo posible).
+    ///   2. Al completar la Evaluación Final: este método se llama ANTES de guardar EvaluacionFinal,
+    ///      por lo que fin sigue siendo 0. El PuntajeFinal almacenado en EvaluacionFinal es por tanto
+    ///      feedback * 0.5. Esto es by design: el jefe puede ajustar ResultadoFinal manualmente.
+    ///
+    /// Diferencia con CONTEXT.md RN-07 (Q1*0.2 + Q2*0.3 + Q3*0.3 + fin*0.2):
+    ///   Se decidió mantener el modelo simplificado (1 feedback) por solicitud explícita.
+    ///   Si en el futuro se restauran Q1/Q2/Q3, actualizar este método y el enum PeriodoRevision.
+    /// </summary>
     private static double CalcularPonderadoInterno(Objetivo? objetivo)
     {
         if (objetivo == null) return 0;
@@ -21,7 +37,6 @@ public class RendimientoService
         double feedback = objetivo.Revisiones.FirstOrDefault(r => r.Periodo == PeriodoRevision.FEEDBACK_MITAD_ANIO)?.Puntaje ?? 0;
         double fin = objetivo.EvaluacionFinal?.PuntajeFinal ?? 0;
 
-        // Revised weight: 50% mid-year feedback, 50% final evaluation
         return (feedback * 0.5) + (fin * 0.5);
     }
 

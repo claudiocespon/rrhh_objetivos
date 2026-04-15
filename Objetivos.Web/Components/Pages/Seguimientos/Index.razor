@@ -2,6 +2,7 @@
 @inject AppDbContext Db
 @inject ICurrentUserService CurrentUser
 @inject RendimientoService Rendimiento
+@inject ChatService ChatService
 
 <RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Seguimientos</RadzenText>
 
@@ -34,6 +35,7 @@ else
     List<Empleado>? empleadosEquipo;
     Empleado? empleadoPersonal;
     Dictionary<int, double> promedios = new();
+    Dictionary<int, int> mensajesPendientes = new();
     bool loading = true;
 
     protected override async Task OnInitializedAsync()
@@ -70,6 +72,12 @@ else
                     promedios[emp.Id] = await Rendimiento.PromedioGeneralAsync(emp.Id, DateTime.Now.Year);
                 }
             }
+
+            // C-07: Cargar counts de mensajes no leídos para el jefe directo
+            if (CurrentUser.EsJefe)
+            {
+                mensajesPendientes = await ChatService.GetConversacionesConNoLeidosAsync(CurrentUser.UsuarioId);
+            }
         }
 
         loading = false;
@@ -104,7 +112,13 @@ else
                     <Columns>
                         <RadzenDataGridColumn TItem="Empleado" Property="Nombre" Title="Nombre">
                             <Template Context="emp">
-                                @emp.Nombre @emp.Apellido
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    @emp.Nombre @emp.Apellido
+                                    @if (mensajesPendientes.TryGetValue(emp.Id, out var pending) && pending > 0)
+                                    {
+                                        <RadzenBadge Text="@pending.ToString()" BadgeStyle="BadgeStyle.Warning" IsPill="true" title="@($"{pending} mensaje(s) sin leer")" />
+                                    }
+                                </RadzenStack>
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Empleado" Property="Puesto" Title="Puesto" />

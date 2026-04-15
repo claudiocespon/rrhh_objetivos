@@ -122,7 +122,16 @@
         else
         {
             autoevaluacion.ObjetivoId = ObjetivoId;
-            autoevaluacion.EmpleadoId = CurrentUser.UsuarioId;
+
+            // C-06: UsuarioId viene de la tabla Jefes cuando el usuario es un Jefe.
+            // Para EmpleadoId debemos buscar el registro en la tabla Empleados por email.
+            var emp = await Db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == CurrentUser.Email.ToLower() && e.Activo);
+            if (emp == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "No se encontró un registro de empleado para su usuario. Contacte a RRHH.");
+                return;
+            }
+            autoevaluacion.EmpleadoId = emp.Id;
             autoevaluacion.FechaAutoevaluacion = DateTime.UtcNow;
         }
     }

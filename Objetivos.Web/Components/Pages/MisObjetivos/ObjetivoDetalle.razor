@@ -1,4 +1,5 @@
 @page "/seguimientos/{EmpleadoId:int}/objetivo/{ObjetivoId:int}"
+@implements IDisposable
 @inject AppDbContext Db
 @inject ObjetivoService ObjetivoService
 @inject BitacoraService BitacoraService
@@ -253,6 +254,8 @@ else
     List<MensajeChat> mensajes = new();
     List<EvolucionItem> evolucion = new();
     string nuevoMensaje = "";
+    Timer? _chatTimer;
+    bool _scrollPending = false;
 
     [Inject] NavigationManager Nav { get; set; } = null!;
     [Inject] DialogService DialogService { get; set; } = null!;
@@ -260,6 +263,34 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+
+        // C-07: Auto-refresh del chat cada 10 segundos
+        _chatTimer = new Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                if (objetivo != null)
+                {
+                    mensajes = await ChatService.GetConversacionAsync(objetivo.Empleado.JefeId, EmpleadoId);
+                    _scrollPending = true;
+                    StateHasChanged();
+                }
+            });
+        }, null, 10_000, 10_000);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_scrollPending)
+        {
+            _scrollPending = false;
+            try { await JS.InvokeVoidAsync("scrollToBottom", "chat-container"); } catch { }
+        }
+    }
+
+    public void Dispose()
+    {
+        _chatTimer?.Dispose();
     }
 
     async Task LoadData()
@@ -280,10 +311,14 @@ else
             }
 
             bitacora = await BitacoraService.GetByObjetivoAsync(ObjetivoId);
-            
+
             // H-04: Usar el JefeId del objetivo para la conversación, no el del usuario actual (si es colaborador)
             int conversationJefeId = objetivo.Empleado.JefeId;
             mensajes = await ChatService.GetConversacionAsync(conversationJefeId, EmpleadoId);
+
+            // C-07: Marcar como leídos los mensajes dirigidos al usuario actual
+            await ChatService.MarcarMensajesComoLeidosAsync(conversationJefeId, EmpleadoId, CurrentUser.EsJefe);
+            _scrollPending = true;
             
             evolucion = objetivo.Revisiones
                 .Where(r => r.Completada && r.Puntaje.HasValue)

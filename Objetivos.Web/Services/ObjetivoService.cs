@@ -62,6 +62,24 @@ public class ObjetivoService
     // RN-01: Crear Objetivo (transacción atómica)
     public async Task<bool> CrearObjetivoAsync(Objetivo nuevo)
     {
+        // VAL-03: Soft skills deben ser diferentes
+        if (nuevo.SoftSkill1Id == nuevo.SoftSkill2Id)
+            return false;
+
+        // VAL-04: Deadline debe ser posterior a hoy
+        if (nuevo.Deadline <= DateTime.Today)
+            return false;
+
+        // VAL-01: No permitir duplicado pilar+empleado+año (la UI ya lo gestiona con confirm,
+        // pero el servicio lo rechaza como red de seguridad si llega sin pasar por el confirm)
+        bool duplicado = await _db.Objetivos.AnyAsync(o =>
+            o.PilarId == nuevo.PilarId &&
+            o.EmpleadoId == nuevo.EmpleadoId &&
+            o.Anio == DateTime.Now.Year &&
+            o.Estado != EstadoObjetivo.CANCELADO);
+        if (duplicado)
+            return false;
+
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
@@ -123,7 +141,7 @@ public class ObjetivoService
             {
                 Entidad = "Objetivo",
                 EntidadId = id,
-                Accion = "CANCEL", 
+                Accion = "DELETE", // RN-04: semántica DELETE según CONTEXT.md
                 UsuarioId = _currentUser.UsuarioId,
                 Fecha = DateTime.UtcNow,
                 CambiosJson = JsonSerializer.Serialize(new { razon, estadoAnterior = "ACTIVO", estadoNuevo = "CANCELADO" })
@@ -171,7 +189,13 @@ public class ObjetivoService
             Fecha = DateTime.UtcNow
         });
 
-        return await _db.SaveChangesAsync() > 0;
+        var saved = await _db.SaveChangesAsync() > 0;
+
+        // M-07: Re-evaluar riesgo al actualizar progreso o deadline
+        if (saved)
+            await EvaluarEstadoRiesgoAsync(objetivo.Id);
+
+        return saved;
     }
 }
 
