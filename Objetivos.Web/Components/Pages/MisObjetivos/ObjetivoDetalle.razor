@@ -264,18 +264,22 @@ else
     {
         await LoadData();
 
-        // C-07: Auto-refresh del chat cada 10 segundos
+        // C-07 / NUEVO-A-13: Auto-refresh del chat cada 10 segundos con protección ante desconexión de circuito
         _chatTimer = new Timer(async _ =>
         {
-            await InvokeAsync(async () =>
+            try
             {
-                if (objetivo != null)
+                await InvokeAsync(async () =>
                 {
-                    mensajes = await ChatService.GetConversacionAsync(objetivo.Empleado.JefeId, EmpleadoId);
-                    _scrollPending = true;
-                    StateHasChanged();
-                }
-            });
+                    if (objetivo != null)
+                    {
+                        mensajes = await ChatService.GetConversacionAsync(objetivo.Empleado.JefeId, EmpleadoId);
+                        _scrollPending = true;
+                        StateHasChanged();
+                    }
+                });
+            }
+            catch (ObjectDisposedException) { /* Circuito desconectado — el Dispose() limpiará el timer */ }
         }, null, 10_000, 10_000);
     }
 

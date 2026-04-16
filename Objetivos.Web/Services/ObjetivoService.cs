@@ -60,25 +60,34 @@ public class ObjetivoService
     }
 
     // RN-01: Crear Objetivo (transacción atómica)
-    public async Task<bool> CrearObjetivoAsync(Objetivo nuevo)
+    // Retorna (Ok=true, Duplicado=false) en éxito.
+    // Retorna (Ok=false, Duplicado=true) si ya existe pilar+empleado+año y reemplazar=false.
+    // Con reemplazar=true cancela el existente y crea el nuevo (VAL-01 completo).
+    public async Task<(bool Ok, bool Duplicado)> CrearObjetivoAsync(Objetivo nuevo, bool reemplazar = false)
     {
         // VAL-03: Soft skills deben ser diferentes
         if (nuevo.SoftSkill1Id == nuevo.SoftSkill2Id)
-            return false;
+            return (false, false);
 
         // VAL-04: Deadline debe ser posterior a hoy
         if (nuevo.Deadline <= DateTime.Today)
-            return false;
+            return (false, false);
 
-        // VAL-01: No permitir duplicado pilar+empleado+año (la UI ya lo gestiona con confirm,
-        // pero el servicio lo rechaza como red de seguridad si llega sin pasar por el confirm)
-        bool duplicado = await _db.Objetivos.AnyAsync(o =>
+        // VAL-01: Verificar duplicado pilar+empleado+año
+        var existente = await _db.Objetivos.FirstOrDefaultAsync(o =>
             o.PilarId == nuevo.PilarId &&
             o.EmpleadoId == nuevo.EmpleadoId &&
             o.Anio == DateTime.Now.Year &&
             o.Estado != EstadoObjetivo.CANCELADO);
-        if (duplicado)
-            return false;
+
+        if (existente != null)
+        {
+            if (!reemplazar)
+                return (false, true);
+
+            // Cancelar el existente antes de crear el nuevo
+            await CancelarObjetivoAsync(existente.Id, "Reemplazado por nuevo objetivo");
+        }
 
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -120,12 +129,12 @@ public class ObjetivoService
 
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
-            return true;
+            return (true, false);
         }
         catch
         {
             await transaction.RollbackAsync();
-            return false;
+            return (false, false);
         }
     }
 

@@ -1,5 +1,4 @@
 @inject RevisionService RevisionService
-@inject AppDbContext Db
 @inject DialogService DialogService
 
 <RadzenTemplateForm TItem="EvaluationModel" Data="@model" Submit="@OnSubmit">
@@ -88,12 +87,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        revision = await Db.RevisionesCuatrimestrales
-            .Include(r => r.Objetivo)
-                .ThenInclude(o => o.SoftSkill1)
-            .Include(r => r.Objetivo)
-                .ThenInclude(o => o.SoftSkill2)
-            .FirstOrDefaultAsync(r => r.Id == RevisionId);
+        revision = await RevisionService.GetRevisionDetalleAsync(RevisionId);
     }
 
     bool RequiereEvidencia()

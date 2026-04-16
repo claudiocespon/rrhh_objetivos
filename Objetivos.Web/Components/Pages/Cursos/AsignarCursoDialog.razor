@@ -1,0 +1,83 @@
+@using Objetivos.Web.Domain.Entities
+@inject CursoService CursoService
+@inject DialogService DialogService
+
+<RadzenStack Gap="1.25rem">
+    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
+        Asignar: <b>@CursoNombre</b>
+    </RadzenAlert>
+
+    @if (empleados == null)
+    {
+        <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.Subtitle2">Seleccionar Colaborador</RadzenText>
+            <RadzenDropDown @bind-Value="@empleadoSeleccionado" Data="@empleados"
+                            TextProperty="NombreCompleto" ValueProperty="Id"
+                            Placeholder="Buscar colaborador..." AllowFiltering="true"
+                            Style="width: 100%;" />
+        </RadzenStack>
+
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.Subtitle2">Notas (opcional)</RadzenText>
+            <RadzenTextArea @bind-Value="@notas" Style="width: 100%;" Rows="2"
+                            Placeholder="Observaciones sobre la asignación..." />
+        </RadzenStack>
+
+        @if (errorMsg != null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">@errorMsg</RadzenAlert>
+        }
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="CANCELAR" Click="@(() => DialogService.Close(false))" />
+            <RadzenButton Text="ASIGNAR" ButtonStyle="ButtonStyle.Primary" Icon="person_add"
+                          Disabled="@(empleadoSeleccionado == 0)"
+                          Click="@OnAsignar" />
+        </RadzenStack>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public int CursoId { get; set; }
+    [Parameter] public string CursoNombre { get; set; } = "";
+    [Parameter] public int AsignadoPorId { get; set; }
+
+    List<EmpleadoItem>? empleados;
+    int empleadoSeleccionado = 0;
+    string notas = "";
+    string? errorMsg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var lista = await CursoService.GetEmpleadosActivosAsync();
+        empleados = lista.Select(e => new EmpleadoItem
+        {
+            Id = e.Id,
+            NombreCompleto = $"{e.Nombre} {e.Apellido}"
+        }).ToList();
+    }
+
+    async Task OnAsignar()
+    {
+        errorMsg = null;
+        if (empleadoSeleccionado == 0) { errorMsg = "Seleccione un colaborador."; return; }
+
+        var (ok, duplicado) = await CursoService.AsignarCursoAsync(CursoId, empleadoSeleccionado, AsignadoPorId, notas);
+        if (duplicado)
+            errorMsg = "Este colaborador ya tiene este curso asignado.";
+        else if (ok)
+            DialogService.Close(true);
+        else
+            errorMsg = "No se pudo realizar la asignación. Intente nuevamente.";
+    }
+
+    class EmpleadoItem
+    {
+        public int Id { get; set; }
+        public string NombreCompleto { get; set; } = "";
+    }
+}

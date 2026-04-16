@@ -30,6 +30,9 @@ public class RendimientoService
     ///   Se decidió mantener el modelo simplificado (1 feedback) por solicitud explícita.
     ///   Si en el futuro se restauran Q1/Q2/Q3, actualizar este método y el enum PeriodoRevision.
     /// </summary>
+    /// <summary>Versión estática pública para uso en batch (SeguimientoService) sin N+1.</summary>
+    public static double CalcularPonderadoStatic(Objetivo? objetivo) => CalcularPonderadoInterno(objetivo);
+
     private static double CalcularPonderadoInterno(Objetivo? objetivo)
     {
         if (objetivo == null) return 0;

@@ -1,8 +1,7 @@
 @page "/seguimientos/{EmpleadoId:int}"
 @using Radzen.Blazor
 @using Radzen
-@inject AppDbContext Db
-@inject RendimientoService Rendimiento
+@inject SeguimientoService SeguimientoService
 @inject ICurrentUserService CurrentUser
 
 @if (empleado == null)
@@ -44,7 +43,7 @@ else
             <RadzenCard Style="height: 100%;">
                 <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Rendimiento por Pilar</RadzenText>
                 <RadzenChart Style="height: 250px;">
-                    <RadzenRadarSeries Data="@radarData" CategoryProperty="Pilar" ValueProperty="Score" Title="Rendimiento" />
+                    <RadzenRadarSeries Data="@radarData" CategoryProperty="Pilar" ValueProperty="Score" Title="Rendimiento" TItem="RadarPilarItem" />
                     <RadzenValueAxis Min="0" Max="5" />
                 </RadzenChart>
             </RadzenCard>
@@ -92,25 +91,19 @@ else
 @code {
     [Parameter] public int EmpleadoId { get; set; }
     Empleado? empleado;
-    List<RadarItem> radarData = new();
+    List<RadarPilarItem> radarData = new();
     Dictionary<int, double> ponderados = new();
 
     [Inject] NavigationManager Nav { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        empleado = await Db.Empleados
-            .Include(e => e.Area)
-            .Include(e => e.Objetivos)
-                .ThenInclude(o => o.Pilar)
-            .Include(e => e.Objetivos)
-                .ThenInclude(o => o.Revisiones)
-            .Include(e => e.Objetivos)
-                .ThenInclude(o => o.EvaluacionFinal)
-            .FirstOrDefaultAsync(e => e.Id == EmpleadoId);
+        var detalle = await SeguimientoService.GetEmpleadoDetalleCompletoAsync(EmpleadoId, DateTime.Now.Year);
 
-        if (empleado != null)
+        if (detalle != null)
         {
+            empleado = detalle.Empleado;
+
             // H-01: Validar acceso por URL
             bool isOwnProfile = !CurrentUser.EsJefe && empleado.Id == CurrentUser.UsuarioId;
             bool isDirectReport = CurrentUser.EsJefe && empleado.JefeId == CurrentUser.UsuarioId;
@@ -123,25 +116,10 @@ else
                 return;
             }
 
-            var pilares = await Db.Pilares.ToListAsync();
-            foreach (var pilar in pilares)
-            {
-                var score = await Rendimiento.RendimientoPorPilarAsync(EmpleadoId, pilar.Id, DateTime.Now.Year);
-                radarData.Add(new RadarItem { Pilar = pilar.Nombre.Replace("_", " "), Score = score });
-            }
-
-            foreach (var obj in empleado.Objetivos)
-            {
-                ponderados[obj.Id] = await Rendimiento.CalcularPonderadoAsync(obj.Id);
-            }
+            radarData = detalle.RadarData;
+            ponderados = detalle.Ponderados;
         }
     }
 
     double GetPonderado(int id) => ponderados.ContainsKey(id) ? ponderados[id] : 0;
-
-    class RadarItem
-    {
-        public string Pilar { get; set; } = "";
-        public double Score { get; set; }
-    }
 }
