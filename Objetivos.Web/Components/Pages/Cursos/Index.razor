@@ -1,32 +1,173 @@
 @page "/cursos"
+@using Objetivos.Web.Domain.Entities
 @inject CursoService CursoService
+@inject ICurrentUserService CurrentUser
+@inject DialogService DialogService
+@inject NotificationService NotificationService
 
-<RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Cursos y Capacitaciones</RadzenText>
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+             JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 1.5rem;">
+    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Cursos y Capacitaciones</RadzenText>
+    @if (CurrentUser.EsJefe || CurrentUser.Rol == "RRHH" || CurrentUser.EsSuperusuario)
+    {
+        <RadzenButton Text="NUEVO CURSO" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@AbrirNuevoCurso" />
+    }
+</RadzenStack>
 
-<RadzenDataGrid Data="@cursos" TItem="Curso" AllowPaging="true" PageSize="10" AllowSorting="true">
-    <Columns>
-        <RadzenDataGridColumn TItem="Curso" Property="Nombre" Title="Curso" />
-        <RadzenDataGridColumn TItem="Curso" Property="Categoria" Title="Categoría" Width="150px" />
-        <RadzenDataGridColumn TItem="Curso" Property="DuracionHoras" Title="Duración (h)" Width="120px" />
-        <RadzenDataGridColumn TItem="Curso" Title="Obligatorio" Width="120px">
-            <Template Context="c">
-                <RadzenBadge Text="@(c.EsObligatorio ? "SÍ" : "NO")" 
-                             BadgeStyle="@(c.EsObligatorio ? BadgeStyle.Warning : BadgeStyle.Info)" />
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Curso" Title="Acción" Width="150px">
-            <Template Context="c">
-                <RadzenButton Text="Ver Curso" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" />
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+@if (loading)
+{
+    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    <RadzenTabs>
+        <Tabs>
+            <RadzenTabsItem Text="Catálogo de Cursos">
+                @RenderCatalogo()
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="Mis Cursos Asignados">
+                @RenderMisCursos()
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+}
 
 @code {
     List<Curso> cursos = new();
+    List<CursoAsignacion> misAsignaciones = new();
+    bool loading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        cursos = await CursoService.GetCursosAsync();
+        await Cargar();
     }
+
+    async Task Cargar()
+    {
+        loading = true;
+        cursos = await CursoService.GetCursosAsync();
+
+        // Buscar empleadoId del usuario actual
+        var asignaciones = await CursoService.GetAsignacionesPorEmailAsync(CurrentUser.Email);
+        misAsignaciones = asignaciones;
+
+        loading = false;
+    }
+
+    async Task AbrirNuevoCurso()
+    {
+        var result = await DialogService.OpenAsync<CursoFormDialog>("Nuevo Curso",
+            new Dictionary<string, object?>(),
+            new DialogOptions { Width = "500px" });
+        if (result == true) await Cargar();
+    }
+
+    async Task AsignarCurso(Curso curso)
+    {
+        var result = await DialogService.OpenAsync<AsignarCursoDialog>("Asignar Curso",
+            new Dictionary<string, object?>
+            {
+                { "CursoId", curso.Id },
+                { "CursoNombre", curso.Nombre },
+                { "AsignadoPorId", CurrentUser.UsuarioId }
+            },
+            new DialogOptions { Width = "480px" });
+        if (result == true)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Asignado", "Curso asignado correctamente.");
+            await Cargar();
+        }
+    }
+
+    async Task MarcarCompletado(CursoAsignacion asignacion)
+    {
+        var ok = await CursoService.MarcarCompletadoAsync(asignacion.Id);
+        if (ok)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Completado", "Curso marcado como completado.");
+            await Cargar();
+        }
+    }
+
+    private RenderFragment RenderCatalogo() => __builder =>
+    {
+        if (!cursos.Any())
+        {
+            <EmptyState Message="No hay cursos registrados en el catálogo." />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@cursos" TItem="Curso" AllowPaging="true" PageSize="10"
+                                AllowSorting="true" AllowFiltering="true" Responsive="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Curso" Property="Nombre" Title="Curso" />
+                        <RadzenDataGridColumn TItem="Curso" Property="Categoria" Title="Categoría" Width="160px" />
+                        <RadzenDataGridColumn TItem="Curso" Property="DuracionHoras" Title="Duración (h)" Width="130px" />
+                        <RadzenDataGridColumn TItem="Curso" Title="Obligatorio" Width="130px">
+                            <Template Context="c">
+                                <RadzenBadge Text="@(c.EsObligatorio ? "OBLIGATORIO" : "OPCIONAL")"
+                                             BadgeStyle="@(c.EsObligatorio ? BadgeStyle.Warning : BadgeStyle.Info)" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Curso" Property="Descripcion" Title="Descripción" />
+                        @if (CurrentUser.EsJefe || CurrentUser.Rol == "RRHH" || CurrentUser.EsSuperusuario)
+                        {
+                            <RadzenDataGridColumn TItem="Curso" Title="Acciones" Width="150px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right">
+                                <Template Context="c">
+                                    <RadzenButton Icon="person_add" Text="Asignar" ButtonStyle="ButtonStyle.Secondary"
+                                                  Variant="Variant.Flat" Size="ButtonSize.Small"
+                                                  Click="@(() => AsignarCurso(c))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        }
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+
+    private RenderFragment RenderMisCursos() => __builder =>
+    {
+        if (!misAsignaciones.Any())
+        {
+            <EmptyState Message="No tienes cursos asignados actualmente." />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@misAsignaciones" TItem="CursoAsignacion"
+                                AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="CursoAsignacion" Property="Curso.Nombre" Title="Curso" />
+                        <RadzenDataGridColumn TItem="CursoAsignacion" Property="Curso.Categoria" Title="Categoría" Width="160px" />
+                        <RadzenDataGridColumn TItem="CursoAsignacion" Property="FechaAsignacion" Title="Asignado" FormatString="{0:dd/MM/yyyy}" Width="130px" />
+                        <RadzenDataGridColumn TItem="CursoAsignacion" Title="Estado" Width="140px">
+                            <Template Context="ca">
+                                @if (ca.Completado)
+                                {
+                                    <RadzenBadge Text="COMPLETADO" BadgeStyle="BadgeStyle.Success" />
+                                }
+                                else
+                                {
+                                    <RadzenBadge Text="PENDIENTE" BadgeStyle="BadgeStyle.Warning" />
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="CursoAsignacion" Property="FechaCompletado" Title="Completado" FormatString="{0:dd/MM/yyyy}" Width="130px" />
+                        <RadzenDataGridColumn TItem="CursoAsignacion" Title="" Width="170px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right">
+                            <Template Context="ca">
+                                @if (!ca.Completado)
+                                {
+                                    <RadzenButton Icon="check_circle" Text="Marcar completado" ButtonStyle="ButtonStyle.Success"
+                                                  Variant="Variant.Flat" Size="ButtonSize.Small"
+                                                  Click="@(() => MarcarCompletado(ca))" />
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
 }

@@ -1,5 +1,5 @@
 @inject RevisionService RevisionService
-@inject AppDbContext Db
+@inject ObjetivoService ObjetivoService
 @inject DialogService DialogService
 
 <RadzenTemplateForm TItem="FinalEvaluationModel" Data="@model" Submit="@OnSubmit">
@@ -63,10 +63,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        objetivo = await Db.Objetivos
-            .Include(o => o.SoftSkill1)
-            .Include(o => o.SoftSkill2)
-            .FirstOrDefaultAsync(o => o.Id == ObjetivoId);
+        objetivo = await ObjetivoService.GetByIdAsync(ObjetivoId);
     }
 
     async Task OnSubmit()

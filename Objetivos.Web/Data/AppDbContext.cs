@@ -22,6 +22,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AuditoriaLog> AuditoriaLogs => Set<AuditoriaLog>();
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
     public DbSet<Curso> Cursos => Set<Curso>();
+    public DbSet<CursoAsignacion> CursoAsignaciones => Set<CursoAsignacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -84,6 +85,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasMany(o => o.Bitacora)
             .WithOne(b => b.Objetivo)
             .HasForeignKey(b => b.ObjetivoId);
+
+        // CursoAsignacion: constraint único empleado+curso (no duplicados)
+        modelBuilder.Entity<CursoAsignacion>()
+            .HasIndex(ca => new { ca.CursoId, ca.EmpleadoId }).IsUnique();
+
+        modelBuilder.Entity<CursoAsignacion>()
+            .HasOne(ca => ca.Curso).WithMany(c => c.Asignaciones).HasForeignKey(ca => ca.CursoId);
+
+        modelBuilder.Entity<CursoAsignacion>()
+            .HasOne(ca => ca.Empleado).WithMany().HasForeignKey(ca => ca.EmpleadoId);
 
         // Unique Email index for login
         modelBuilder.Entity<Jefe>()

@@ -151,26 +151,22 @@
             return;
         }
 
-        // VAL-01 Check duplicate
-        bool exists = await Db.Objetivos.AnyAsync(o => o.PilarId == objetivo.PilarId 
-                                                   && o.EmpleadoId == objetivo.EmpleadoId 
-                                                   && o.Anio == DateTime.Now.Year);
-        if (exists)
+        // NUEVO-M-13 / VAL-01: El servicio detecta duplicados y permite reemplazo confirmado
+        var (ok, duplicado) = await ObjetivoService.CrearObjetivoAsync(objetivo);
+
+        if (duplicado)
         {
-            var confirm = await DialogService.Confirm($"Ya existe un objetivo de este pilar para el empleado en {DateTime.Now.Year}. ¿Desea reemplazarlo?", 
-                "Objetivo Duplicado", new ConfirmOptions { OkButtonText = "Sí, reemplazar", CancelButtonText = "No" });
-            
+            var confirm = await DialogService.Confirm(
+                $"Ya existe un objetivo de este pilar para el empleado en {DateTime.Now.Year}. ¿Desea reemplazarlo?",
+                "Objetivo Duplicado",
+                new ConfirmOptions { OkButtonText = "Sí, reemplazar", CancelButtonText = "No" });
+
             if (confirm != true) return;
-            
-            // If replace, find and cancel old objective
-            var old = await Db.Objetivos.FirstAsync(o => o.PilarId == objetivo.PilarId 
-                                                   && o.EmpleadoId == objetivo.EmpleadoId 
-                                                   && o.Anio == DateTime.Now.Year);
-            await ObjetivoService.CancelarObjetivoAsync(old.Id, "Reemplazado por nuevo objetivo");
+
+            (ok, _) = await ObjetivoService.CrearObjetivoAsync(objetivo, reemplazar: true);
         }
 
-        var success = await ObjetivoService.CrearObjetivoAsync(objetivo);
-        if (success)
+        if (ok)
         {
             DialogService.Close(true);
         }

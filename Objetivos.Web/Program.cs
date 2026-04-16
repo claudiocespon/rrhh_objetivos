@@ -36,6 +36,10 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<CursoService>();
 builder.Services.AddScoped<EvaluacionService>();
 builder.Services.AddScoped<DataScopeService>();
+builder.Services.AddScoped<NotificacionService>();
+builder.Services.AddScoped<SeguimientoService>();
+builder.Services.AddScoped<AutoevaluacionService>();
+builder.Services.AddScoped<CalendarioService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 

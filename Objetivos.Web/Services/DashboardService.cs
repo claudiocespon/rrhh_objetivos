@@ -36,6 +36,8 @@ public class DashboardService
             {
                 TotalObjetivos = misObjetivos.Count(o => o.Estado != EstadoObjetivo.CANCELADO),
                 EnCurso = misObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO),
+                EnRiesgo = misObjetivos.Count(o => o.Estado == EstadoObjetivo.EN_RIESGO),
+                Completados = misObjetivos.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
                 VencenPronto = misObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO && o.Deadline <= en30Dias),
                 PendientesRevision = await _db.RevisionesCuatrimestrales
                     .CountAsync(r => !r.Completada && r.Objetivo.EmpleadoId == empleadoPropio.Id && r.Anio == hoy.Year && r.Objetivo.Estado != EstadoObjetivo.CANCELADO)
@@ -58,6 +60,8 @@ public class DashboardService
             {
                 TotalObjetivos = teamObjetivos.Count(o => o.Estado != EstadoObjetivo.CANCELADO),
                 EnCurso = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO),
+                EnRiesgo = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.EN_RIESGO),
+                Completados = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
                 VencenPronto = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO && o.Deadline <= en30Dias),
                 PendientesRevision = pendingTeamRevision
             };
@@ -77,6 +81,8 @@ public class DashboardData
 {
     public int TotalObjetivos { get; set; }
     public int EnCurso { get; set; }
+    public int EnRiesgo { get; set; }
+    public int Completados { get; set; }
     public int VencenPronto { get; set; }
     public int PendientesRevision { get; set; }
 }

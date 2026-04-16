@@ -21,6 +21,17 @@ public class RevisionService
         _objetivoService = objetivoService;
     }
 
+    // Carga revisión con Objetivo y SoftSkills para el diálogo de evaluación
+    public async Task<RevisionCuatrimestral?> GetRevisionDetalleAsync(int revisionId)
+    {
+        return await _db.RevisionesCuatrimestrales
+            .Include(r => r.Objetivo)
+                .ThenInclude(o => o.SoftSkill1)
+            .Include(r => r.Objetivo)
+                .ThenInclude(o => o.SoftSkill2)
+            .FirstOrDefaultAsync(r => r.Id == revisionId);
+    }
+
     // RN-02: Completar Revisión Cuatrimestral
     public async Task<bool> CompletarRevisionAsync(int revisionId, int puntaje, string comentario, ResultadoEval resultado, List<string> evidencias,
         int? ss1Puntaje = null, string? ss1Comentario = null, int? ss2Puntaje = null, string? ss2Comentario = null)

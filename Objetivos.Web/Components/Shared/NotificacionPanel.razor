@@ -1,0 +1,132 @@
+@using Objetivos.Web.Domain.Entities
+@using Objetivos.Web.Domain.Enums
+@inject NotificacionService NotificacionService
+
+@if (Visible)
+{
+    <div class="notificacion-overlay" @onclick="Cerrar"></div>
+    <div class="notificacion-panel">
+        <RadzenStack Gap="0">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                         JustifyContent="JustifyContent.SpaceBetween"
+                         Style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--rz-base-300);">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">Notificaciones</RadzenText>
+                <RadzenButton Icon="close" Variant="Variant.Text" ButtonStyle="ButtonStyle.Light"
+                              Size="ButtonSize.Small" Click="Cerrar" />
+            </RadzenStack>
+
+            @if (loading)
+            {
+                <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="margin: 1rem;" />
+            }
+            else if (!notificaciones.Any())
+            {
+                <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center"
+                             Style="padding: 2rem; opacity: 0.6;">
+                    <RadzenIcon Icon="notifications_none" Style="font-size: 2.5rem;" />
+                    <RadzenText TextStyle="TextStyle.Body2">Sin notificaciones</RadzenText>
+                </RadzenStack>
+            }
+            else
+            {
+                <div class="notificacion-list">
+                    @foreach (var n in notificaciones)
+                    {
+                        <div class="notificacion-item @(n.Leida ? "" : "no-leida")"
+                             @onclick="() => MarcarLeida(n)">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.75rem">
+                                <RadzenIcon Icon="@GetIcono(n.Tipo)"
+                                            Style="@($"color: {GetColor(n.Tipo)}; margin-top: 2px; flex-shrink: 0;")" />
+                                <RadzenStack Gap="0.1rem" Style="flex: 1; min-width: 0;">
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; white-space: normal; word-break: break-word;">
+                                        @n.Mensaje
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; opacity: 0.6;">
+                                        @n.Fecha.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    </RadzenText>
+                                </RadzenStack>
+                                @if (!n.Leida)
+                                {
+                                    <div class="notificacion-dot" title="No leída"></div>
+                                }
+                            </RadzenStack>
+                        </div>
+                    }
+                </div>
+
+                @if (notificaciones.Any(n => !n.Leida))
+                {
+                    <div style="padding: 0.75rem 1.25rem; border-top: 1px solid var(--rz-base-300);">
+                        <RadzenButton Text="Marcar todas como leídas" Variant="Variant.Text"
+                                      ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                      Click="MarcarTodasLeidas" />
+                    </div>
+                }
+            }
+        </RadzenStack>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public int UsuarioId { get; set; }
+    [Parameter] public EventCallback OnLeidaChanged { get; set; }
+
+    List<Notificacion> notificaciones = new();
+    bool loading = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible && !notificaciones.Any())
+        {
+            await Cargar();
+        }
+    }
+
+    async Task Cargar()
+    {
+        loading = true;
+        notificaciones = await NotificacionService.GetNotificacionesAsync(UsuarioId);
+        loading = false;
+    }
+
+    async Task MarcarLeida(Notificacion n)
+    {
+        if (!n.Leida)
+        {
+            n.Leida = true;
+            await NotificacionService.MarcarComoLeidaAsync(n.Id);
+            await OnLeidaChanged.InvokeAsync();
+        }
+    }
+
+    async Task MarcarTodasLeidas()
+    {
+        await NotificacionService.MarcarTodasComoLeidasAsync(UsuarioId);
+        foreach (var n in notificaciones) n.Leida = true;
+        await OnLeidaChanged.InvokeAsync();
+        StateHasChanged();
+    }
+
+    async Task Cerrar()
+    {
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    string GetIcono(TipoNotificacion tipo) => tipo switch
+    {
+        TipoNotificacion.SOLICITUD_ACTUALIZACION => "update",
+        TipoNotificacion.NUEVA_EVALUACION        => "rate_review",
+        TipoNotificacion.DEADLINE_PROXIMO        => "schedule",
+        _                                        => "notifications"
+    };
+
+    string GetColor(TipoNotificacion tipo) => tipo switch
+    {
+        TipoNotificacion.SOLICITUD_ACTUALIZACION => "var(--rz-warning)",
+        TipoNotificacion.NUEVA_EVALUACION        => "var(--rz-info)",
+        TipoNotificacion.DEADLINE_PROXIMO        => "var(--rz-danger)",
+        _                                        => "var(--rz-text-color)"
+    };
+}

@@ -1,0 +1,75 @@
+@using Objetivos.Web.Domain.Entities
+@inject CursoService CursoService
+@inject DialogService DialogService
+
+<RadzenTemplateForm TItem="Curso" Data="@curso" Submit="@OnSubmit">
+    <RadzenStack Gap="1rem">
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Nombre del Curso</RadzenText>
+                <RadzenTextBox @bind-Value="@curso.Nombre" Style="width: 100%;" Name="Nombre" />
+                <RadzenRequiredValidator Component="Nombre" Text="El nombre es obligatorio" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Descripción</RadzenText>
+                <RadzenTextArea @bind-Value="@curso.Descripcion" Style="width: 100%;" Rows="3" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow>
+            <RadzenColumn Size="6">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Categoría</RadzenText>
+                <RadzenTextBox @bind-Value="@curso.Categoria" Style="width: 100%;" Name="Categoria" />
+                <RadzenRequiredValidator Component="Categoria" Text="La categoría es obligatoria" Style="position: absolute" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Duración (horas)</RadzenText>
+                <RadzenNumeric @bind-Value="@curso.DuracionHoras" Style="width: 100%;" Min="1" Name="Duracion" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenCheckBox @bind-Value="@curso.EsObligatorio" Name="EsObligatorio" />
+                <RadzenLabel Text="Curso obligatorio" Component="EsObligatorio" Style="margin-left: 0.5rem;" />
+            </RadzenColumn>
+        </RadzenRow>
+        @if (errorMsg != null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">@errorMsg</RadzenAlert>
+        }
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="CANCELAR" Click="@(() => DialogService.Close(false))" />
+            <RadzenButton ButtonType="ButtonType.Submit" Text="GUARDAR" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public int? CursoId { get; set; }
+
+    Curso curso = new();
+    string? errorMsg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CursoId.HasValue)
+        {
+            var existente = await CursoService.GetByIdAsync(CursoId.Value);
+            if (existente != null) curso = existente;
+        }
+    }
+
+    async Task OnSubmit()
+    {
+        errorMsg = null;
+        bool ok = curso.Id == 0
+            ? await CursoService.CrearCursoAsync(curso)
+            : await CursoService.ActualizarCursoAsync(curso);
+
+        if (ok)
+            DialogService.Close(true);
+        else
+            errorMsg = "No se pudo guardar el curso. Intente nuevamente.";
+    }
+}

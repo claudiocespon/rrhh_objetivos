@@ -1,8 +1,7 @@
 @inherits LayoutComponentBase
-@using Microsoft.EntityFrameworkCore
 @inject ICurrentUserService CurrentUser
 @inject NavigationManager Nav
-@inject AppDbContext Db
+@inject NotificacionService NotificacionService
 
 @if (!CurrentUser.EstaAutenticado)
 {
@@ -27,12 +26,20 @@ else
                     </div>
                 </RadzenStack>
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                    <RadzenBadge Text="@unreadCount.ToString()" BadgeStyle="BadgeStyle.Danger" IsPill="true" Visible="@(unreadCount > 0)" />
-                    <RadzenIcon Icon="notifications" Style="color: white; cursor: pointer;" @onclick="@OnNotificationsClick" />
+                    <div style="position: relative; display: inline-flex; align-items: center;">
+                        <RadzenIcon Icon="notifications" Style="color: white; cursor: pointer; font-size: 1.5rem;" @onclick="@TogglePanel" />
+                        @if (unreadCount > 0)
+                        {
+                            <RadzenBadge Text="@unreadCount.ToString()" BadgeStyle="BadgeStyle.Danger" IsPill="true"
+                                         Style="position: absolute; top: -6px; right: -8px; pointer-events: none;" />
+                        }
+                    </div>
+                    <NotificacionPanel @bind-Visible="panelVisible" UsuarioId="@CurrentUser.UsuarioId"
+                                       OnLeidaChanged="@OnLeidaChanged" />
                     <RadzenText Style="color: white; margin: 0;">
                         Bienvenido, <b>@CurrentUser.NombreCompleto</b>
                     </RadzenText>
-                    <RadzenButton Text="Cerrar Sesión" Icon="logout" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                    <RadzenButton Text="Cerrar Sesión" Icon="logout" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                   Click="@CerrarSesion" Variant="Variant.Text" Style="color: white;" />
                 </RadzenStack>
             </RadzenStack>
@@ -52,6 +59,7 @@ else
 
 @code {
     bool sidebarExpanded = true;
+    bool panelVisible = false;
     int unreadCount = 0;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -59,33 +67,27 @@ else
         if (firstRender)
         {
             await CurrentUser.InitializeAsync();
-            
+
             if (!CurrentUser.EstaAutenticado && !Nav.Uri.Contains("/login"))
             {
                 Nav.NavigateTo("login");
             }
             else if (CurrentUser.EstaAutenticado)
             {
-                await LoadNotifications();
+                unreadCount = await NotificacionService.GetNoLeidasCountAsync(CurrentUser.UsuarioId);
             }
             StateHasChanged();
         }
     }
 
-    async Task LoadNotifications()
+    void TogglePanel()
     {
-        unreadCount = await Db.Notificaciones
-            .Where(n => n.UsuarioId == CurrentUser.UsuarioId && !n.Leida)
-            .CountAsync();
+        panelVisible = !panelVisible;
     }
 
-    async Task OnNotificationsClick()
+    async Task OnLeidaChanged()
     {
-        await Db.Notificaciones
-            .Where(n => n.UsuarioId == CurrentUser.UsuarioId && !n.Leida)
-            .ExecuteUpdateAsync(s => s.SetProperty(n => n.Leida, true));
-        
-        unreadCount = 0;
+        unreadCount = await NotificacionService.GetNoLeidasCountAsync(CurrentUser.UsuarioId);
         StateHasChanged();
     }
 

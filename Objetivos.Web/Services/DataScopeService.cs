@@ -33,21 +33,27 @@ public class DataScopeService
 
     public IQueryable<RevisionCuatrimestral> AplicarScope(IQueryable<RevisionCuatrimestral> query, ICurrentUserService user)
     {
-        if (PuedeVerTodo(user))
-        {
-            return query;
-        }
-
-        if (user.Rol == "DIRECTOR")
-        {
-            return query.Where(r => r.Objetivo.Empleado.AreaId == user.AreaId);
-        }
-
-        if (user.EsJefe)
-        {
-            return query.Where(r => r.Objetivo.Empleado.JefeId == user.UsuarioId);
-        }
-
+        if (PuedeVerTodo(user)) return query;
+        if (user.Rol == "DIRECTOR") return query.Where(r => r.Objetivo.Empleado.AreaId == user.AreaId);
+        if (user.EsJefe) return query.Where(r => r.Objetivo.Empleado.JefeId == user.UsuarioId);
         return query.Where(r => false);
+    }
+
+    // A-08: Overload para Empleados
+    public IQueryable<Empleado> AplicarScope(IQueryable<Empleado> query, ICurrentUserService user)
+    {
+        if (PuedeVerTodo(user)) return query;
+        if (user.Rol == "DIRECTOR") return query.Where(e => e.AreaId == user.AreaId);
+        if (user.EsJefe) return query.Where(e => e.JefeId == user.UsuarioId);
+        return query.Where(e => false);
+    }
+
+    // A-08: Overload para Autoevaluaciones
+    public IQueryable<Autoevaluacion> AplicarScope(IQueryable<Autoevaluacion> query, ICurrentUserService user)
+    {
+        if (PuedeVerTodo(user)) return query;
+        if (user.Rol == "DIRECTOR") return query.Where(ae => ae.Objetivo.Empleado.AreaId == user.AreaId);
+        if (user.EsJefe) return query.Where(ae => ae.Objetivo.Empleado.JefeId == user.UsuarioId);
+        return query.Where(ae => false);
     }
 }

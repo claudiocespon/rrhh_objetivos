@@ -1,7 +1,6 @@
 @page "/seguimientos"
-@inject AppDbContext Db
+@inject SeguimientoService SeguimientoService
 @inject ICurrentUserService CurrentUser
-@inject RendimientoService Rendimiento
 @inject ChatService ChatService
 
 <RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Seguimientos</RadzenText>
@@ -40,38 +39,21 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Fetch Personal
-        empleadoPersonal = await Db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == CurrentUser.Email.ToLower() && e.Activo);
-        if (empleadoPersonal != null)
+        // 1. Fetch Personal (batch — sin N+1)
+        var personalData = await SeguimientoService.GetEmpleadoPersonalAsync(CurrentUser.Email, DateTime.Now.Year);
+        if (personalData != null)
         {
-            promedios[empleadoPersonal.Id] = await Rendimiento.PromedioGeneralAsync(empleadoPersonal.Id, DateTime.Now.Year);
+            empleadoPersonal = personalData.Empleado;
+            promedios[personalData.Empleado.Id] = personalData.Promedio;
         }
 
-        // 2. Fetch Equipo / Org
-        bool canSeeAll = CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.Rol == "RRHH" || CurrentUser.EsSuperusuario;
-        
-        if (canSeeAll)
+        // 2. Fetch Equipo / Org (batch — sin N+1)
+        if (CurrentUser.EsJefe || CurrentUser.Rol == "RRHH" || CurrentUser.EsSuperusuario)
         {
-            empleadosEquipo = await Db.Empleados.Where(e => e.Activo).ToListAsync();
-        }
-        else if (CurrentUser.Rol == "DIRECTOR")
-        {
-            empleadosEquipo = await Db.Empleados.Where(e => e.AreaId == CurrentUser.AreaId && e.Activo).ToListAsync();
-        }
-        else if (CurrentUser.EsJefe)
-        {
-            empleadosEquipo = await Db.Empleados.Where(e => e.JefeId == CurrentUser.UsuarioId && e.Activo).ToListAsync();
-        }
-
-        if (empleadosEquipo != null)
-        {
-            foreach (var emp in empleadosEquipo)
-            {
-                if (!promedios.ContainsKey(emp.Id))
-                {
-                    promedios[emp.Id] = await Rendimiento.PromedioGeneralAsync(emp.Id, DateTime.Now.Year);
-                }
-            }
+            var equipoData = await SeguimientoService.GetEmpleadosEquipoConPromediosAsync(CurrentUser, DateTime.Now.Year);
+            empleadosEquipo = equipoData.Select(x => x.Empleado).ToList();
+            foreach (var item in equipoData)
+                promedios[item.Empleado.Id] = item.Promedio;
 
             // C-07: Cargar counts de mensajes no leídos para el jefe directo
             if (CurrentUser.EsJefe)

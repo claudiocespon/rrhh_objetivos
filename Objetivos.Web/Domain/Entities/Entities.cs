@@ -213,4 +213,20 @@ public class Curso {
     public string Categoria { get; set; } = "";
     public int DuracionHoras { get; set; }
     public bool EsObligatorio { get; set; } = false;
+
+    // Nav
+    public List<CursoAsignacion> Asignaciones { get; set; } = [];
+}
+
+public class CursoAsignacion {
+    public int Id { get; set; }
+    public int CursoId { get; set; }
+    public Curso Curso { get; set; } = null!;
+    public int EmpleadoId { get; set; }
+    public Empleado Empleado { get; set; } = null!;
+    public DateTime FechaAsignacion { get; set; } = DateTime.UtcNow;
+    public DateTime? FechaCompletado { get; set; }
+    public bool Completado { get; set; } = false;
+    public int? AsignadoPorId { get; set; }
+    public string? Notas { get; set; }
 }

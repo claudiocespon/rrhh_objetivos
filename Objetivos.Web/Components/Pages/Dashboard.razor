@@ -1,5 +1,6 @@
 @page "/dashboard"
 @inject DashboardService DashboardService
+@inject CalendarioService CalendarioService
 @inject ICurrentUserService CurrentUser
 
 <RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Dashboard</RadzenText>
@@ -39,20 +40,24 @@ else
 
 @code {
     RoleDashboardData? roleData;
+    List<ProximoEvento> proximosEventos = new();
 
     protected override async Task OnInitializedAsync()
     {
         roleData = await DashboardService.GetDashboardDataAsync();
+        proximosEventos = await CalendarioService.GetProximosEventosAsync(CurrentUser);
     }
 
     private RenderFragment RenderDashboard(DashboardData data, string title) => __builder =>
     {
+        // M-01: Mostrar distribución real de estados — "Vencen Pronto" es un subconjunto
+        // de ACTIVO, no un estado; se muestra en su KPI card separado, no en el donut.
         var donutData = new List<DonutItem>
         {
-            new DonutItem { Estado = "Activo", Cantidad = data.EnCurso },
-            new DonutItem { Estado = "Vencen Pronto", Cantidad = data.VencenPronto },
-            new DonutItem { Estado = "Pendientes", Cantidad = data.PendientesRevision }
-        };
+            new DonutItem { Estado = "En Curso", Cantidad = data.EnCurso },
+            new DonutItem { Estado = "En Riesgo", Cantidad = data.EnRiesgo },
+            new DonutItem { Estado = "Completados", Cantidad = data.Completados }
+        }.Where(d => d.Cantidad > 0).ToList();
 
         <div class="row mb-4 pt-3">
             <div class="col-md-3">
@@ -102,7 +107,7 @@ else
         </div>
 
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-8">
                 <RadzenCard>
                     <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">@title</RadzenText>
                     @if (data.TotalObjetivos == 0)
@@ -121,7 +126,70 @@ else
                     }
                 </RadzenCard>
             </div>
+            <div class="col-md-4">
+                <RadzenCard Style="height: 100%;">
+                    <RadzenStack Gap="0.75rem">
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 0.5rem;">Próximos Eventos</RadzenText>
+                        @if (!proximosEventos.Any())
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" Style="padding: 1.5rem 0; opacity: 0.6;">
+                                <RadzenIcon Icon="event_available" Style="font-size: 2rem;" />
+                                <RadzenText TextStyle="TextStyle.Caption">Sin eventos próximos</RadzenText>
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            @foreach (var ev in proximosEventos)
+                            {
+                                <RadzenCard Style="@($"border-left: 4px solid {GetEventoColor(ev.Tipo)}; padding: 0.6rem 0.85rem;")">
+                                    <RadzenStack Gap="0.1rem">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem">
+                                            <RadzenIcon Icon="@GetEventoIcono(ev.Tipo)" Style="@($"color: {GetEventoColor(ev.Tipo)}; font-size: 1rem;")" />
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 600; white-space: normal; word-break: break-word;">@ev.Titulo</RadzenText>
+                                        </RadzenStack>
+                                        @if (!string.IsNullOrEmpty(ev.Subtitulo))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; opacity: 0.7;">@ev.Subtitulo</RadzenText>
+                                        }
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="@($"margin: 0; color: {GetEventoColor(ev.Tipo)};")">
+                                            @ev.Fecha.ToString("dd/MM/yyyy")
+                                            @if (ev.EsVencido)
+                                            {
+                                                <span> · VENCIDO</span>
+                                            }
+                                            else if (ev.DiasFaltantes == 0)
+                                            {
+                                                <span> · HOY</span>
+                                            }
+                                            else
+                                            {
+                                                <span> · en @ev.DiasFaltantes día(s)</span>
+                                            }
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            </div>
         </div>
+    };
+
+    string GetEventoColor(string tipo) => tipo switch
+    {
+        "DEADLINE"            => "var(--rz-danger)",
+        "REVISION_PENDIENTE"  => "var(--rz-warning)",
+        "EVALUACION_FINAL"    => "var(--rz-info)",
+        _                     => "var(--rz-primary)"
+    };
+
+    string GetEventoIcono(string tipo) => tipo switch
+    {
+        "DEADLINE"            => "flag",
+        "REVISION_PENDIENTE"  => "rate_review",
+        "EVALUACION_FINAL"    => "verified",
+        _                     => "event"
     };
 
     class DonutItem
