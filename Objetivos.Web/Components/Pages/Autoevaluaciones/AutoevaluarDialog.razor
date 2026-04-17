@@ -144,7 +144,7 @@
 
     void OnUploadComplete(UploadCompleteEventArgs args)
     {
-        var response = JsonSerializer.Deserialize<UploadResponse>(args.RawResponse);
+        var response = string.IsNullOrEmpty(args.RawResponse) ? null : JsonSerializer.Deserialize<UploadResponse>(args.RawResponse);
         if (response?.urls != null)
         {
             adjuntos.AddRange(response.urls);
