@@ -54,18 +54,22 @@ using (var scope = app.Services.CreateScope())
     await SeedData.InitializeAsync(db, app.Environment, app.Configuration);
 }
 
-
-
+// PathBase: soporta despliegue bajo subruta (ej: /objetivos) vía proxy inverso.
+// Configurar en appsettings.json: "PathBase": "/objetivos"
+var pathBase = app.Configuration["PathBase"];
+if (!string.IsNullOrEmpty(pathBase))
+{
+    app.UsePathBase(pathBase);
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// HTTPS redirect deshabilitado: el proxy inverso maneja TLS externamente.
+// app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
