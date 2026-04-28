@@ -59,121 +59,109 @@ else
             new DonutItem { Estado = "Completados", Cantidad = data.Completados }
         }.Where(d => d.Cantidad > 0).ToList();
 
-        <div class="row mb-4 pt-3">
-            <div class="col-md-3">
-                <RadzenCard Style="background-color: var(--rz-primary); color: white;">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                        <RadzenIcon Icon="assignment" Style="font-size: 2.5rem; opacity: 0.8;" />
-                        <RadzenStack Gap="0">
-                            <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.TotalObjetivos</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Total Objetivos</RadzenText>
-                        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" Style="margin-bottom: 2rem; flex-wrap: wrap;">
+            <RadzenCard Style="background-color: var(--rz-primary); color: white; flex: 1; min-width: 200px;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenIcon Icon="assignment" Style="font-size: 2.5rem; opacity: 0.8;" />
+                    <RadzenStack Gap="0">
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.TotalObjetivos</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Total Objetivos</RadzenText>
                     </RadzenStack>
-                </RadzenCard>
-            </div>
-            <div class="col-md-3">
-                <RadzenCard Style="background-color: var(--rz-info); color: white;">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                        <RadzenIcon Icon="trending_up" Style="font-size: 2.5rem; opacity: 0.8;" />
-                        <RadzenStack Gap="0">
-                            <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.EnCurso</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">En Curso</RadzenText>
-                        </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+            <RadzenCard Style="background-color: var(--rz-info); color: white; flex: 1; min-width: 200px;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenIcon Icon="trending_up" Style="font-size: 2.5rem; opacity: 0.8;" />
+                    <RadzenStack Gap="0">
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.EnCurso</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">En Curso</RadzenText>
                     </RadzenStack>
-                </RadzenCard>
-            </div>
-            <div class="col-md-3">
-                <RadzenCard Style="background-color: var(--rz-warning); color: white;">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                        <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; opacity: 0.8;" />
-                        <RadzenStack Gap="0">
-                            <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.VencenPronto</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Vencen Pronto</RadzenText>
-                        </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+            <RadzenCard Style="background-color: var(--rz-warning); color: white; flex: 1; min-width: 200px;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; opacity: 0.8;" />
+                    <RadzenStack Gap="0">
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.VencenPronto</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Vencen Pronto</RadzenText>
                     </RadzenStack>
-                </RadzenCard>
-            </div>
-            <div class="col-md-3">
-                <RadzenCard Style="background-color: var(--rz-danger); color: white;">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                        <RadzenIcon Icon="rule" Style="font-size: 2.5rem; opacity: 0.8;" />
-                        <RadzenStack Gap="0">
-                            <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.PendientesRevision</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Pendientes Revisión</RadzenText>
-                        </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+            <RadzenCard Style="background-color: var(--rz-danger); color: white; flex: 1; min-width: 200px;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenIcon Icon="rule" Style="font-size: 2.5rem; opacity: 0.8;" />
+                    <RadzenStack Gap="0">
+                        <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.PendientesRevision</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Pendientes Revisión</RadzenText>
                     </RadzenStack>
-                </RadzenCard>
-            </div>
-        </div>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenStack>
 
-        <div class="row">
-            <div class="col-md-8">
-                <RadzenCard>
-                    <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">@title</RadzenText>
-                    @if (data.TotalObjetivos == 0)
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="margin-top: 2rem;">
+            <RadzenCard Style="flex: 2;">
+                <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">@title</RadzenText>
+                @if (data.TotalObjetivos == 0)
+                {
+                    <EmptyState Message="No hay objetivos creados aún" />
+                }
+                else
+                {
+                    <RadzenChart>
+                        <RadzenDonutSeries Data="@donutData" CategoryProperty="Estado" ValueProperty="Cantidad" Title="Objetivos">
+                            <ChildContent>
+                                <RadzenSeriesDataLabels Visible="true" />
+                            </ChildContent>
+                        </RadzenDonutSeries>
+                    </RadzenChart>
+                }
+            </RadzenCard>
+            <RadzenCard Style="flex: 1;">
+                <RadzenStack Gap="0.75rem">
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 0.5rem;">Próximos Eventos</RadzenText>
+                    @if (!proximosEventos.Any())
                     {
-                        <EmptyState Message="No hay objetivos creados aún" />
+                        <RadzenStack AlignItems="AlignItems.Center" Style="padding: 1.5rem 0; opacity: 0.6;">
+                            <RadzenIcon Icon="event_available" Style="font-size: 2rem;" />
+                            <RadzenText TextStyle="TextStyle.Caption">Sin eventos próximos</RadzenText>
+                        </RadzenStack>
                     }
                     else
                     {
-                        <RadzenChart>
-                            <RadzenDonutSeries Data="@donutData" CategoryProperty="Estado" ValueProperty="Cantidad" Title="Objetivos">
-                                <ChildContent>
-                                    <RadzenSeriesDataLabels Visible="true" />
-                                </ChildContent>
-                            </RadzenDonutSeries>
-                        </RadzenChart>
-                    }
-                </RadzenCard>
-            </div>
-            <div class="col-md-4">
-                <RadzenCard Style="height: 100%;">
-                    <RadzenStack Gap="0.75rem">
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 0.5rem;">Próximos Eventos</RadzenText>
-                        @if (!proximosEventos.Any())
+                        @foreach (var ev in proximosEventos)
                         {
-                            <RadzenStack AlignItems="AlignItems.Center" Style="padding: 1.5rem 0; opacity: 0.6;">
-                                <RadzenIcon Icon="event_available" Style="font-size: 2rem;" />
-                                <RadzenText TextStyle="TextStyle.Caption">Sin eventos próximos</RadzenText>
-                            </RadzenStack>
-                        }
-                        else
-                        {
-                            @foreach (var ev in proximosEventos)
-                            {
-                                <RadzenCard Style="@($"border-left: 4px solid {GetEventoColor(ev.Tipo)}; padding: 0.6rem 0.85rem;")">
-                                    <RadzenStack Gap="0.1rem">
-                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem">
-                                            <RadzenIcon Icon="@GetEventoIcono(ev.Tipo)" Style="@($"color: {GetEventoColor(ev.Tipo)}; font-size: 1rem;")" />
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 600; white-space: normal; word-break: break-word;">@ev.Titulo</RadzenText>
-                                        </RadzenStack>
-                                        @if (!string.IsNullOrEmpty(ev.Subtitulo))
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; opacity: 0.7;">@ev.Subtitulo</RadzenText>
-                                        }
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="@($"margin: 0; color: {GetEventoColor(ev.Tipo)};")">
-                                            @ev.Fecha.ToString("dd/MM/yyyy")
-                                            @if (ev.EsVencido)
-                                            {
-                                                <span> · VENCIDO</span>
-                                            }
-                                            else if (ev.DiasFaltantes == 0)
-                                            {
-                                                <span> · HOY</span>
-                                            }
-                                            else
-                                            {
-                                                <span> · en @ev.DiasFaltantes día(s)</span>
-                                            }
-                                        </RadzenText>
+                            <RadzenCard Style="@($"border-left: 4px solid {GetEventoColor(ev.Tipo)}; padding: 0.6rem 0.85rem;")">
+                                <RadzenStack Gap="0.1rem">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem">
+                                        <RadzenIcon Icon="@GetEventoIcono(ev.Tipo)" Style="@($"color: {GetEventoColor(ev.Tipo)}; font-size: 1rem;")" />
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 600; white-space: normal; word-break: break-word;">@ev.Titulo</RadzenText>
                                     </RadzenStack>
-                                </RadzenCard>
-                            }
+                                    @if (!string.IsNullOrEmpty(ev.Subtitulo))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; opacity: 0.7;">@ev.Subtitulo</RadzenText>
+                                    }
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="@($"margin: 0; color: {GetEventoColor(ev.Tipo)};")">
+                                        @ev.Fecha.ToString("dd/MM/yyyy")
+                                        @if (ev.EsVencido)
+                                        {
+                                            <span> · VENCIDO</span>
+                                        }
+                                        else if (ev.DiasFaltantes == 0)
+                                        {
+                                            <span> · HOY</span>
+                                        }
+                                        else
+                                        {
+                                            <span> · en @ev.DiasFaltantes día(s)</span>
+                                        }
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenCard>
                         }
-                    </RadzenStack>
-                </RadzenCard>
-            </div>
-        </div>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenStack>
     };
 
     string GetEventoColor(string tipo) => tipo switch
