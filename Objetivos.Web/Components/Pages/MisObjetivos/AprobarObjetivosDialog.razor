@@ -1,0 +1,98 @@
+@inject ObjetivoService ObjetivoService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1.5rem">
+    @if (loading)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else if (!objetivos.Any())
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
+            No hay objetivos pendientes de aprobación en tu equipo.
+        </RadzenAlert>
+    }
+    else
+    {
+        <div class="pt-2">
+            <RadzenDataGrid Data="@objetivos" TItem="Objetivo" AllowPaging="true" PageSize="10" Responsive="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Empleado.Nombre" Title="Colaborador" Width="150px">
+                        <Template Context="obj">
+                            @obj.Empleado.Nombre @obj.Empleado.Apellido
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar" Width="120px" />
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="120px" />
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Descripcion" Title="Descripción" Width="200px">
+                        <Template Context="obj">
+                            <RadzenText TextStyle="TextStyle.Caption" Style="white-space: pre-wrap; word-break: break-word;">@obj.Descripcion</RadzenText>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="200px">
+                        <Template Context="obj">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Text="Aprobar" Icon="check_circle" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                              Click="@(() => OnAprobarClick(obj))" />
+                                <RadzenButton Text="Rechazar" Icon="cancel" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                              Click="@(() => OnRechazarClick(obj))" />
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+        <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cerrar" Click="@(() => DialogService.Close(false))" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    List<Objetivo> objetivos = new();
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadObjetivos();
+    }
+
+    async Task LoadObjetivos()
+    {
+        loading = true;
+        objetivos = await ObjetivoService.GetObjetivosPendientesAprobacionAsync();
+        loading = false;
+    }
+
+    async Task OnAprobarClick(Objetivo obj)
+    {
+        var success = await ObjetivoService.AprobarObjetivoAsync(obj.Id);
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Aprobación", $"Objetivo '{obj.Nombre}' aprobado exitosamente.");
+            await LoadObjetivos();
+            StateHasChanged();
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo aprobar el objetivo.");
+        }
+    }
+
+    async Task OnRechazarClick(Objetivo obj)
+    {
+        var result = await DialogService.OpenAsync<RechazarObjetivoDialog>(
+            "Rechazar Objetivo",
+            new Dictionary<string, object?> { { "ObjetivoId", obj.Id }, { "ObjetivoNombre", obj.Nombre } },
+            new DialogOptions { Width = "500px" });
+
+        if (result == true)
+        {
+            await LoadObjetivos();
+            StateHasChanged();
+        }
+    }
+}

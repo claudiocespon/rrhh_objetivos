@@ -11,12 +11,14 @@ public class ObjetivoService
     private readonly AppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly DataScopeService _dataScope;
+    private readonly ConfiguracionService _configuracion;
 
-    public ObjetivoService(AppDbContext db, ICurrentUserService currentUser, DataScopeService dataScope)
+    public ObjetivoService(AppDbContext db, ICurrentUserService currentUser, DataScopeService dataScope, ConfiguracionService configuracion)
     {
         _db = db;
         _currentUser = currentUser;
         _dataScope = dataScope;
+        _configuracion = configuracion;
     }
 
     public async Task<RoleObjetivosData> GetObjetivosRoleAsync(int anio)
@@ -96,6 +98,12 @@ public class ObjetivoService
             nuevo.FechaCreacion = DateTime.UtcNow;
             nuevo.CreadoPorId = _currentUser.UsuarioId;
             nuevo.Anio = DateTime.Now.Year;
+
+            // Set dynamic approval state to "pendiente_aprobacion"
+            var estadoPendiente = await _db.EstadosObjetivoConfig
+                .FirstOrDefaultAsync(e => e.Slug == "pendiente_aprobacion" && e.Activo);
+            if (estadoPendiente != null)
+                nuevo.EstadoObjetivoConfigId = estadoPendiente.Id;
 
             _db.Objetivos.Add(nuevo);
             await _db.SaveChangesAsync(); // Save to get Id
@@ -205,6 +213,98 @@ public class ObjetivoService
             await EvaluarEstadoRiesgoAsync(objetivo.Id);
 
         return saved;
+    }
+
+    // RN-01A: Aprobar Objetivo (flujo de aprobación por jefe)
+    public async Task<bool> AprobarObjetivoAsync(int objetivoId)
+    {
+        var objetivo = await _db.Objetivos
+            .Include(o => o.Empleado)
+            .FirstOrDefaultAsync(o => o.Id == objetivoId);
+
+        if (objetivo == null) return false;
+
+        // Solo el jefe del empleado o superusuario puede aprobar
+        if (!_currentUser.EsSuperusuario && objetivo.Empleado.JefeId != _currentUser.UsuarioId)
+            return false;
+
+        // Obtener estado "aprobado"
+        var estadoAprobado = await _db.EstadosObjetivoConfig
+            .FirstOrDefaultAsync(e => e.Slug == "aprobado" && e.Activo);
+        if (estadoAprobado == null) return false;
+
+        objetivo.EstadoObjetivoConfigId = estadoAprobado.Id;
+        objetivo.AprobadoPorJefe = true;
+
+        _db.AuditoriaLogs.Add(new AuditoriaLog
+        {
+            Entidad = "Objetivo",
+            EntidadId = objetivoId,
+            Accion = "UPDATE",
+            UsuarioId = _currentUser.UsuarioId,
+            Fecha = DateTime.UtcNow,
+            CambiosJson = JsonSerializer.Serialize(new { accion = "APROBACIÓN", estado = "aprobado" })
+        });
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    // RN-01B: Rechazar Objetivo (vuelve a "pendiente_aprobacion")
+    public async Task<bool> RechazarObjetivoAsync(int objetivoId, string comentario)
+    {
+        var objetivo = await _db.Objetivos
+            .Include(o => o.Empleado)
+            .FirstOrDefaultAsync(o => o.Id == objetivoId);
+
+        if (objetivo == null) return false;
+
+        // Solo el jefe del empleado o superusuario puede rechazar
+        if (!_currentUser.EsSuperusuario && objetivo.Empleado.JefeId != _currentUser.UsuarioId)
+            return false;
+
+        // Vuelve a "pendiente_aprobacion" sin cambiar AprobadoPorJefe (permanece false)
+        var estadoPendiente = await _db.EstadosObjetivoConfig
+            .FirstOrDefaultAsync(e => e.Slug == "pendiente_aprobacion" && e.Activo);
+        if (estadoPendiente == null) return false;
+
+        objetivo.EstadoObjetivoConfigId = estadoPendiente.Id;
+
+        _db.AuditoriaLogs.Add(new AuditoriaLog
+        {
+            Entidad = "Objetivo",
+            EntidadId = objetivoId,
+            Accion = "UPDATE",
+            UsuarioId = _currentUser.UsuarioId,
+            Fecha = DateTime.UtcNow,
+            CambiosJson = JsonSerializer.Serialize(new { accion = "RECHAZO", estado = "pendiente_aprobacion", comentario })
+        });
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    // RN-01C: Obtener objetivos pendientes de aprobación para un jefe
+    public async Task<List<Objetivo>> GetObjetivosPendientesAprobacionAsync()
+    {
+        var empleadosDelJefe = await _db.Empleados
+            .Where(e => e.JefeId == _currentUser.UsuarioId && e.Activo)
+            .Select(e => e.Id)
+            .ToListAsync();
+
+        var estadoPendiente = await _db.EstadosObjetivoConfig
+            .FirstOrDefaultAsync(e => e.Slug == "pendiente_aprobacion" && e.Activo);
+        if (estadoPendiente == null) return new();
+
+        return await _db.Objetivos
+            .Include(o => o.Empleado)
+            .Include(o => o.Pilar)
+            .Include(o => o.EstadoObjetivoConfig)
+            .Where(o => empleadosDelJefe.Contains(o.EmpleadoId)
+                    && o.EstadoObjetivoConfigId == estadoPendiente.Id
+                    && o.Estado != EstadoObjetivo.CANCELADO)
+            .OrderBy(o => o.FechaCreacion)
+            .ToListAsync();
     }
 }
 

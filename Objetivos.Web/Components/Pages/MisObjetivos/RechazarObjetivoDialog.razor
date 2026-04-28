@@ -1,0 +1,59 @@
+@inject ObjetivoService ObjetivoService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<RadzenTemplateForm TItem="RechazarModel" Data="@model" Submit="@OnSubmit">
+    <RadzenStack Gap="1.5rem">
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" ShowIcon="true">
+            Estás a punto de rechazar el objetivo: <b>@ObjetivoNombre</b>
+        </RadzenAlert>
+
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Motivo del Rechazo</RadzenText>
+                <RadzenTextArea @bind-Value="@model.Comentario" Style="width: 100%;" Rows="4" Name="Comentario"
+                               Placeholder="Explica por qué se rechaza este objetivo para que el colaborador pueda hacer ajustes..." />
+                <RadzenRequiredValidator Component="Comentario" Text="El motivo es obligatorio" Style="position: absolute" />
+                <RadzenLengthValidator Component="Comentario" Min="10" Text="El motivo debe tener al menos 10 caracteres" Style="position: absolute" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        @if (!string.IsNullOrEmpty(errorMsg))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">@errorMsg</RadzenAlert>
+        }
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Rechazar Objetivo" ButtonStyle="ButtonStyle.Danger" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public int ObjetivoId { get; set; }
+    [Parameter] public string ObjetivoNombre { get; set; } = "";
+
+    RechazarModel model = new();
+    string? errorMsg;
+
+    async Task OnSubmit()
+    {
+        errorMsg = null;
+        var success = await ObjetivoService.RechazarObjetivoAsync(ObjetivoId, model.Comentario);
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Rechazo", "Objetivo rechazado exitosamente.");
+            DialogService.Close(true);
+        }
+        else
+        {
+            errorMsg = "No se pudo rechazar el objetivo. Verifique que tenga permisos.";
+        }
+    }
+
+    class RechazarModel
+    {
+        public string Comentario { get; set; } = "";
+    }
+}

@@ -25,6 +25,15 @@ else
     {
         <RadzenTabs>
             <Tabs>
+                @if (CurrentUser.EsJefe)
+                {
+                    <RadzenTabsItem Text="Pendientes de Aprobación">
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" Style="margin-bottom: 1rem;">
+                            <RadzenButton Icon="check_circle" Text="Revisar Aprobaciones" Click="@OnAprobarObjetivosClick" ButtonStyle="ButtonStyle.Primary" />
+                        </RadzenStack>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">Los objetivos de tu equipo están pendientes de tu aprobación para poder entrar en evaluación.</RadzenText>
+                    </RadzenTabsItem>
+                }
                 <RadzenTabsItem Text="Objetivos de mi Equipo">
                     @RenderObjetivos(roleData.Equipo, true)
                 </RadzenTabsItem>
@@ -94,6 +103,19 @@ else
         {
             await LoadData();
             NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Objetivo creado correctamente");
+        }
+    }
+
+    async Task OnAprobarObjetivosClick()
+    {
+        var result = await DialogService.OpenAsync<AprobarObjetivosDialog>("Aprobar Objetivos de mi Equipo",
+            new Dictionary<string, object?>(),
+            new DialogOptions { Width = "900px", Resizable = true, Draggable = true });
+
+        if (result != null)
+        {
+            await LoadData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Aprobaciones procesadas");
         }
     }
 
