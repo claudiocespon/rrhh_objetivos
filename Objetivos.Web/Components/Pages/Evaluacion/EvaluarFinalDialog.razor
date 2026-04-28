@@ -7,18 +7,18 @@
         @if (objetivo != null)
         {
             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
-                Evaluación Final para: <b>@objetivo.Nombre</b>. El puntaje final será calculado automáticamente basado en el promedio ponderado de las revisiones.
+                Evaluación Final para: <b>@objetivo.Nombre</b>. La valoración final será calculada automáticamente basada en el promedio ponderado de las revisiones.
             </RadzenAlert>
 
             <RadzenRow>
                 <RadzenColumn Size="6">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @objetivo.SoftSkill1.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@model.SoftSkill1Puntaje" Stars="5" Name="SS1Puntaje" />
+                    <RadzenRating @bind-Value="@model.SoftSkill1Valoracion" Stars="5" Name="SS1Valoracion" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill1Comentario" Placeholder="Comentario final sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>
                 <RadzenColumn Size="6">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @objetivo.SoftSkill2.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@model.SoftSkill2Puntaje" Stars="5" Name="SS2Puntaje" />
+                    <RadzenRating @bind-Value="@model.SoftSkill2Valoracion" Stars="5" Name="SS2Valoracion" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill2Comentario" Placeholder="Comentario final sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>
             </RadzenRow>
@@ -70,12 +70,12 @@
     {
         errorMsg = null;
         var success = await RevisionService.CompletarEvaluacionFinalAsync(
-            ObjetivoId, 
-            model.Comentario, 
+            ObjetivoId,
+            model.Comentario,
             model.Resultado!.Value,
-            model.SoftSkill1Puntaje,
+            model.SoftSkill1Valoracion,
             model.SoftSkill1Comentario,
-            model.SoftSkill2Puntaje,
+            model.SoftSkill2Valoracion,
             model.SoftSkill2Comentario
         );
         
@@ -93,10 +93,10 @@
     {
         public ResultadoEval? Resultado { get; set; }
         public string Comentario { get; set; } = "";
-        
-        public int SoftSkill1Puntaje { get; set; }
+
+        public int SoftSkill1Valoracion { get; set; }
         public string SoftSkill1Comentario { get; set; } = "";
-        public int SoftSkill2Puntaje { get; set; }
+        public int SoftSkill2Valoracion { get; set; }
         public string SoftSkill2Comentario { get; set; } = "";
     }
 }

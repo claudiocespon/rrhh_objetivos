@@ -113,7 +113,7 @@ else
                                     </RadzenStack>
 
                                     <div class="d-flex align-items-center gap-2 mb-2">
-                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success)">Score: @objetivo.EvaluacionFinal.PuntajeFinal.ToString("N1")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success)">Valoración: @objetivo.EvaluacionFinal.PuntajeFinal.ToString("N1")</RadzenText>
                                         <RadzenRating Value="@((int)Math.Round(objetivo.EvaluacionFinal.PuntajeFinal))" ReadOnly="true" Stars="5" />
                                     </div>
 
@@ -196,7 +196,7 @@ else
             <RadzenCard>
                 <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Evolución del Objetivo</RadzenText>
                 <RadzenChart Style="height: 250px;">
-                    <RadzenLineSeries Data="@evolucion" CategoryProperty="Periodo" ValueProperty="Puntaje" Title="Puntaje (1-5)">
+                    <RadzenLineSeries Data="@evolucion" CategoryProperty="Periodo" ValueProperty="Puntaje" Title="Valoración (1-5)">
                         <ChildContent>
                             <RadzenMarkers Visible="true" MarkerType="MarkerType.Circle" />
                         </ChildContent>
@@ -205,7 +205,7 @@ else
                         <RadzenAxisTitle Text="Revisión" />
                     </RadzenCategoryAxis>
                     <RadzenValueAxis Min="0" Max="5">
-                        <RadzenAxisTitle Text="Score" />
+                        <RadzenAxisTitle Text="Valoración" />
                     </RadzenValueAxis>
                 </RadzenChart>
             </RadzenCard>

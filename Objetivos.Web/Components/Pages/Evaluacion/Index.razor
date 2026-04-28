@@ -166,7 +166,7 @@ else
                                 <RadzenBadge Text="@rev.Periodo.ToString().Replace("_", " ")" BadgeStyle="BadgeStyle.Success" />
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Puntuación" Width="120px">
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Valoración" Width="120px">
                             <Template Context="rev">
                                 <RadzenRating Value="@(rev.Puntaje ?? 0)" ReadOnly="true" Stars="5" />
                             </Template>

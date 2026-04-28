@@ -5,9 +5,9 @@
     <RadzenStack Gap="1.5rem">
         <RadzenRow>
             <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Puntaje General (1-5 estrellas)</RadzenText>
-                <RadzenRating @bind-Value="@model.Puntaje" Stars="5" Name="Puntaje" />
-                <RadzenRequiredValidator Component="Puntaje" Text="Debe calificar con al menos 1 estrella" Style="position: absolute" />
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Valoración General (1-5 estrellas)</RadzenText>
+                <RadzenRating @bind-Value="@model.Valoracion" Stars="5" Name="Valoracion" />
+                <RadzenRequiredValidator Component="Valoracion" Text="Debe calificar con al menos 1 estrella" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -16,12 +16,12 @@
             <RadzenRow>
                 <RadzenColumn Size="6">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @revision.Objetivo.SoftSkill1.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@model.SoftSkill1Puntaje" Stars="5" Name="SS1Puntaje" />
+                    <RadzenRating @bind-Value="@model.SoftSkill1Valoracion" Stars="5" Name="SS1Valoracion" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill1Comentario" Placeholder="Comentario sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>
                 <RadzenColumn Size="6">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @revision.Objetivo.SoftSkill2.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@model.SoftSkill2Puntaje" Stars="5" Name="SS2Puntaje" />
+                    <RadzenRating @bind-Value="@model.SoftSkill2Valoracion" Stars="5" Name="SS2Valoracion" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill2Comentario" Placeholder="Comentario sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>
             </RadzenRow>
@@ -58,7 +58,7 @@
                 </RadzenCheckBoxList>
                 @if (submitted && RequiereEvidencia() && !model.EvidenciasSeleccionadas.Any())
                 {
-                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger)">Debe marcar al menos una evidencia para este puntaje</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger)">Debe marcar al menos una evidencia para esta valoración</RadzenText>
                 }
             </RadzenColumn>
         </RadzenRow>
@@ -92,8 +92,8 @@
 
     bool RequiereEvidencia()
     {
-        // VAL-10: Solo obligatorio si puntaje <= 2 o == 5
-        return model.Puntaje <= 2 || model.Puntaje == 5;
+        // VAL-10: Solo obligatorio si valoración <= 2 o == 5
+        return model.Valoracion <= 2 || model.Valoracion == 5;
     }
 
     async Task OnSubmit()
@@ -107,14 +107,14 @@
         }
 
         var success = await RevisionService.CompletarRevisionAsync(
-            RevisionId, 
-            model.Puntaje, 
-            model.Comentario, 
-            model.Resultado!.Value, 
+            RevisionId,
+            model.Valoracion,
+            model.Comentario,
+            model.Resultado!.Value,
             model.EvidenciasSeleccionadas.ToList(),
-            model.SoftSkill1Puntaje,
+            model.SoftSkill1Valoracion,
             model.SoftSkill1Comentario,
-            model.SoftSkill2Puntaje,
+            model.SoftSkill2Valoracion,
             model.SoftSkill2Comentario
         );
         
@@ -130,14 +130,14 @@
 
     class EvaluationModel
     {
-        public int Puntaje { get; set; } = 0;
+        public int Valoracion { get; set; } = 0;
         public ResultadoEval? Resultado { get; set; }
         public string Comentario { get; set; } = "";
         public IEnumerable<string> EvidenciasSeleccionadas { get; set; } = new List<string>();
-        
-        public int SoftSkill1Puntaje { get; set; }
+
+        public int SoftSkill1Valoracion { get; set; }
         public string SoftSkill1Comentario { get; set; } = "";
-        public int SoftSkill2Puntaje { get; set; }
+        public int SoftSkill2Valoracion { get; set; }
         public string SoftSkill2Comentario { get; set; } = "";
     }
 }

@@ -33,8 +33,8 @@ public class RevisionService
     }
 
     // RN-02: Completar Revisión Cuatrimestral
-    public async Task<bool> CompletarRevisionAsync(int revisionId, int puntaje, string comentario, ResultadoEval resultado, List<string> evidencias,
-        int? ss1Puntaje = null, string? ss1Comentario = null, int? ss2Puntaje = null, string? ss2Comentario = null)
+    public async Task<bool> CompletarRevisionAsync(int revisionId, int valoracion, string comentario, ResultadoEval resultado, List<string> evidencias,
+        int? ss1Valoracion = null, string? ss1Comentario = null, int? ss2Valoracion = null, string? ss2Comentario = null)
     {
         var revision = await _db.RevisionesCuatrimestrales
             .Include(r => r.Objetivo)
@@ -43,7 +43,7 @@ public class RevisionService
 
         if (revision == null || revision.Completada) return false;
 
-        revision.Puntaje = puntaje;
+        revision.Puntaje = valoracion;
         revision.ComentarioJefe = comentario;
         revision.Resultado = resultado;
         revision.EvidenciasRevisadasJson = JsonSerializer.Serialize(evidencias);
@@ -52,9 +52,9 @@ public class RevisionService
         revision.EvaluadorId = _currentUser.UsuarioId;
 
         // Soft Skills
-        revision.SoftSkill1Puntaje = ss1Puntaje;
+        revision.SoftSkill1Puntaje = ss1Valoracion;
         revision.SoftSkill1Comentario = ss1Comentario ?? "";
-        revision.SoftSkill2Puntaje = ss2Puntaje;
+        revision.SoftSkill2Puntaje = ss2Valoracion;
         revision.SoftSkill2Comentario = ss2Comentario ?? "";
 
         _db.AuditoriaLogs.Add(new AuditoriaLog
@@ -77,7 +77,7 @@ public class RevisionService
 
     // RN-03: Evaluación Final
     public async Task<bool> CompletarEvaluacionFinalAsync(int objetivoId, string comentario, ResultadoEval resultado,
-        int? ss1Puntaje = null, string? ss1Comentario = null, int? ss2Puntaje = null, string? ss2Comentario = null)
+        int? ss1Valoracion = null, string? ss1Comentario = null, int? ss2Valoracion = null, string? ss2Comentario = null)
     {
         var objetivo = await _db.Objetivos
             .Include(o => o.Revisiones)
@@ -93,20 +93,20 @@ public class RevisionService
         // sin verificar si el deadline pasó. Este servicio es consistente con esa decisión.
         if (objetivo.EvaluacionFinal != null) return false;
 
-        double puntajeFinal = await _rendimiento.CalcularPonderadoAsync(objetivoId);
+        double valoracionFinal = await _rendimiento.CalcularPonderadoAsync(objetivoId);
 
         var evalFinal = new EvaluacionFinal
         {
             ObjetivoId = objetivoId,
             Anio = objetivo.Anio,
-            PuntajeFinal = puntajeFinal,
+            PuntajeFinal = valoracionFinal,
             ComentarioJefe = comentario,
             ResultadoFinal = resultado,
             FechaEvaluacion = DateTime.UtcNow,
             EvaluadorId = _currentUser.UsuarioId,
-            SoftSkill1Puntaje = ss1Puntaje,
+            SoftSkill1Puntaje = ss1Valoracion,
             SoftSkill1Comentario = ss1Comentario ?? "",
-            SoftSkill2Puntaje = ss2Puntaje,
+            SoftSkill2Puntaje = ss2Valoracion,
             SoftSkill2Comentario = ss2Comentario ?? ""
         };
         _db.EvaluacionesFinales.Add(evalFinal);

@@ -15,15 +15,15 @@ public class RendimientoService
     }
 
     /// <summary>
-    /// Calcula el puntaje ponderado de un objetivo según el modelo simplificado (1 revisión).
+    /// Calcula la valoracion ponderada de un objetivo según el modelo simplificado (1 revisión).
     ///
     /// Fórmula: (feedback * 0.5) + (evaluaciónFinal * 0.5)
     ///
     /// NOTA — comportamiento durante el flujo:
     ///   1. Al completar el Feedback de Mitad de Año: EvaluacionFinal aún no existe → fin = 0.
-    ///      El resultado en ese momento es feedback * 0.5 (la mitad del puntaje máximo posible).
+    ///      El resultado en ese momento es feedback * 0.5 (la mitad de la valoracion máxima posible).
     ///   2. Al completar la Evaluación Final: este método se llama ANTES de guardar EvaluacionFinal,
-    ///      por lo que fin sigue siendo 0. El PuntajeFinal almacenado en EvaluacionFinal es por tanto
+    ///      por lo que fin sigue siendo 0. La ValoracionFinal almacenada en EvaluacionFinal es por tanto
     ///      feedback * 0.5. Esto es by design: el jefe puede ajustar ResultadoFinal manualmente.
     ///
     /// Diferencia con CONTEXT.md RN-07 (Q1*0.2 + Q2*0.3 + Q3*0.3 + fin*0.2):
@@ -43,7 +43,7 @@ public class RendimientoService
         return (feedback * 0.5) + (fin * 0.5);
     }
 
-    // Puntaje ponderado de un objetivo (1-5) - RN-07
+    // Valoracion ponderada de un objetivo (1-5) - RN-07
     public async Task<double> CalcularPonderadoAsync(int objetivoId)
     {
         var objetivo = await _db.Objetivos
@@ -97,7 +97,7 @@ public class RendimientoService
     }
 
     // Display sobre 100 - RN-07
-    public int DisplayScore(double promedio)
+    public int DisplayValoracion(double promedio)
     {
         return (int)Math.Round(promedio * 20);
     }
