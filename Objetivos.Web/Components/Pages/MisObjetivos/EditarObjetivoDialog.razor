@@ -14,9 +14,14 @@
         </RadzenFormField>
 
         <RadzenRow>
-            <RadzenColumn Size="6">
+            <RadzenColumn Size="4">
                 <RadzenFormField Text="Pilar" Style="width: 100%;">
                     <RadzenDropDown TValue="int" Data="@pilares" TextProperty="Nombre" ValueProperty="Id" @bind-Value="Objetivo.PilarId" Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="2">
+                <RadzenFormField Text="Ponderación (%)" Style="width: 100%;">
+                    <RadzenNumeric @bind-Value="Objetivo.PorcentajePilar" Min="0" Max="100" Step="5" Style="width: 100%;" />
                 </RadzenFormField>
             </RadzenColumn>
             <RadzenColumn Size="6">

@@ -40,6 +40,8 @@ builder.Services.AddScoped<NotificacionService>();
 builder.Services.AddScoped<SeguimientoService>();
 builder.Services.AddScoped<AutoevaluacionService>();
 builder.Services.AddScoped<CalendarioService>();
+builder.Services.AddScoped<ConfiguracionService>();
+builder.Services.AddScoped<ValidacionObjetivoService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 

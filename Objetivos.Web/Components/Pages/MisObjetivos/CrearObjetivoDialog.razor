@@ -3,6 +3,7 @@
 @inject NotificationService NotificationService
 @inject AppDbContext Db
 @inject DialogService DialogService
+@inject ValidacionObjetivoService ValidacionService
 
 <RadzenTemplateForm TItem="Objetivo" Data="@objetivo" Submit="@OnSubmit">
     <RadzenStack Gap="1rem">
@@ -17,11 +18,16 @@
         </RadzenRow>
 
         <RadzenRow>
-            <RadzenColumn Size="12">
+            <RadzenColumn Size="8">
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Pilar Estratégico</RadzenText>
-                <RadzenDropDown @bind-Value="@objetivo.PilarId" Data="@pilares" TextProperty="Nombre" ValueProperty="Id" 
+                <RadzenDropDown @bind-Value="@objetivo.PilarId" Data="@pilares" TextProperty="Nombre" ValueProperty="Id"
                                 Style="width: 100%;" Name="Pilar" />
                 <RadzenRequiredValidator Component="Pilar" Text="Este campo es obligatorio" Style="position: absolute" />
+            </RadzenColumn>
+            <RadzenColumn Size="4">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Ponderación (%)</RadzenText>
+                <RadzenNumeric @bind-Value="@objetivo.PorcentajePilar" Min="0" Max="100" Step="5" Style="width: 100%;" Name="Porcentaje" />
+                <RadzenRangeValidator Component="Porcentaje" Min="0" Max="100" Text="El porcentaje debe estar entre 0 y 100" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
 
