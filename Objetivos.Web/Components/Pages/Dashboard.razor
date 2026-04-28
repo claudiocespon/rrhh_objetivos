@@ -61,39 +61,31 @@ else
 
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" Style="margin-bottom: 2rem; flex-wrap: wrap;">
             <RadzenCard Style="background-color: var(--rz-primary); color: white; flex: 1; min-width: 200px;">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="assignment" Style="font-size: 2.5rem; opacity: 0.8;" />
-                    <RadzenStack Gap="0">
-                        <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.TotalObjetivos</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Total Objetivos</RadzenText>
-                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0; text-align: center;">@data.TotalObjetivos</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0; text-align: center;">Total Objetivos</RadzenText>
                 </RadzenStack>
             </RadzenCard>
             <RadzenCard Style="background-color: var(--rz-info); color: white; flex: 1; min-width: 200px;">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="trending_up" Style="font-size: 2.5rem; opacity: 0.8;" />
-                    <RadzenStack Gap="0">
-                        <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.EnCurso</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">En Curso</RadzenText>
-                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0; text-align: center;">@data.EnCurso</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0; text-align: center;">En Curso</RadzenText>
                 </RadzenStack>
             </RadzenCard>
             <RadzenCard Style="background-color: var(--rz-warning); color: white; flex: 1; min-width: 200px;">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; opacity: 0.8;" />
-                    <RadzenStack Gap="0">
-                        <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.VencenPronto</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Vencen Pronto</RadzenText>
-                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0; text-align: center;">@data.VencenPronto</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0; text-align: center;">Vencen Pronto</RadzenText>
                 </RadzenStack>
             </RadzenCard>
             <RadzenCard Style="background-color: var(--rz-danger); color: white; flex: 1; min-width: 200px;">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="rule" Style="font-size: 2.5rem; opacity: 0.8;" />
-                    <RadzenStack Gap="0">
-                        <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0;">@data.PendientesRevision</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0;">Pendientes Revisión</RadzenText>
-                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0; text-align: center;">@data.PendientesRevision</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0; text-align: center;">Pendientes Revisión</RadzenText>
                 </RadzenStack>
             </RadzenCard>
         </RadzenStack>
