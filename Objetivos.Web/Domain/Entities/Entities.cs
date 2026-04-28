@@ -101,6 +101,9 @@ public class Objetivo {
     public bool AprobadoPorJefe { get; set; } = false;
     public int? EstadoObjetivoConfigId { get; set; }
     public EstadoObjetivoConfig? EstadoObjetivoConfig { get; set; }
+    public int? AreaEspecificaId { get; set; }
+    public Area? AreaEspecifica { get; set; }
+    public decimal PorcentajeArea { get; set; } = 0;
     // Nav
     public List<RevisionCuatrimestral> Revisiones { get; set; } = [];
     public EvaluacionFinal? EvaluacionFinal { get; set; }
