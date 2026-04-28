@@ -23,6 +23,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
     public DbSet<Curso> Cursos => Set<Curso>();
     public DbSet<CursoAsignacion> CursoAsignaciones => Set<CursoAsignacion>();
+    public DbSet<EscalaValoracion> EscalasValoracion => Set<EscalaValoracion>();
+    public DbSet<EstadoObjetivoConfig> EstadosObjetivoConfig => Set<EstadoObjetivoConfig>();
+    public DbSet<EstadoEvaluacionConfig> EstadosEvaluacionConfig => Set<EstadoEvaluacionConfig>();
+    public DbSet<ConfiguracionPlataforma> ConfiguracionesPlataforma => Set<ConfiguracionPlataforma>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -102,5 +106,112 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Empleado>()
             .HasIndex(e => e.Email).IsUnique();
+
+        // ConfiguracionPlataforma: Clave es PK string
+        modelBuilder.Entity<ConfiguracionPlataforma>()
+            .HasKey(c => c.Clave);
+
+        // EstadoObjetivoConfig: Slug unique
+        modelBuilder.Entity<EstadoObjetivoConfig>()
+            .HasIndex(e => e.Slug).IsUnique();
+
+        // EstadoEvaluacionConfig: Slug unique
+        modelBuilder.Entity<EstadoEvaluacionConfig>()
+            .HasIndex(e => e.Slug).IsUnique();
+
+        // Índices para Orden (ordenamiento)
+        modelBuilder.Entity<EscalaValoracion>()
+            .HasIndex(e => e.Orden);
+
+        modelBuilder.Entity<Pilar>()
+            .HasIndex(p => p.Orden);
+
+        modelBuilder.Entity<SoftSkill>()
+            .HasIndex(s => s.Orden);
+
+        modelBuilder.Entity<EstadoObjetivoConfig>()
+            .HasIndex(e => e.Orden);
+
+        modelBuilder.Entity<EstadoEvaluacionConfig>()
+            .HasIndex(e => e.Orden);
+
+        // Relaciones para nuevos FK
+        modelBuilder.Entity<Objetivo>()
+            .HasOne(o => o.EstadoObjetivoConfig)
+            .WithMany()
+            .HasForeignKey(o => o.EstadoObjetivoConfigId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<RevisionCuatrimestral>()
+            .HasOne(r => r.EscalaValoracion)
+            .WithMany()
+            .HasForeignKey(r => r.EscalaValoracionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<RevisionCuatrimestral>()
+            .HasOne(r => r.SoftSkill1EscalaValoracion)
+            .WithMany()
+            .HasForeignKey(r => r.SoftSkill1EscalaValoracionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<RevisionCuatrimestral>()
+            .HasOne(r => r.SoftSkill2EscalaValoracion)
+            .WithMany()
+            .HasForeignKey(r => r.SoftSkill2EscalaValoracionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<RevisionCuatrimestral>()
+            .HasOne(r => r.EstadoEvaluacionConfig)
+            .WithMany()
+            .HasForeignKey(r => r.EstadoEvaluacionConfigId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<EvaluacionFinal>()
+            .HasOne(e => e.EscalaValoracionFinal)
+            .WithMany()
+            .HasForeignKey(e => e.EscalaValoracionIdFinal)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<EvaluacionFinal>()
+            .HasOne(e => e.SoftSkill1EscalaValoracion)
+            .WithMany()
+            .HasForeignKey(e => e.SoftSkill1EscalaValoracionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<EvaluacionFinal>()
+            .HasOne(e => e.SoftSkill2EscalaValoracion)
+            .WithMany()
+            .HasForeignKey(e => e.SoftSkill2EscalaValoracionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<EvaluacionFinal>()
+            .HasOne(e => e.EstadoEvaluacionConfig)
+            .WithMany()
+            .HasForeignKey(e => e.EstadoEvaluacionConfigId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Autoevaluacion>()
+            .HasOne(a => a.EscalaValoracionScore)
+            .WithMany()
+            .HasForeignKey(a => a.EscalaValoracionIdScore)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Autoevaluacion>()
+            .HasOne(a => a.SoftSkill1EscalaValoracion)
+            .WithMany()
+            .HasForeignKey(a => a.SoftSkill1EscalaValoracionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Autoevaluacion>()
+            .HasOne(a => a.SoftSkill2EscalaValoracion)
+            .WithMany()
+            .HasForeignKey(a => a.SoftSkill2EscalaValoracionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Autoevaluacion>()
+            .HasOne(a => a.EstadoEvaluacionConfig)
+            .WithMany()
+            .HasForeignKey(a => a.EstadoEvaluacionConfigId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

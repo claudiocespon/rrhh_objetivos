@@ -45,23 +45,6 @@
             </RadzenColumn>
         </RadzenRow>
 
-        <RadzenRow>
-            <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2">Evidencias Verificadas</RadzenText>
-                <RadzenCheckBoxList @bind-Value="@model.EvidenciasSeleccionadas" TValue="string" Orientation="Orientation.Vertical" Name="Evidencias">
-                    <Items>
-                        @foreach (var ev in evidenciasDisponibles)
-                        {
-                            <RadzenCheckBoxListItem Text="@ev" Value="@ev" />
-                        }
-                    </Items>
-                </RadzenCheckBoxList>
-                @if (submitted && RequiereEvidencia() && !model.EvidenciasSeleccionadas.Any())
-                {
-                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger)">Debe marcar al menos una evidencia para esta valoración</RadzenText>
-                }
-            </RadzenColumn>
-        </RadzenRow>
 
         @if (errorMsg != null)
         {

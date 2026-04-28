@@ -10,19 +10,24 @@ public class DashboardService
     private readonly AppDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly DataScopeService _dataScope;
+    private readonly ConfiguracionService _configuracion;
 
-    public DashboardService(AppDbContext db, ICurrentUserService currentUser, DataScopeService dataScope)
+    public DashboardService(AppDbContext db, ICurrentUserService currentUser, DataScopeService dataScope, ConfiguracionService configuracion)
     {
         _db = db;
         _currentUser = currentUser;
         _dataScope = dataScope;
+        _configuracion = configuracion;
     }
 
     public async Task<RoleDashboardData> GetDashboardDataAsync()
     {
         var result = new RoleDashboardData();
         var hoy = DateTime.Today;
-        var en30Dias = hoy.AddDays(30);
+
+        // Obtener días próximo vencimiento de configuración (default 7 si no está definido)
+        var diasProximoVencimiento = await _configuracion.ObtenerConfiguracionIntAsync("dias_proximo_vencimiento") ?? 7;
+        var proximaFecha = hoy.AddDays(diasProximoVencimiento);
 
         // 1. Fetch Personal Data (for Colaborador, or for Jefe/Gerente's own objectives)
         var empleadoPropio = await _db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == _currentUser.Email.ToLower() && e.Activo);
@@ -38,7 +43,7 @@ public class DashboardService
                 EnCurso = misObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO),
                 EnRiesgo = misObjetivos.Count(o => o.Estado == EstadoObjetivo.EN_RIESGO),
                 Completados = misObjetivos.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
-                VencenPronto = misObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO && o.Deadline <= en30Dias),
+                VencenPronto = misObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO && o.Deadline <= proximaFecha),
                 PendientesRevision = await _db.RevisionesCuatrimestrales
                     .CountAsync(r => !r.Completada && r.Objetivo.EmpleadoId == empleadoPropio.Id && r.Anio == hoy.Year && r.Objetivo.Estado != EstadoObjetivo.CANCELADO)
             };
@@ -62,7 +67,7 @@ public class DashboardService
                 EnCurso = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO),
                 EnRiesgo = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.EN_RIESGO),
                 Completados = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
-                VencenPronto = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO && o.Deadline <= en30Dias),
+                VencenPronto = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO && o.Deadline <= proximaFecha),
                 PendientesRevision = pendingTeamRevision
             };
         }

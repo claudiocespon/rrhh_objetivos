@@ -1,0 +1,277 @@
+@page "/admin/configuracion"
+@attribute [Authorize(Roles = "RRHH,SUPERUSUARIO")]
+
+@inject AdminPilarService AdminPilarService
+@inject AdminSoftSkillService AdminSoftSkillService
+@inject AdminAreaService AdminAreaService
+@inject AdminEscalaValoracionService AdminEscalaService
+@inject AdminEstadoService AdminEstadoService
+@inject AdminConfiguracionPlatformaService AdminConfigService
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1.5rem">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Administración de Configuración</RadzenText>
+    </RadzenStack>
+
+    @if (loading)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Pilares Estratégicos">
+                    @RenderPilares()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Soft Skills">
+                    @RenderSoftSkills()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Escala de Valoración">
+                    @RenderEscalas()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Estados Objetivo">
+                    @RenderEstadosObjetivo()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Estados Evaluación">
+                    @RenderEstadosEvaluacion()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Áreas">
+                    @RenderAreas()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Configuraciones">
+                    @RenderConfiguraciones()
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    }
+</RadzenStack>
+
+@code {
+    List<Pilar> pilares = new();
+    List<SoftSkill> softSkills = new();
+    List<Area> areas = new();
+    List<EscalaValoracion> escalas = new();
+    List<EstadoObjetivoConfig> estadosObjetivo = new();
+    List<EstadoEvaluacionConfig> estadosEvaluacion = new();
+    List<ConfiguracionPlataforma> configuraciones = new();
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllData();
+    }
+
+    async Task LoadAllData()
+    {
+        loading = true;
+        pilares = await AdminPilarService.ObtenerTodosAsync();
+        softSkills = await AdminSoftSkillService.ObtenerTodosAsync();
+        areas = await AdminAreaService.ObtenerTodosAsync();
+        escalas = await AdminEscalaService.ObtenerTodosAsync();
+        estadosObjetivo = await AdminEstadoService.ObtenerEstadosObjetivoAsync();
+        estadosEvaluacion = await AdminEstadoService.ObtenerEstadosEvaluacionAsync();
+        configuraciones = await AdminConfigService.ObtenerTodosAsync();
+        loading = false;
+    }
+
+    private RenderFragment RenderPilares() => __builder =>
+    {
+        <div class="pt-3">
+            <RadzenButton Icon="add" Text="Agregar Pilar" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarPilar())" Style="margin-bottom: 1rem;" />
+            <RadzenDataGrid Data="@pilares" TItem="Pilar" AllowPaging="true" PageSize="10" Responsive="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Pilar" Property="Nombre" Title="Nombre" />
+                    <RadzenDataGridColumn TItem="Pilar" Property="Descripcion" Title="Descripción" Width="250px" />
+                    <RadzenDataGridColumn TItem="Pilar" Property="Orden" Title="Orden" Width="80px" />
+                    <RadzenDataGridColumn TItem="Pilar" Title="Color" Width="100px">
+                        <Template Context="p">
+                            <div style="@($"background-color: {p.ColorHex}; width: 30px; height: 30px; border-radius: 4px;")"></div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Pilar" Title="Activo" Width="80px">
+                        <Template Context="p">
+                            <RadzenCheckBox @bind-Value="@p.Activo" Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Pilar" Filterable="false" Sortable="false" Width="150px">
+                        <Template Context="p">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OnEditarPilar(p))" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@(() => OnEliminarPilar(p.Id))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    };
+
+    private RenderFragment RenderSoftSkills() => __builder =>
+    {
+        <div class="pt-3">
+            <RadzenButton Icon="add" Text="Agregar Soft Skill" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarSoftSkill())" Style="margin-bottom: 1rem;" />
+            <RadzenDataGrid Data="@softSkills" TItem="SoftSkill" AllowPaging="true" PageSize="10" Responsive="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="SoftSkill" Property="Nombre" Title="Nombre" />
+                    <RadzenDataGridColumn TItem="SoftSkill" Property="Descripcion" Title="Descripción" Width="250px" />
+                    <RadzenDataGridColumn TItem="SoftSkill" Property="Orden" Title="Orden" Width="80px" />
+                    <RadzenDataGridColumn TItem="SoftSkill" Title="Activo" Width="80px">
+                        <Template Context="s">
+                            <RadzenCheckBox @bind-Value="@s.Activo" Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SoftSkill" Filterable="false" Sortable="false" Width="150px">
+                        <Template Context="s">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OnEditarSoftSkill(s))" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@(() => OnEliminarSoftSkill(s.Id))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    };
+
+    private RenderFragment RenderEscalas() => __builder =>
+    {
+        <div class="pt-3">
+            <RadzenButton Icon="add" Text="Agregar Escala" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarEscala())" Style="margin-bottom: 1rem;" />
+            <RadzenDataGrid Data="@escalas" TItem="EscalaValoracion" AllowPaging="true" PageSize="10" Responsive="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="EscalaValoracion" Property="Etiqueta" Title="Etiqueta" />
+                    <RadzenDataGridColumn TItem="EscalaValoracion" Property="ValorNumerico" Title="Valor Numérico" Width="120px" />
+                    <RadzenDataGridColumn TItem="EscalaValoracion" Property="Orden" Title="Orden" Width="80px" />
+                    <RadzenDataGridColumn TItem="EscalaValoracion" Title="Activo" Width="80px">
+                        <Template Context="e">
+                            <RadzenCheckBox @bind-Value="@e.Activo" Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="EscalaValoracion" Filterable="false" Sortable="false" Width="150px">
+                        <Template Context="e">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OnEditarEscala(e))" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@(() => OnEliminarEscala(e.Id))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    };
+
+    private RenderFragment RenderEstadosObjetivo() => __builder =>
+    {
+        <div class="pt-3">
+            <RadzenDataGrid Data="@estadosObjetivo" TItem="EstadoObjetivoConfig" AllowPaging="true" PageSize="10" Responsive="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="EstadoObjetivoConfig" Property="Nombre" Title="Nombre" />
+                    <RadzenDataGridColumn TItem="EstadoObjetivoConfig" Property="Slug" Title="Slug" Width="150px" />
+                    <RadzenDataGridColumn TItem="EstadoObjetivoConfig" Title="Color" Width="100px">
+                        <Template Context="e">
+                            <div style="@($"background-color: {e.ColorHex}; width: 30px; height: 30px; border-radius: 4px;")"></div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="EstadoObjetivoConfig" Property="Orden" Title="Orden" Width="80px" />
+                    <RadzenDataGridColumn TItem="EstadoObjetivoConfig" Title="Activo" Width="80px">
+                        <Template Context="e">
+                            <RadzenCheckBox @bind-Value="@e.Activo" Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="EstadoObjetivoConfig" Filterable="false" Sortable="false" Width="150px">
+                        <Template Context="e">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OnEditarEstadoObjetivo(e))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    };
+
+    private RenderFragment RenderEstadosEvaluacion() => __builder =>
+    {
+        <div class="pt-3">
+            <RadzenDataGrid Data="@estadosEvaluacion" TItem="EstadoEvaluacionConfig" AllowPaging="true" PageSize="10" Responsive="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="EstadoEvaluacionConfig" Property="Nombre" Title="Nombre" />
+                    <RadzenDataGridColumn TItem="EstadoEvaluacionConfig" Property="Slug" Title="Slug" Width="150px" />
+                    <RadzenDataGridColumn TItem="EstadoEvaluacionConfig" Title="Color" Width="100px">
+                        <Template Context="e">
+                            <div style="@($"background-color: {e.ColorHex}; width: 30px; height: 30px; border-radius: 4px;")"></div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="EstadoEvaluacionConfig" Property="Orden" Title="Orden" Width="80px" />
+                    <RadzenDataGridColumn TItem="EstadoEvaluacionConfig" Title="Activo" Width="80px">
+                        <Template Context="e">
+                            <RadzenCheckBox @bind-Value="@e.Activo" Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="EstadoEvaluacionConfig" Filterable="false" Sortable="false" Width="150px">
+                        <Template Context="e">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OnEditarEstadoEvaluacion(e))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    };
+
+    private RenderFragment RenderAreas() => __builder =>
+    {
+        <div class="pt-3">
+            <RadzenButton Icon="add" Text="Agregar Área" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarArea())" Style="margin-bottom: 1rem;" />
+            <RadzenDataGrid Data="@areas" TItem="Area" AllowPaging="true" PageSize="10" Responsive="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Area" Property="Nombre" Title="Nombre" />
+                    <RadzenDataGridColumn TItem="Area" Property="Descripcion" Title="Descripción" Width="250px" />
+                    <RadzenDataGridColumn TItem="Area" Title="Activo" Width="80px">
+                        <Template Context="a">
+                            <RadzenCheckBox @bind-Value="@a.Activo" Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Area" Filterable="false" Sortable="false" Width="150px">
+                        <Template Context="a">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OnEditarArea(a))" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@(() => OnEliminarArea(a.Id))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    };
+
+    private RenderFragment RenderConfiguraciones() => __builder =>
+    {
+        <div class="pt-3">
+            <RadzenDataGrid Data="@configuraciones" TItem="ConfiguracionPlataforma" AllowPaging="true" PageSize="10" Responsive="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="ConfiguracionPlataforma" Property="Clave" Title="Clave" Width="200px" />
+                    <RadzenDataGridColumn TItem="ConfiguracionPlataforma" Property="Descripcion" Title="Descripción" Width="250px" />
+                    <RadzenDataGridColumn TItem="ConfiguracionPlataforma" Property="Valor" Title="Valor" />
+                    <RadzenDataGridColumn TItem="ConfiguracionPlataforma" Filterable="false" Sortable="false" Width="150px">
+                        <Template Context="c">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OnEditarConfiguracion(c))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    };
+
+    async Task OnAgregarPilar() => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de agregar pilar pendiente");
+    async Task OnEditarPilar(Pilar p) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar pilar pendiente");
+    async Task OnEliminarPilar(int id) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de eliminar pilar pendiente");
+
+    async Task OnAgregarSoftSkill() => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de agregar soft skill pendiente");
+    async Task OnEditarSoftSkill(SoftSkill s) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar soft skill pendiente");
+    async Task OnEliminarSoftSkill(int id) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de eliminar soft skill pendiente");
+
+    async Task OnAgregarEscala() => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de agregar escala pendiente");
+    async Task OnEditarEscala(EscalaValoracion e) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar escala pendiente");
+    async Task OnEliminarEscala(int id) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de eliminar escala pendiente");
+
+    async Task OnEditarEstadoObjetivo(EstadoObjetivoConfig e) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar estado pendiente");
+    async Task OnEditarEstadoEvaluacion(EstadoEvaluacionConfig e) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar estado pendiente");
+
+    async Task OnAgregarArea() => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de agregar área pendiente");
+    async Task OnEditarArea(Area a) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar área pendiente");
+    async Task OnEliminarArea(int id) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de eliminar área pendiente");
+
+    async Task OnEditarConfiguracion(ConfiguracionPlataforma c) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar configuración pendiente");
+}

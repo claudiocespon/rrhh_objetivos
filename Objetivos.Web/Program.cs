@@ -42,6 +42,12 @@ builder.Services.AddScoped<AutoevaluacionService>();
 builder.Services.AddScoped<CalendarioService>();
 builder.Services.AddScoped<ConfiguracionService>();
 builder.Services.AddScoped<ValidacionObjetivoService>();
+builder.Services.AddScoped<AdminPilarService>();
+builder.Services.AddScoped<AdminSoftSkillService>();
+builder.Services.AddScoped<AdminAreaService>();
+builder.Services.AddScoped<AdminEscalaValoracionService>();
+builder.Services.AddScoped<AdminEstadoService>();
+builder.Services.AddScoped<AdminConfiguracionPlatformaService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 

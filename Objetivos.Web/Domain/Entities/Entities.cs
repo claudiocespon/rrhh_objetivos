@@ -11,6 +11,9 @@ public class Area {
     public int Id { get; set; }
     public string Nombre { get; set; } = "";
     public string Descripcion { get; set; } = "";
+    public bool Activo { get; set; } = true;
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+    public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
 }
 
 public class Jefe {
@@ -57,15 +60,23 @@ public class Empleado {
 
 public class Pilar {
     public int Id { get; set; }
-    public string Nombre { get; set; } = ""; // "EXCELENCIA_ORGANIZACIONAL" | "INNOVACION_MEJORA" | "ORIENTACION_CLIENTE"
+    public string Nombre { get; set; } = "";
     public string Descripcion { get; set; } = "";
     public string ColorHex { get; set; } = "#000000";
+    public bool Activo { get; set; } = true;
+    public int Orden { get; set; } = 0;
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+    public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
 }
 
 public class SoftSkill {
     public int Id { get; set; }
     public string Nombre { get; set; } = "";
     public string Descripcion { get; set; } = "";
+    public bool Activo { get; set; } = true;
+    public int Orden { get; set; } = 0;
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+    public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
 }
 
 public class Objetivo {
@@ -86,6 +97,10 @@ public class Objetivo {
     public int Progreso { get; set; } = 0; // 0-100
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public int CreadoPorId { get; set; }
+    public decimal PorcentajePilar { get; set; } = 0;
+    public bool AprobadoPorJefe { get; set; } = false;
+    public int? EstadoObjetivoConfigId { get; set; }
+    public EstadoObjetivoConfig? EstadoObjetivoConfig { get; set; }
     // Nav
     public List<RevisionCuatrimestral> Revisiones { get; set; } = [];
     public EvaluacionFinal? EvaluacionFinal { get; set; }
@@ -99,18 +114,25 @@ public class RevisionCuatrimestral {
     public Objetivo Objetivo { get; set; } = null!;
     public PeriodoRevision Periodo { get; set; }
     public int Anio { get; set; }
-    public int? Puntaje { get; set; }           // null = pendiente, 1-5 = completada
+    public int? Puntaje { get; set; }
+    public int? EscalaValoracionId { get; set; }
+    public EscalaValoracion? EscalaValoracion { get; set; }
     public string ComentarioJefe { get; set; } = "";
     public ResultadoEval? Resultado { get; set; }
-    public string EvidenciasRevisadasJson { get; set; } = "[]"; // JSON serializado
+    public string EvidenciasRevisadasJson { get; set; } = "[]";
     public bool Completada { get; set; } = false;
     public DateTime? FechaEvaluacion { get; set; }
     public int? EvaluadorId { get; set; }
+    public int? EstadoEvaluacionConfigId { get; set; }
+    public EstadoEvaluacionConfig? EstadoEvaluacionConfig { get; set; }
 
-    // Habilidades Blandas
     public int? SoftSkill1Puntaje { get; set; }
+    public int? SoftSkill1EscalaValoracionId { get; set; }
+    public EscalaValoracion? SoftSkill1EscalaValoracion { get; set; }
     public string SoftSkill1Comentario { get; set; } = "";
     public int? SoftSkill2Puntaje { get; set; }
+    public int? SoftSkill2EscalaValoracionId { get; set; }
+    public EscalaValoracion? SoftSkill2EscalaValoracion { get; set; }
     public string SoftSkill2Comentario { get; set; } = "";
 }
 
@@ -119,16 +141,23 @@ public class EvaluacionFinal {
     public int ObjetivoId { get; set; }
     public Objetivo Objetivo { get; set; } = null!;
     public int Anio { get; set; }
-    public double PuntajeFinal { get; set; }    // resultado del promedio ponderado
+    public double PuntajeFinal { get; set; }
+    public int? EscalaValoracionIdFinal { get; set; }
+    public EscalaValoracion? EscalaValoracionFinal { get; set; }
     public string ComentarioJefe { get; set; } = "";
     public ResultadoEval ResultadoFinal { get; set; }
     public DateTime FechaEvaluacion { get; set; }
     public int EvaluadorId { get; set; }
+    public int? EstadoEvaluacionConfigId { get; set; }
+    public EstadoEvaluacionConfig? EstadoEvaluacionConfig { get; set; }
 
-    // Habilidades Blandas
     public int? SoftSkill1Puntaje { get; set; }
+    public int? SoftSkill1EscalaValoracionId { get; set; }
+    public EscalaValoracion? SoftSkill1EscalaValoracion { get; set; }
     public string SoftSkill1Comentario { get; set; } = "";
     public int? SoftSkill2Puntaje { get; set; }
+    public int? SoftSkill2EscalaValoracionId { get; set; }
+    public EscalaValoracion? SoftSkill2EscalaValoracion { get; set; }
     public string SoftSkill2Comentario { get; set; } = "";
 }
 
@@ -137,17 +166,24 @@ public class Autoevaluacion {
     public int ObjetivoId { get; set; }
     public Objetivo Objetivo { get; set; } = null!;
     public int EmpleadoId { get; set; }
-    public int Score { get; set; }              // 1-5
+    public int Score { get; set; }
+    public int? EscalaValoracionIdScore { get; set; }
+    public EscalaValoracion? EscalaValoracionScore { get; set; }
     public string Comentario { get; set; } = "";
     public string EvidenciasMencionadasJson { get; set; } = "[]";
-    public string ArchivosAdjuntosJson { get; set; } = "[]"; // List of relative file paths
-    
-    // Soft Skills Evaluation
-    public int SoftSkill1Score { get; set; }    // 1-5
+    public string ArchivosAdjuntosJson { get; set; } = "[]";
+    public int? EstadoEvaluacionConfigId { get; set; }
+    public EstadoEvaluacionConfig? EstadoEvaluacionConfig { get; set; }
+
+    public int SoftSkill1Score { get; set; }
+    public int? SoftSkill1EscalaValoracionId { get; set; }
+    public EscalaValoracion? SoftSkill1EscalaValoracion { get; set; }
     public string SoftSkill1Comentario { get; set; } = "";
-    public int SoftSkill2Score { get; set; }    // 1-5
+    public int SoftSkill2Score { get; set; }
+    public int? SoftSkill2EscalaValoracionId { get; set; }
+    public EscalaValoracion? SoftSkill2EscalaValoracion { get; set; }
     public string SoftSkill2Comentario { get; set; } = "";
-    
+
     public DateTime FechaAutoevaluacion { get; set; }
 }
 
@@ -229,4 +265,43 @@ public class CursoAsignacion {
     public bool Completado { get; set; } = false;
     public int? AsignadoPorId { get; set; }
     public string? Notas { get; set; }
+}
+
+public class EscalaValoracion {
+    public int Id { get; set; }
+    public string Etiqueta { get; set; } = "";
+    public decimal? ValorNumerico { get; set; }
+    public int Orden { get; set; }
+    public bool Activo { get; set; } = true;
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+    public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
+}
+
+public class EstadoObjetivoConfig {
+    public int Id { get; set; }
+    public string Nombre { get; set; } = "";
+    public string Slug { get; set; } = "";
+    public string ColorHex { get; set; } = "#000000";
+    public int Orden { get; set; }
+    public bool Activo { get; set; } = true;
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+}
+
+public class EstadoEvaluacionConfig {
+    public int Id { get; set; }
+    public string Nombre { get; set; } = "";
+    public string Slug { get; set; } = "";
+    public string ColorHex { get; set; } = "#000000";
+    public int Orden { get; set; }
+    public bool Activo { get; set; } = true;
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+}
+
+public class ConfiguracionPlataforma {
+    public string Clave { get; set; } = "";
+    public string Valor { get; set; } = "";
+    public string Descripcion { get; set; } = "";
+    public string Tipo { get; set; } = "string";
+    public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
+    public int? ActualizadoPorId { get; set; }
 }

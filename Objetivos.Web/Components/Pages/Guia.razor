@@ -1,0 +1,127 @@
+@page "/guia"
+@inject ConfiguracionService ConfiguracionService
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<RadzenStack Gap="2rem">
+    <RadzenText TextStyle="TextStyle.H4">Guía de Uso - PQ Talent</RadzenText>
+
+    @if (loading)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Pilares Estratégicos">
+                    <RadzenStack Gap="1.5rem" Style="padding: 1.5rem 0;">
+                        @if (pilares != null && pilares.Any())
+                        {
+                            @foreach (var pilar in pilares.Where(p => p.Activo))
+                            {
+                                <RadzenCard>
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <div style="@($"width: 20px; height: 20px; background-color: {pilar.ColorHex}; border-radius: 4px;")"></div>
+                                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">@pilar.Nombre</RadzenText>
+                                        </RadzenStack>
+                                        <RadzenText TextStyle="TextStyle.Body2">@pilar.Descripcion</RadzenText>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">No hay pilares disponibles.</RadzenAlert>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Competencias (Soft Skills)">
+                    <RadzenStack Gap="1.5rem" Style="padding: 1.5rem 0;">
+                        @if (softSkills != null && softSkills.Any())
+                        {
+                            @foreach (var skill in softSkills.Where(s => s.Activo))
+                            {
+                                <RadzenCard>
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">@skill.Nombre</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">@skill.Descripcion</RadzenText>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">No hay competencias disponibles.</RadzenAlert>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Manual de Uso">
+                    <RadzenStack Gap="1.5rem" Style="padding: 1.5rem 0;">
+                        @if (!string.IsNullOrEmpty(manualContenido))
+                        {
+                            <RadzenCard>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap; line-height: 1.8;">@manualContenido</RadzenText>
+                            </RadzenCard>
+                        }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
+                                El manual de uso aún no ha sido configurado. Contacta al equipo de RRHH para obtener más información.
+                            </RadzenAlert>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Escala de Valoración">
+                    <RadzenStack Gap="1.5rem" Style="padding: 1.5rem 0;">
+                        @if (escalas != null && escalas.Any())
+                        {
+                            <RadzenDataGrid Data="@escalas.Where(e => e.Activo).OrderBy(e => e.Orden).ToList()" TItem="EscalaValoracion" Responsive="true">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="EscalaValoracion" Property="Etiqueta" Title="Nivel" />
+                                    <RadzenDataGridColumn TItem="EscalaValoracion" Property="ValorNumerico" Title="Valor" Width="100px" />
+                                    <RadzenDataGridColumn TItem="EscalaValoracion" Property="Orden" Title="Posición" Width="100px" />
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">No hay escalas de valoración disponibles.</RadzenAlert>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    }
+</RadzenStack>
+
+@code {
+    List<Pilar>? pilares;
+    List<SoftSkill>? softSkills;
+    List<EscalaValoracion>? escalas;
+    string manualContenido = "";
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        loading = true;
+
+        using var db = await DbFactory.CreateDbContextAsync();
+        pilares = await db.Pilares.Where(p => p.Activo).OrderBy(p => p.Orden).ToListAsync();
+        softSkills = await db.SoftSkills.Where(s => s.Activo).OrderBy(s => s.Orden).ToListAsync();
+        escalas = await db.EscalasValoracion.Where(e => e.Activo).OrderBy(e => e.Orden).ToListAsync();
+
+        // Obtener manual de configuración
+        manualContenido = await ConfiguracionService.ObtenerConfiguracionAsync("texto_guia_plataforma") ?? "";
+
+        loading = false;
+    }
+}

@@ -4,6 +4,7 @@
 @inject AppDbContext Db
 @inject DialogService DialogService
 @inject ValidacionObjetivoService ValidacionService
+@inject ConfiguracionService ConfigService
 
 <RadzenTemplateForm TItem="Objetivo" Data="@objetivo" Submit="@OnSubmit">
     <RadzenStack Gap="1rem">
@@ -63,17 +64,38 @@
         <RadzenRow>
             <RadzenColumn Size="6">
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Soft Skill 1</RadzenText>
-                <RadzenDropDown @bind-Value="@objetivo.SoftSkill1Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id" 
+                <RadzenDropDown @bind-Value="@objetivo.SoftSkill1Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id"
                                 Style="width: 100%;" Name="SS1" />
                 <RadzenRequiredValidator Component="SS1" Text="Este campo es obligatorio" Style="position: absolute" />
             </RadzenColumn>
             <RadzenColumn Size="6">
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Soft Skill 2</RadzenText>
-                <RadzenDropDown @bind-Value="@objetivo.SoftSkill2Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id" 
+                <RadzenDropDown @bind-Value="@objetivo.SoftSkill2Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id"
                                 Style="width: 100%;" Name="SS2" />
                 <RadzenRequiredValidator Component="SS2" Text="Este campo es obligatorio" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
+
+        @if (objetivoAreaHabilitado)
+        {
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Objetivo Específico por Área (Opcional)</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Configure si este objetivo está dirigido a una área específica</RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow>
+                <RadzenColumn Size="8">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Área Específica</RadzenText>
+                    <RadzenDropDown @bind-Value="@objetivo.AreaEspecificaId" Data="@areas" TextProperty="Nombre" ValueProperty="Id"
+                                    Style="width: 100%;" Name="AreaEspecifica" AllowClear="true" Placeholder="Seleccione un área..." />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Ponderación Área (%)</RadzenText>
+                    <RadzenNumeric @bind-Value="@objetivo.PorcentajeArea" Min="0" Max="100" Step="5" Style="width: 100%;" Name="PorcentajeArea" />
+                </RadzenColumn>
+            </RadzenRow>
+        }
 
         @if (errorMsg != null)
         {
@@ -94,12 +116,18 @@
     List<EmpleadoItem> empleados = new();
     List<Pilar> pilares = new();
     List<SoftSkill> softSkills = new();
+    List<Area> areas = new();
+    bool objetivoAreaHabilitado = false;
     string? errorMsg;
 
     protected override async Task OnInitializedAsync()
     {
-        pilares = await Db.Pilares.ToListAsync();
-        softSkills = await Db.SoftSkills.ToListAsync();
+        pilares = await Db.Pilares.Where(p => p.Activo).ToListAsync();
+        softSkills = await Db.SoftSkills.Where(s => s.Activo).ToListAsync();
+        areas = await Db.Areas.Where(a => a.Activo).ToListAsync();
+
+        // Verificar si objetivo por área está habilitado
+        objetivoAreaHabilitado = await ConfigService.ObtenerConfiguracionBoolAsync("objetivo_area_habilitado") ?? false;
         
         IQueryable<Empleado> query = Db.Empleados;
         

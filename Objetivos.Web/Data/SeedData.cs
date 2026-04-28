@@ -80,9 +80,9 @@ public static class SeedData
         // ─── Pilares (keep original) ───
         var pilares = new List<Pilar>
         {
-            new Pilar { Id = 1, Nombre = "EXCELENCIA_ORGANIZACIONAL", ColorHex = "#2563EB" },
-            new Pilar { Id = 2, Nombre = "INNOVACION_MEJORA",         ColorHex = "#7C3AED" },
-            new Pilar { Id = 3, Nombre = "ORIENTACION_CLIENTE",       ColorHex = "#059669" }
+            new Pilar { Id = 1, Nombre = "Crecimiento de Ventas", Descripcion = "Objetivo enfocado en el incremento de ingresos y participación de mercado", ColorHex = "#2563EB", Activo = true, Orden = 1 },
+            new Pilar { Id = 2, Nombre = "Orientación al Cliente", Descripcion = "Objetivo centrado en mejorar la satisfacción y experiencia del cliente", ColorHex = "#7C3AED", Activo = true, Orden = 2 },
+            new Pilar { Id = 3, Nombre = "Eficiencia Organizacional", Descripcion = "Objetivo de optimización de procesos y recursos internos", ColorHex = "#059669", Activo = true, Orden = 3 }
         };
         db.Pilares.AddRange(pilares);
 
@@ -99,7 +99,14 @@ public static class SeedData
         };
         for (int i = 0; i < skillNames.Length; i++)
         {
-            db.SoftSkills.Add(new SoftSkill { Id = i + 1, Nombre = $"SS{i + 1:D2}-{skillNames[i]}" });
+            db.SoftSkills.Add(new SoftSkill
+            {
+                Id = i + 1,
+                Nombre = skillNames[i],
+                Descripcion = skillNames[i],
+                Activo = true,
+                Orden = i + 1
+            });
         }
 
         // ─── Cursos ───
@@ -113,6 +120,51 @@ public static class SeedData
             };
             db.Cursos.AddRange(cursos);
         }
+
+        // ─── Escala de Valoración ───
+        var escalas = new List<EscalaValoracion>
+        {
+            new EscalaValoracion { Etiqueta = "Excelente", ValorNumerico = 5, Orden = 1, Activo = true },
+            new EscalaValoracion { Etiqueta = "Muy bueno", ValorNumerico = 4, Orden = 2, Activo = true },
+            new EscalaValoracion { Etiqueta = "Bueno", ValorNumerico = 3, Orden = 3, Activo = true },
+            new EscalaValoracion { Etiqueta = "Regular", ValorNumerico = 2, Orden = 4, Activo = true },
+            new EscalaValoracion { Etiqueta = "Malo", ValorNumerico = 1, Orden = 5, Activo = true }
+        };
+        db.EscalasValoracion.AddRange(escalas);
+
+        // ─── Estados Objetivo ───
+        var estadosObjetivo = new List<EstadoObjetivoConfig>
+        {
+            new EstadoObjetivoConfig { Nombre = "Borrador", Slug = "borrador", ColorHex = "#9E9E9E", Orden = 1, Activo = true },
+            new EstadoObjetivoConfig { Nombre = "Pendiente de aprobación", Slug = "pendiente_aprobacion", ColorHex = "#FF9800", Orden = 2, Activo = true },
+            new EstadoObjetivoConfig { Nombre = "Aprobado", Slug = "aprobado", ColorHex = "#4CAF50", Orden = 3, Activo = true },
+            new EstadoObjetivoConfig { Nombre = "En curso", Slug = "en_curso", ColorHex = "#2196F3", Orden = 4, Activo = true },
+            new EstadoObjetivoConfig { Nombre = "Completado", Slug = "completado", ColorHex = "#8BC34A", Orden = 5, Activo = true },
+            new EstadoObjetivoConfig { Nombre = "Vencido", Slug = "vencido", ColorHex = "#F44336", Orden = 6, Activo = true }
+        };
+        db.EstadosObjetivoConfig.AddRange(estadosObjetivo);
+
+        // ─── Estados Evaluación ───
+        var estadosEvaluacion = new List<EstadoEvaluacionConfig>
+        {
+            new EstadoEvaluacionConfig { Nombre = "Pendiente", Slug = "pendiente", ColorHex = "#FF9800", Orden = 1, Activo = true },
+            new EstadoEvaluacionConfig { Nombre = "En progreso", Slug = "en_progreso", ColorHex = "#2196F3", Orden = 2, Activo = true },
+            new EstadoEvaluacionConfig { Nombre = "Completada", Slug = "completada", ColorHex = "#4CAF50", Orden = 3, Activo = true },
+            new EstadoEvaluacionConfig { Nombre = "Próxima a vencer", Slug = "proxima_a_vencer", ColorHex = "#FF5722", Orden = 4, Activo = true }
+        };
+        db.EstadosEvaluacionConfig.AddRange(estadosEvaluacion);
+
+        // ─── Configuración Plataforma ───
+        var configs = new List<ConfiguracionPlataforma>
+        {
+            new ConfiguracionPlataforma { Clave = "email_soporte", Valor = "rrhh@permaquim.com", Descripcion = "Email de ayuda e inconvenientes", Tipo = "email" },
+            new ConfiguracionPlataforma { Clave = "dias_proximo_vencimiento", Valor = "7", Descripcion = "Días antes del vencimiento para marcar como 'Próximo a vencer'", Tipo = "integer" },
+            new ConfiguracionPlataforma { Clave = "objetivo_area_habilitado", Valor = "true", Descripcion = "Habilita objetivo específico por área en evaluaciones", Tipo = "boolean" },
+            new ConfiguracionPlataforma { Clave = "calculos_comerciales_habilitados", Valor = "false", Descripcion = "Habilita cálculos del área comercial (diferido)", Tipo = "boolean" },
+            new ConfiguracionPlataforma { Clave = "resultado_final_manual", Valor = "true", Descripcion = "Resultado final de evaluación ingresado manualmente por el jefe", Tipo = "boolean" },
+            new ConfiguracionPlataforma { Clave = "texto_guia_plataforma", Valor = "", Descripcion = "Contenido del manual de uso en la sección Guía", Tipo = "text" }
+        };
+        db.ConfiguracionesPlataforma.AddRange(configs);
 
         await db.SaveChangesAsync();
 
