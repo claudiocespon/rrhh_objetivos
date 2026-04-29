@@ -67,6 +67,13 @@ public class ObjetivoService
     // Con reemplazar=true cancela el existente y crea el nuevo (VAL-01 completo).
     public async Task<(bool Ok, bool Duplicado)> CrearObjetivoAsync(Objetivo nuevo, bool reemplazar = false)
     {
+        // VAL-JEFE: Verificar si jefe está autorizado a crear objetivos
+        bool jefePermitido = await _configuracion.ObtenerConfiguracionBoolAsync("jefe_puede_crear_objetivos") ?? false;
+        if (_currentUser.EsJefe && !jefePermitido && _currentUser.Rol != "RRHH" && _currentUser.Rol != "DIRECTOR_GENERAL")
+        {
+            return (false, false); // 403 Forbidden equivalent
+        }
+
         // VAL-03: Soft skills deben ser diferentes
         if (nuevo.SoftSkill1Id == nuevo.SoftSkill2Id)
             return (false, false);

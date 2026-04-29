@@ -162,6 +162,7 @@ public static class SeedData
             new ConfiguracionPlataforma { Clave = "objetivo_area_habilitado", Valor = "true", Descripcion = "Habilita objetivo específico por área en evaluaciones", Tipo = "boolean" },
             new ConfiguracionPlataforma { Clave = "calculos_comerciales_habilitados", Valor = "false", Descripcion = "Habilita cálculos del área comercial (diferido)", Tipo = "boolean" },
             new ConfiguracionPlataforma { Clave = "resultado_final_manual", Valor = "true", Descripcion = "Resultado final de evaluación ingresado manualmente por el jefe", Tipo = "boolean" },
+            new ConfiguracionPlataforma { Clave = "jefe_puede_crear_objetivos", Valor = "false", Descripcion = "Si es true, el rol jefe puede crear objetivos. Si es false, solo empleados pueden crearlos", Tipo = "boolean" },
             new ConfiguracionPlataforma { Clave = "texto_guia_plataforma", Valor = "", Descripcion = "Contenido del manual de uso en la sección Guía", Tipo = "text" }
         };
         db.ConfiguracionesPlataforma.AddRange(configs);
