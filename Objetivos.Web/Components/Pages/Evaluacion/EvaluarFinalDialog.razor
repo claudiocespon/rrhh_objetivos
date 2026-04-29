@@ -1,14 +1,24 @@
 @inject RevisionService RevisionService
 @inject ObjetivoService ObjetivoService
 @inject DialogService DialogService
+@inject ConfiguracionService ConfigService
 
 <RadzenTemplateForm TItem="FinalEvaluationModel" Data="@model" Submit="@OnSubmit">
     <RadzenStack Gap="1.5rem">
         @if (objetivo != null)
         {
-            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
-                Evaluación Final para: <b>@objetivo.Nombre</b>. La valoración final será calculada automáticamente basada en el promedio ponderado de las revisiones.
-            </RadzenAlert>
+            @if (resultadoFinalManual)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
+                    Evaluación Final para: <b>@objetivo.Nombre</b>. Ingrese manualmente la valoración final.
+                </RadzenAlert>
+            }
+            else
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
+                    Evaluación Final para: <b>@objetivo.Nombre</b>. La valoración final será calculada automáticamente basada en el promedio ponderado de las revisiones.
+                </RadzenAlert>
+            }
 
             <RadzenRow>
                 <RadzenColumn Size="6">
@@ -27,9 +37,18 @@
         <RadzenRow>
             <RadzenColumn Size="12">
                 <RadzenText TextStyle="TextStyle.Subtitle2">Resultado Final</RadzenText>
-                <RadzenDropDown @bind-Value="@model.Resultado" Data="@resultados" 
-                                Placeholder="Seleccione resultado final" Style="width: 100%;" Name="Resultado" />
-                <RadzenRequiredValidator Component="Resultado" Text="El resultado final es obligatorio" Style="position: absolute" />
+                @if (resultadoFinalManual)
+                {
+                    <RadzenDropDown @bind-Value="@model.EscalaValoracionId" Data="@escalas" TextProperty="Etiqueta" ValueProperty="Id"
+                                    Placeholder="Seleccione valoración final" Style="width: 100%;" Name="ResultadoEscala" />
+                    <RadzenRequiredValidator Component="ResultadoEscala" Text="Debe seleccionar una valoración final" Style="position: absolute" />
+                }
+                else
+                {
+                    <RadzenDropDown @bind-Value="@model.Resultado" Data="@resultados"
+                                    Placeholder="Seleccione resultado final" Style="width: 100%;" Name="Resultado" />
+                    <RadzenRequiredValidator Component="Resultado" Text="El resultado final es obligatorio" Style="position: absolute" />
+                }
             </RadzenColumn>
         </RadzenRow>
 
@@ -55,15 +74,26 @@
 
 @code {
     [Parameter] public int ObjetivoId { get; set; }
-    
+
     FinalEvaluationModel model = new();
     List<ResultadoEval> resultados = Enum.GetValues<ResultadoEval>().ToList();
+    List<EscalaValoracion> escalas = new();
     Objetivo? objetivo;
     string? errorMsg;
+    bool resultadoFinalManual = true;
 
     protected override async Task OnInitializedAsync()
     {
         objetivo = await ObjetivoService.GetByIdAsync(ObjetivoId);
+
+        // Verificar si resultado final es manual
+        resultadoFinalManual = await ConfigService.ObtenerConfiguracionBoolAsync("resultado_final_manual") ?? true;
+
+        // Cargar escala de valoración si es manual
+        if (resultadoFinalManual)
+        {
+            escalas = await ConfigService.ObtenerEscalasActivasAsync();
+        }
     }
 
     async Task OnSubmit()
@@ -72,13 +102,14 @@
         var success = await RevisionService.CompletarEvaluacionFinalAsync(
             ObjetivoId,
             model.Comentario,
-            model.Resultado!.Value,
+            resultadoFinalManual ? null : model.Resultado,
             model.SoftSkill1Valoracion,
             model.SoftSkill1Comentario,
             model.SoftSkill2Valoracion,
-            model.SoftSkill2Comentario
+            model.SoftSkill2Comentario,
+            resultadoFinalManual ? model.EscalaValoracionId : null
         );
-        
+
         if (success)
         {
             DialogService.Close(true);
@@ -92,6 +123,7 @@
     class FinalEvaluationModel
     {
         public ResultadoEval? Resultado { get; set; }
+        public int? EscalaValoracionId { get; set; }
         public string Comentario { get; set; } = "";
 
         public int SoftSkill1Valoracion { get; set; }

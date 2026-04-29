@@ -76,8 +76,8 @@ public class RevisionService
     }
 
     // RN-03: Evaluación Final
-    public async Task<bool> CompletarEvaluacionFinalAsync(int objetivoId, string comentario, ResultadoEval resultado,
-        int? ss1Valoracion = null, string? ss1Comentario = null, int? ss2Valoracion = null, string? ss2Comentario = null)
+    public async Task<bool> CompletarEvaluacionFinalAsync(int objetivoId, string comentario, ResultadoEval? resultado,
+        int? ss1Valoracion = null, string? ss1Comentario = null, int? ss2Valoracion = null, string? ss2Comentario = null, int? escalaValoracionIdFinal = null)
     {
         var objetivo = await _db.Objetivos
             .Include(o => o.Revisiones)
@@ -93,15 +93,20 @@ public class RevisionService
         // sin verificar si el deadline pasó. Este servicio es consistente con esa decisión.
         if (objetivo.EvaluacionFinal != null) return false;
 
-        double valoracionFinal = await _rendimiento.CalcularPonderadoAsync(objetivoId);
+        double valoracionFinal = 0;
+        if (escalaValoracionIdFinal == null)
+        {
+            valoracionFinal = await _rendimiento.CalcularPonderadoAsync(objetivoId);
+        }
 
         var evalFinal = new EvaluacionFinal
         {
             ObjetivoId = objetivoId,
             Anio = objetivo.Anio,
             PuntajeFinal = valoracionFinal,
+            EscalaValoracionIdFinal = escalaValoracionIdFinal,
             ComentarioJefe = comentario,
-            ResultadoFinal = resultado,
+            ResultadoFinal = resultado ?? ResultadoEval.CUMPLIDO,
             FechaEvaluacion = DateTime.UtcNow,
             EvaluadorId = _currentUser.UsuarioId,
             SoftSkill1Puntaje = ss1Valoracion,
