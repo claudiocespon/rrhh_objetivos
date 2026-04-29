@@ -6,9 +6,18 @@
     <RadzenPanelMenuItem Text="Autoevaluación"           Icon="assignment" Path="autoevaluacion" />
     <RadzenPanelMenuItem Text="Evaluación"               Icon="grading"    Path="evaluacion" />
     <RadzenPanelMenuItem Text="Cursos"                   Icon="school"     Path="cursos" />
-    
-    @if (CurrentUser.EsSuperusuario)
+    <RadzenPanelMenuItem Text="Guía"                     Icon="help"       Path="guia" />
+
+    @if (IsAdmin())
     {
-        <RadzenPanelMenuItem Text="Administración Usuarios" Icon="admin_panel_settings" Path="admin/usuarios" />
+        <RadzenPanelMenuItemSeparator />
+        <RadzenPanelMenuItem Text="Administración" Icon="admin_panel_settings">
+            <RadzenPanelMenuItem Text="Configuración" Icon="settings" Path="admin/configuracion" />
+            <RadzenPanelMenuItem Text="Usuarios" Icon="people" Path="admin/usuarios" />
+        </RadzenPanelMenuItem>
     }
 </RadzenPanelMenu>
+
+@code {
+    bool IsAdmin() => CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario;
+}
