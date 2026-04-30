@@ -6,12 +6,13 @@ namespace Objetivos.Web.Services;
 
 public class ConfiguracionService(IDbContextFactory<AppDbContext> dbFactory)
 {
-    private static Dictionary<string, string> _cache = new();
-    private static bool _cacheLoaded = false;
+    private Dictionary<string, string> _cache = new();
+    private DateTime _cacheExpiry = DateTime.MinValue;
+    private const int CACHE_MINUTES = 5;
 
     public async Task<string?> ObtenerConfiguracionAsync(string clave)
     {
-        if (!_cacheLoaded)
+        if (DateTime.UtcNow >= _cacheExpiry)
             await CargarCacheAsync();
 
         return _cache.TryGetValue(clave, out var valor) ? valor : null;
@@ -92,12 +93,12 @@ public class ConfiguracionService(IDbContextFactory<AppDbContext> dbFactory)
         using var db = await dbFactory.CreateDbContextAsync();
         var configs = await db.ConfiguracionesPlataforma.ToListAsync();
         _cache = configs.ToDictionary(c => c.Clave, c => c.Valor);
-        _cacheLoaded = true;
+        _cacheExpiry = DateTime.UtcNow.AddMinutes(CACHE_MINUTES);
     }
 
     private void LimpiarCache()
     {
         _cache.Clear();
-        _cacheLoaded = false;
+        _cacheExpiry = DateTime.MinValue;
     }
 }

@@ -187,6 +187,27 @@
             return;
         }
 
+        // VAL-06: Validar suma de porcentajes
+        if (objetivoAreaHabilitado && objetivo.AreaEspecificaId.HasValue && objetivo.AreaEspecificaId > 0)
+        {
+            // Área específica seleccionada: suma debe ser exactamente 100%
+            var suma = objetivo.PorcentajePilar + objetivo.PorcentajeArea;
+            if (Math.Abs(suma - 100) > 0.01m)
+            {
+                errorMsg = $"La suma de porcentajes debe ser 100% (Pilar: {objetivo.PorcentajePilar}% + Área: {objetivo.PorcentajeArea}% = {suma}%)";
+                return;
+            }
+        }
+        else
+        {
+            // Sin área específica: porcentaje del pilar debe ser 100%
+            if (Math.Abs(objetivo.PorcentajePilar - 100) > 0.01m)
+            {
+                errorMsg = "El porcentaje del Pilar debe ser 100% (o seleccione un área específica)";
+                return;
+            }
+        }
+
         // VAL-05: Límite de 10 objetivos
         int count = await Db.Objetivos.CountAsync(o => o.EmpleadoId == objetivo.EmpleadoId && o.Anio == DateTime.Now.Year && o.Estado != EstadoObjetivo.CANCELADO);
         if (count >= 10)

@@ -27,6 +27,7 @@ public class ObjetivoService
         var email = _currentUser.Email?.ToLower();
 
         // 1. Fetch Personal Data
+        // Search for Empleado by email - handles both employees and managers (jefes) who are also employees
         var empleadoPropio = await _db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
         if (empleadoPropio != null)
         {
@@ -81,6 +82,22 @@ public class ObjetivoService
         // VAL-04: Deadline debe ser posterior a hoy
         if (nuevo.Deadline <= DateTime.Today)
             return (false, false);
+
+        // VAL-06: Validar suma de porcentajes (backend validation)
+        bool areaHabilitada = await _configuracion.ObtenerConfiguracionBoolAsync("objetivo_area_habilitado") ?? false;
+        if (areaHabilitada && nuevo.AreaEspecificaId.HasValue && nuevo.AreaEspecificaId > 0)
+        {
+            // Área específica seleccionada: suma debe ser 100%
+            var suma = nuevo.PorcentajePilar + nuevo.PorcentajeArea;
+            if (Math.Abs(suma - 100) > 0.01m)
+                return (false, false);
+        }
+        else
+        {
+            // Sin área específica: porcentaje del pilar debe ser 100%
+            if (Math.Abs(nuevo.PorcentajePilar - 100) > 0.01m)
+                return (false, false);
+        }
 
         // VAL-01: Verificar duplicado pilar+empleado+año
         var existente = await _db.Objetivos.FirstOrDefaultAsync(o =>
