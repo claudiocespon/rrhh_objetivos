@@ -1,13 +1,14 @@
 @inject RevisionService RevisionService
 @inject DialogService DialogService
+@inject ConfiguracionService ConfigService
 
 <RadzenTemplateForm TItem="EvaluationModel" Data="@model" Submit="@OnSubmit">
     <RadzenStack Gap="1.5rem">
         <RadzenRow>
             <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Valoración General (1-5 estrellas)</RadzenText>
-                <RadzenRating @bind-Value="@model.Valoracion" Stars="5" Name="Valoracion" />
-                <RadzenRequiredValidator Component="Valoracion" Text="Debe calificar con al menos 1 estrella" Style="position: absolute" />
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Valoración General</RadzenText>
+                <EscalaSelector @bind-SelectedId="@model.EscalaValoracionId" />
+                <RadzenRequiredValidator Component="Valoracion" Text="Debe seleccionar una valoración" DefaultValue="0" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -16,12 +17,12 @@
             <RadzenRow>
                 <RadzenColumn Size="6">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @revision.Objetivo.SoftSkill1.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@model.SoftSkill1Valoracion" Stars="5" Name="SS1Valoracion" />
+                    <EscalaSelector @bind-SelectedId="@model.SoftSkill1EscalaValoracionId" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill1Comentario" Placeholder="Comentario sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>
                 <RadzenColumn Size="6">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @revision.Objetivo.SoftSkill2.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@model.SoftSkill2Valoracion" Stars="5" Name="SS2Valoracion" />
+                    <EscalaSelector @bind-SelectedId="@model.SoftSkill2EscalaValoracionId" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill2Comentario" Placeholder="Comentario sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>
             </RadzenRow>
@@ -64,7 +65,6 @@
     RevisionCuatrimestral? revision;
     EvaluationModel model = new();
     List<ResultadoEval> resultados = Enum.GetValues<ResultadoEval>().ToList();
-    List<string> evidenciasDisponibles = new() { "Reporte de avance", "Documentación técnica", "Presentación de resultados", "Feedback de pares", "Métricas de sistema" };
     string? errorMsg;
     bool submitted = false;
 
@@ -73,31 +73,20 @@
         revision = await RevisionService.GetRevisionDetalleAsync(RevisionId);
     }
 
-    bool RequiereEvidencia()
-    {
-        // VAL-10: Solo obligatorio si valoración <= 2 o == 5
-        return model.Valoracion <= 2 || model.Valoracion == 5;
-    }
-
     async Task OnSubmit()
     {
         submitted = true;
         errorMsg = null;
 
-        if (RequiereEvidencia() && !model.EvidenciasSeleccionadas.Any())
-        {
-            return;
-        }
-
         var success = await RevisionService.CompletarRevisionAsync(
             RevisionId,
-            model.Valoracion,
+            model.EscalaValoracionId,
             model.Comentario,
             model.Resultado!.Value,
-            model.EvidenciasSeleccionadas.ToList(),
-            model.SoftSkill1Valoracion,
+            new List<string>(),
+            model.SoftSkill1EscalaValoracionId,
             model.SoftSkill1Comentario,
-            model.SoftSkill2Valoracion,
+            model.SoftSkill2EscalaValoracionId,
             model.SoftSkill2Comentario
         );
         
@@ -113,14 +102,13 @@
 
     class EvaluationModel
     {
-        public int Valoracion { get; set; } = 0;
+        public int? EscalaValoracionId { get; set; }
         public ResultadoEval? Resultado { get; set; }
         public string Comentario { get; set; } = "";
-        public IEnumerable<string> EvidenciasSeleccionadas { get; set; } = new List<string>();
 
-        public int SoftSkill1Valoracion { get; set; }
+        public int? SoftSkill1EscalaValoracionId { get; set; }
         public string SoftSkill1Comentario { get; set; } = "";
-        public int SoftSkill2Valoracion { get; set; }
+        public int? SoftSkill2EscalaValoracionId { get; set; }
         public string SoftSkill2Comentario { get; set; } = "";
     }
 }

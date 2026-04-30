@@ -23,12 +23,12 @@
             <RadzenRow>
                 <RadzenColumn Size="6">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @objetivo.SoftSkill1.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@model.SoftSkill1Valoracion" Stars="5" Name="SS1Valoracion" />
+                    <EscalaSelector @bind-SelectedId="@model.SoftSkill1EscalaValoracionId" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill1Comentario" Placeholder="Comentario final sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>
                 <RadzenColumn Size="6">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @objetivo.SoftSkill2.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@model.SoftSkill2Valoracion" Stars="5" Name="SS2Valoracion" />
+                    <EscalaSelector @bind-SelectedId="@model.SoftSkill2EscalaValoracionId" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill2Comentario" Placeholder="Comentario final sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>
             </RadzenRow>
@@ -103,9 +103,9 @@
             ObjetivoId,
             model.Comentario,
             resultadoFinalManual ? null : model.Resultado,
-            model.SoftSkill1Valoracion,
+            model.SoftSkill1EscalaValoracionId,
             model.SoftSkill1Comentario,
-            model.SoftSkill2Valoracion,
+            model.SoftSkill2EscalaValoracionId,
             model.SoftSkill2Comentario,
             resultadoFinalManual ? model.EscalaValoracionId : null
         );
@@ -126,9 +126,9 @@
         public int? EscalaValoracionId { get; set; }
         public string Comentario { get; set; } = "";
 
-        public int SoftSkill1Valoracion { get; set; }
+        public int? SoftSkill1EscalaValoracionId { get; set; }
         public string SoftSkill1Comentario { get; set; } = "";
-        public int SoftSkill2Valoracion { get; set; }
+        public int? SoftSkill2EscalaValoracionId { get; set; }
         public string SoftSkill2Comentario { get; set; } = "";
     }
 }

@@ -63,9 +63,9 @@ else
                             </RadzenDataGridColumn>
                         }
                         <RadzenDataGridColumn TItem="Autoevaluacion" Property="Objetivo.Nombre" Title="Objetivo" />
-                        <RadzenDataGridColumn TItem="Autoevaluacion" Title="Score (1-5)" Width="120px">
+                        <RadzenDataGridColumn TItem="Autoevaluacion" Title="Valoración" Width="120px">
                             <Template Context="ae">
-                                <RadzenRating Value="@ae.Score" ReadOnly="true" Stars="5" />
+                                @(ae.EscalaValoracionScore?.Etiqueta ?? "-")
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Autoevaluacion" Property="Comentario" Title="Comentario" />
@@ -74,11 +74,11 @@ else
                                 <RadzenStack Gap="0.5rem">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <RadzenText TextStyle="TextStyle.Caption" Style="margin:0; flex: 1;">@ae.Objetivo.SoftSkill1.Nombre</RadzenText>
-                                        <RadzenRating Value="@ae.SoftSkill1Score" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin:0;">@(ae.SoftSkill1EscalaValoracion?.Etiqueta ?? "-")</RadzenText>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <RadzenText TextStyle="TextStyle.Caption" Style="margin:0; flex: 1;">@ae.Objetivo.SoftSkill2.Nombre</RadzenText>
-                                        <RadzenRating Value="@ae.SoftSkill2Score" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin:0;">@(ae.SoftSkill2EscalaValoracion?.Etiqueta ?? "-")</RadzenText>
                                     </div>
                                 </RadzenStack>
                             </Template>

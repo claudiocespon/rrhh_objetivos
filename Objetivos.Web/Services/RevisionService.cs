@@ -35,8 +35,8 @@ public class RevisionService
     }
 
     // RN-02: Completar Revisión Cuatrimestral
-    public async Task<bool> CompletarRevisionAsync(int revisionId, int valoracion, string comentario, ResultadoEval resultado, List<string> evidencias,
-        int? ss1Valoracion = null, string? ss1Comentario = null, int? ss2Valoracion = null, string? ss2Comentario = null)
+    public async Task<bool> CompletarRevisionAsync(int revisionId, int? escalaValoracionId, string comentario, ResultadoEval resultado, List<string> evidencias,
+        int? ss1EscalaValoracionId = null, string? ss1Comentario = null, int? ss2EscalaValoracionId = null, string? ss2Comentario = null)
     {
         var revision = await _db.RevisionesCuatrimestrales
             .Include(r => r.Objetivo)
@@ -45,7 +45,7 @@ public class RevisionService
 
         if (revision == null || revision.Completada) return false;
 
-        revision.Puntaje = valoracion;
+        revision.EscalaValoracionId = escalaValoracionId;
         revision.ComentarioJefe = comentario;
         revision.Resultado = resultado;
         revision.EvidenciasRevisadasJson = JsonSerializer.Serialize(evidencias);
@@ -53,10 +53,10 @@ public class RevisionService
         revision.FechaEvaluacion = DateTime.UtcNow;
         revision.EvaluadorId = _currentUser.UsuarioId;
 
-        // Soft Skills
-        revision.SoftSkill1Puntaje = ss1Valoracion;
+        // Soft Skills - now using EscalaValoracionId
+        revision.SoftSkill1EscalaValoracionId = ss1EscalaValoracionId;
         revision.SoftSkill1Comentario = ss1Comentario ?? "";
-        revision.SoftSkill2Puntaje = ss2Valoracion;
+        revision.SoftSkill2EscalaValoracionId = ss2EscalaValoracionId;
         revision.SoftSkill2Comentario = ss2Comentario ?? "";
 
         _db.AuditoriaLogs.Add(new AuditoriaLog
@@ -79,7 +79,7 @@ public class RevisionService
 
     // RN-03: Evaluación Final (respeta configuración resultado_final_manual)
     public async Task<bool> CompletarEvaluacionFinalAsync(int objetivoId, string comentario, ResultadoEval? resultado,
-        int? ss1Valoracion = null, string? ss1Comentario = null, int? ss2Valoracion = null, string? ss2Comentario = null, int? escalaValoracionIdFinal = null)
+        int? ss1EscalaValoracionId = null, string? ss1Comentario = null, int? ss2EscalaValoracionId = null, string? ss2Comentario = null, int? escalaValoracionIdFinal = null)
     {
         var objetivo = await _db.Objetivos
             .Include(o => o.Revisiones)
@@ -119,9 +119,9 @@ public class RevisionService
             ResultadoFinal = resultado ?? ResultadoEval.CUMPLIDO,
             FechaEvaluacion = DateTime.UtcNow,
             EvaluadorId = _currentUser.UsuarioId,
-            SoftSkill1Puntaje = ss1Valoracion,
+            SoftSkill1EscalaValoracionId = ss1EscalaValoracionId,
             SoftSkill1Comentario = ss1Comentario ?? "",
-            SoftSkill2Puntaje = ss2Valoracion,
+            SoftSkill2EscalaValoracionId = ss2EscalaValoracionId,
             SoftSkill2Comentario = ss2Comentario ?? ""
         };
         _db.EvaluacionesFinales.Add(evalFinal);

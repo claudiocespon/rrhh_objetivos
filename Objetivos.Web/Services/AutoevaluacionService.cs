@@ -38,6 +38,9 @@ public class AutoevaluacionService
                     .ThenInclude(o => o.SoftSkill1)
                 .Include(ae => ae.Objetivo)
                     .ThenInclude(o => o.SoftSkill2)
+                .Include(ae => ae.EscalaValoracionScore)
+                .Include(ae => ae.SoftSkill1EscalaValoracion)
+                .Include(ae => ae.SoftSkill2EscalaValoracion)
                 .Where(ae => ae.Objetivo.EmpleadoId == empleadoPropio.Id)
                 .OrderByDescending(ae => ae.FechaAutoevaluacion)
                 .ToListAsync();
@@ -53,6 +56,9 @@ public class AutoevaluacionService
                     .ThenInclude(o => o.SoftSkill1)
                 .Include(ae => ae.Objetivo)
                     .ThenInclude(o => o.SoftSkill2)
+                .Include(ae => ae.EscalaValoracionScore)
+                .Include(ae => ae.SoftSkill1EscalaValoracion)
+                .Include(ae => ae.SoftSkill2EscalaValoracion)
                 .AsQueryable();
 
             if (!user.EsSuperusuario && user.Rol != "RRHH" && user.Rol != "DIRECTOR_GENERAL")
