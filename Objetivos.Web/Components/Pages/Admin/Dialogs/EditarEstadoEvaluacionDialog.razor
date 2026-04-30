@@ -1,0 +1,85 @@
+@inject AdminEstadoService AdminEstadoService
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1rem">
+    <RadzenTemplateForm TItem="EstadoEvaluacionConfig" Data="@estado" Submit="@OnSubmit">
+        <RadzenStack Gap="1rem">
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Nombre</RadzenText>
+                    <RadzenTextBox @bind-Value="@estado.Nombre" Style="width: 100%;" Name="Nombre" />
+                    <RadzenRequiredValidator Component="Nombre" Text="El nombre es obligatorio" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Slug</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Identificador único en minúsculas (ej: pendiente, completada)</RadzenText>
+                    <RadzenTextBox @bind-Value="@estado.Slug" Style="width: 100%;" Name="Slug" />
+                    <RadzenRequiredValidator Component="Slug" Text="El slug es obligatorio" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="6">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Color</RadzenText>
+                    <input type="color" @bind="@estado.ColorHex" style="width: 100%; height: 40px; cursor: pointer;" />
+                </RadzenColumn>
+                <RadzenColumn Size="6">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Orden</RadzenText>
+                    <RadzenNumeric @bind-Value="@estado.Orden" Style="width: 100%;" Name="Orden" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Estado</RadzenText>
+                    <RadzenCheckBox @bind-Value="@estado.Activo" Text="Activo" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenStack>
+
+@code {
+    [Parameter] public EstadoEvaluacionConfig? EstadoEvaluacionConfig { get; set; }
+    [Inject] DialogService DialogService { get; set; } = null!;
+
+    private EstadoEvaluacionConfig estado = new();
+
+    protected override void OnInitialized()
+    {
+        if (EstadoEvaluacionConfig != null)
+        {
+            estado = new()
+            {
+                Id = EstadoEvaluacionConfig.Id,
+                Nombre = EstadoEvaluacionConfig.Nombre,
+                Slug = EstadoEvaluacionConfig.Slug,
+                ColorHex = EstadoEvaluacionConfig.ColorHex,
+                Orden = EstadoEvaluacionConfig.Orden,
+                Activo = EstadoEvaluacionConfig.Activo
+            };
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        var success = await AdminEstadoService.ActualizarEstadoEvaluacionAsync(estado);
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Estado actualizado correctamente");
+            DialogService.Close(true);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar el estado");
+        }
+    }
+}

@@ -1,0 +1,70 @@
+@inject AdminAreaService AdminAreaService
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1rem">
+    <RadzenTemplateForm TItem="Area" Data="@area" Submit="@OnSubmit">
+        <RadzenStack Gap="1rem">
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Nombre</RadzenText>
+                    <RadzenTextBox @bind-Value="@area.Nombre" Style="width: 100%;" Name="Nombre" />
+                    <RadzenRequiredValidator Component="Nombre" Text="El nombre es obligatorio" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Descripción</RadzenText>
+                    <RadzenTextArea @bind-Value="@area.Descripcion" Style="width: 100%;" Name="Descripcion" Rows="3" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Estado</RadzenText>
+                    <RadzenCheckBox @bind-Value="@area.Activo" Text="Activo" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenStack>
+
+@code {
+    [Parameter] public Area? Area { get; set; }
+    [Inject] DialogService DialogService { get; set; } = null!;
+
+    private Area area = new();
+
+    protected override void OnInitialized()
+    {
+        if (Area != null)
+        {
+            area = new()
+            {
+                Id = Area.Id,
+                Nombre = Area.Nombre,
+                Descripcion = Area.Descripcion,
+                Activo = Area.Activo
+            };
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        var success = await AdminAreaService.ActualizarAsync(area);
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Área actualizada correctamente");
+            DialogService.Close(true);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar el área");
+        }
+    }
+}

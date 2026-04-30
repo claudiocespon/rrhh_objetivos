@@ -9,6 +9,7 @@
 @inject AdminEstadoService AdminEstadoService
 @inject AdminConfiguracionPlatformaService AdminConfigService
 @inject NotificationService NotificationService
+@inject DialogService DialogService
 
 <RadzenStack Gap="1.5rem">
     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
@@ -261,24 +262,191 @@
         </div>
     };
 
-    async Task OnAgregarPilar() => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de agregar pilar pendiente");
-    async Task OnEditarPilar(Pilar p) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar pilar pendiente");
-    async Task OnEliminarPilar(int id) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de eliminar pilar pendiente");
+    async Task OnAgregarPilar()
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarPilarDialog>("Agregar Pilar",
+            new Dictionary<string, object?> { { "Pilar", new Pilar() } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
 
-    async Task OnAgregarSoftSkill() => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de agregar soft skill pendiente");
-    async Task OnEditarSoftSkill(SoftSkill s) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar soft skill pendiente");
-    async Task OnEliminarSoftSkill(int id) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de eliminar soft skill pendiente");
+        if (result == true)
+        {
+            await LoadAllData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Pilar creado correctamente");
+        }
+    }
 
-    async Task OnAgregarEscala() => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de agregar escala pendiente");
-    async Task OnEditarEscala(EscalaValoracion e) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar escala pendiente");
-    async Task OnEliminarEscala(int id) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de eliminar escala pendiente");
+    async Task OnEditarPilar(Pilar p)
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarPilarDialog>("Editar Pilar",
+            new Dictionary<string, object?> { { "Pilar", p } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
 
-    async Task OnEditarEstadoObjetivo(EstadoObjetivoConfig e) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar estado pendiente");
-    async Task OnEditarEstadoEvaluacion(EstadoEvaluacionConfig e) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar estado pendiente");
+        if (result == true)
+        {
+            await LoadAllData();
+        }
+    }
 
-    async Task OnAgregarArea() => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de agregar área pendiente");
-    async Task OnEditarArea(Area a) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar área pendiente");
-    async Task OnEliminarArea(int id) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de eliminar área pendiente");
+    async Task OnEliminarPilar(int id)
+    {
+        var confirm = await DialogService.Confirm("¿Está seguro de que desea eliminar este pilar?", "Confirmar eliminación",
+            new ConfirmOptions { OkButtonText = "Sí", CancelButtonText = "No" });
 
-    async Task OnEditarConfiguracion(ConfiguracionPlataforma c) => NotificationService.Notify(NotificationSeverity.Info, "Info", "Funcionalidad de editar configuración pendiente");
+        if (confirm == true)
+        {
+            await AdminPilarService.EliminarAsync(id);
+            await LoadAllData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Pilar eliminado correctamente");
+        }
+    }
+
+    async Task OnAgregarSoftSkill()
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarSoftSkillDialog>("Agregar Soft Skill",
+            new Dictionary<string, object?> { { "SoftSkill", new SoftSkill() } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Soft Skill creado correctamente");
+        }
+    }
+
+    async Task OnEditarSoftSkill(SoftSkill s)
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarSoftSkillDialog>("Editar Soft Skill",
+            new Dictionary<string, object?> { { "SoftSkill", s } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+        }
+    }
+
+    async Task OnEliminarSoftSkill(int id)
+    {
+        var confirm = await DialogService.Confirm("¿Está seguro de que desea eliminar este Soft Skill?", "Confirmar eliminación",
+            new ConfirmOptions { OkButtonText = "Sí", CancelButtonText = "No" });
+
+        if (confirm == true)
+        {
+            await AdminSoftSkillService.EliminarAsync(id);
+            await LoadAllData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Soft Skill eliminado correctamente");
+        }
+    }
+
+    async Task OnAgregarEscala()
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarEscalaDialog>("Agregar Escala",
+            new Dictionary<string, object?> { { "EscalaValoracion", new EscalaValoracion() } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Escala creada correctamente");
+        }
+    }
+
+    async Task OnEditarEscala(EscalaValoracion e)
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarEscalaDialog>("Editar Escala",
+            new Dictionary<string, object?> { { "EscalaValoracion", e } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+        }
+    }
+
+    async Task OnEliminarEscala(int id)
+    {
+        var confirm = await DialogService.Confirm("¿Está seguro de que desea eliminar esta escala?", "Confirmar eliminación",
+            new ConfirmOptions { OkButtonText = "Sí", CancelButtonText = "No" });
+
+        if (confirm == true)
+        {
+            await AdminEscalaService.EliminarAsync(id);
+            await LoadAllData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Escala eliminada correctamente");
+        }
+    }
+
+    async Task OnEditarEstadoObjetivo(EstadoObjetivoConfig e)
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarEstadoObjetivoDialog>("Editar Estado Objetivo",
+            new Dictionary<string, object?> { { "EstadoObjetivoConfig", e } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+        }
+    }
+
+    async Task OnEditarEstadoEvaluacion(EstadoEvaluacionConfig e)
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarEstadoEvaluacionDialog>("Editar Estado Evaluación",
+            new Dictionary<string, object?> { { "EstadoEvaluacionConfig", e } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+        }
+    }
+
+    async Task OnAgregarArea()
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarAreaDialog>("Agregar Área",
+            new Dictionary<string, object?> { { "Area", new Area() } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Área creada correctamente");
+        }
+    }
+
+    async Task OnEditarArea(Area a)
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarAreaDialog>("Editar Área",
+            new Dictionary<string, object?> { { "Area", a } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+        }
+    }
+
+    async Task OnEliminarArea(int id)
+    {
+        var confirm = await DialogService.Confirm("¿Está seguro de que desea eliminar esta área?", "Confirmar eliminación",
+            new ConfirmOptions { OkButtonText = "Sí", CancelButtonText = "No" });
+
+        if (confirm == true)
+        {
+            await AdminAreaService.EliminarAsync(id);
+            await LoadAllData();
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Área eliminada correctamente");
+        }
+    }
+
+    async Task OnEditarConfiguracion(ConfiguracionPlataforma c)
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarConfiguracionDialog>("Editar Configuración",
+            new Dictionary<string, object?> { { "ConfiguracionPlataforma", c } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+        }
+    }
 }

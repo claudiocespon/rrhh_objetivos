@@ -1,0 +1,75 @@
+@inject AdminEscalaValoracionService AdminEscalaService
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1rem">
+    <RadzenTemplateForm TItem="EscalaValoracion" Data="@escala" Submit="@OnSubmit">
+        <RadzenStack Gap="1rem">
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Etiqueta</RadzenText>
+                    <RadzenTextBox @bind-Value="@escala.Etiqueta" Style="width: 100%;" Name="Etiqueta" />
+                    <RadzenRequiredValidator Component="Etiqueta" Text="La etiqueta es obligatoria" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="6">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Valor Numérico (Opcional)</RadzenText>
+                    <RadzenNumeric @bind-Value="@escala.ValorNumerico" Style="width: 100%;" Name="ValorNumerico" />
+                </RadzenColumn>
+                <RadzenColumn Size="6">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Orden</RadzenText>
+                    <RadzenNumeric @bind-Value="@escala.Orden" Style="width: 100%;" Name="Orden" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Estado</RadzenText>
+                    <RadzenCheckBox @bind-Value="@escala.Activo" Text="Activo" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenStack>
+
+@code {
+    [Parameter] public EscalaValoracion? EscalaValoracion { get; set; }
+    [Inject] DialogService DialogService { get; set; } = null!;
+
+    private EscalaValoracion escala = new();
+
+    protected override void OnInitialized()
+    {
+        if (EscalaValoracion != null)
+        {
+            escala = new()
+            {
+                Id = EscalaValoracion.Id,
+                Etiqueta = EscalaValoracion.Etiqueta,
+                ValorNumerico = EscalaValoracion.ValorNumerico,
+                Orden = EscalaValoracion.Orden,
+                Activo = EscalaValoracion.Activo
+            };
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        var success = await AdminEscalaService.ActualizarAsync(escala);
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Escala actualizada correctamente");
+            DialogService.Close(true);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar la escala");
+        }
+    }
+}

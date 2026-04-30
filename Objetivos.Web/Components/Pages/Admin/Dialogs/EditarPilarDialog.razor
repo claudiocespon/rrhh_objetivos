@@ -1,0 +1,83 @@
+@inject AdminPilarService AdminPilarService
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1rem">
+    <RadzenTemplateForm TItem="Pilar" Data="@pilar" Submit="@OnSubmit">
+        <RadzenStack Gap="1rem">
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Nombre</RadzenText>
+                    <RadzenTextBox @bind-Value="@pilar.Nombre" Style="width: 100%;" Name="Nombre" />
+                    <RadzenRequiredValidator Component="Nombre" Text="El nombre es obligatorio" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Descripción</RadzenText>
+                    <RadzenTextArea @bind-Value="@pilar.Descripcion" Style="width: 100%;" Name="Descripcion" Rows="3" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="6">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Color</RadzenText>
+                    <input type="color" @bind="@pilar.ColorHex" style="width: 100%; height: 40px; cursor: pointer;" />
+                </RadzenColumn>
+                <RadzenColumn Size="6">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Orden</RadzenText>
+                    <RadzenNumeric @bind-Value="@pilar.Orden" Style="width: 100%;" Name="Orden" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Estado</RadzenText>
+                    <RadzenCheckBox @bind-Value="@pilar.Activo" Text="Activo" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenStack>
+
+@code {
+    [Parameter] public Pilar? Pilar { get; set; }
+    [Inject] DialogService DialogService { get; set; } = null!;
+
+    private Pilar pilar = new();
+
+    protected override void OnInitialized()
+    {
+        if (Pilar != null)
+        {
+            pilar = new()
+            {
+                Id = Pilar.Id,
+                Nombre = Pilar.Nombre,
+                Descripcion = Pilar.Descripcion,
+                ColorHex = Pilar.ColorHex,
+                Activo = Pilar.Activo,
+                Orden = Pilar.Orden
+            };
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        var success = await AdminPilarService.ActualizarAsync(pilar);
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Pilar actualizado correctamente");
+            DialogService.Close(true);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar el pilar");
+        }
+    }
+}

@@ -1,0 +1,103 @@
+@inject AdminConfiguracionPlatformaService AdminConfigService
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1rem">
+    <RadzenTemplateForm TItem="ConfiguracionPlataforma" Data="@config" Submit="@OnSubmit">
+        <RadzenStack Gap="1rem">
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Clave</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">@config.Clave</RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Descripción</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">@config.Descripcion</RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Valor</RadzenText>
+                    @if (config.Tipo == "boolean")
+                    {
+                        <RadzenCheckBox @bind-Value="@boolValue" />
+                    }
+                    else if (config.Tipo == "integer")
+                    {
+                        <RadzenNumeric @bind-Value="@intValue" Style="width: 100%;" Name="Valor" />
+                    }
+                    else
+                    {
+                        <RadzenTextArea @bind-Value="@config.Valor" Style="width: 100%;" Name="Valor" Rows="3" />
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenStack>
+
+@code {
+    [Parameter] public ConfiguracionPlataforma? ConfiguracionPlataforma { get; set; }
+    [Inject] DialogService DialogService { get; set; } = null!;
+
+    private ConfiguracionPlataforma config = new();
+    private bool boolValue = false;
+    private int intValue = 0;
+
+    protected override void OnInitialized()
+    {
+        if (ConfiguracionPlataforma != null)
+        {
+            config = new()
+            {
+                Clave = ConfiguracionPlataforma.Clave,
+                Valor = ConfiguracionPlataforma.Valor,
+                Descripcion = ConfiguracionPlataforma.Descripcion,
+                Tipo = ConfiguracionPlataforma.Tipo,
+                ActualizadoEn = ConfiguracionPlataforma.ActualizadoEn
+            };
+
+            // Parse values based on type
+            if (config.Tipo == "boolean" && bool.TryParse(config.Valor, out var bVal))
+            {
+                boolValue = bVal;
+            }
+            else if (config.Tipo == "integer" && int.TryParse(config.Valor, out var iVal))
+            {
+                intValue = iVal;
+            }
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        // Convert values back to string
+        if (config.Tipo == "boolean")
+        {
+            config.Valor = boolValue.ToString().ToLower();
+        }
+        else if (config.Tipo == "integer")
+        {
+            config.Valor = intValue.ToString();
+        }
+
+        var success = await AdminConfigService.ActualizarAsync(config);
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Configuración actualizada correctamente");
+            DialogService.Close(true);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar la configuración");
+        }
+    }
+}

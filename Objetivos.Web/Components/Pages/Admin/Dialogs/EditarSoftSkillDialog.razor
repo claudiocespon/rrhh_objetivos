@@ -1,0 +1,78 @@
+@inject AdminSoftSkillService AdminSoftSkillService
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1rem">
+    <RadzenTemplateForm TItem="SoftSkill" Data="@softSkill" Submit="@OnSubmit">
+        <RadzenStack Gap="1rem">
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Nombre</RadzenText>
+                    <RadzenTextBox @bind-Value="@softSkill.Nombre" Style="width: 100%;" Name="Nombre" />
+                    <RadzenRequiredValidator Component="Nombre" Text="El nombre es obligatorio" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Descripción</RadzenText>
+                    <RadzenTextArea @bind-Value="@softSkill.Descripcion" Style="width: 100%;" Name="Descripcion" Rows="3" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Orden</RadzenText>
+                    <RadzenNumeric @bind-Value="@softSkill.Orden" Style="width: 100%;" Name="Orden" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Estado</RadzenText>
+                    <RadzenCheckBox @bind-Value="@softSkill.Activo" Text="Activo" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenStack>
+
+@code {
+    [Parameter] public SoftSkill? SoftSkill { get; set; }
+    [Inject] DialogService DialogService { get; set; } = null!;
+
+    private SoftSkill softSkill = new();
+
+    protected override void OnInitialized()
+    {
+        if (SoftSkill != null)
+        {
+            softSkill = new()
+            {
+                Id = SoftSkill.Id,
+                Nombre = SoftSkill.Nombre,
+                Descripcion = SoftSkill.Descripcion,
+                Activo = SoftSkill.Activo,
+                Orden = SoftSkill.Orden
+            };
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        var success = await AdminSoftSkillService.ActualizarAsync(softSkill);
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Soft Skill actualizado correctamente");
+            DialogService.Close(true);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar el Soft Skill");
+        }
+    }
+}
