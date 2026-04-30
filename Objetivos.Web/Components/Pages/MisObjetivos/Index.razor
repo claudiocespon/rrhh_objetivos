@@ -2,6 +2,7 @@
 @page "/misobjetivos"
 @inject Objetivos.Web.Services.ObjetivoService ObjetivoService
 @inject Objetivos.Web.Services.ICurrentUserService CurrentUser
+@inject Objetivos.Web.Services.ConfiguracionService ConfigService
 @inject Radzen.DialogService DialogService
 @inject Radzen.NotificationService NotificationService
 @inject Objetivos.Web.Services.ExportService ExportService
@@ -11,7 +12,7 @@
     <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Objetivos y Competencias</RadzenText>
     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
         <RadzenButton Icon="download" Text="Exportar CSV" Click="@OnExportClick" ButtonStyle="ButtonStyle.Success" Visible="@(CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario)" />
-        <RadzenButton Icon="add" Text="Nuevo Objetivo" Click="@OnCreateClick" ButtonStyle="ButtonStyle.Primary" Visible="@(CurrentUser.EsJefe)" />
+        <RadzenButton Icon="add" Text="Nuevo Objetivo" Click="@OnCreateClick" ButtonStyle="ButtonStyle.Primary" Visible="@puedeCrearObjetivo" />
     </RadzenStack>
 </RadzenStack>
 
@@ -59,9 +60,14 @@ else
 
 @code {
     Objetivos.Web.Services.RoleObjetivosData? roleData;
+    bool puedeCrearObjetivo;
 
     protected override async Task OnInitializedAsync()
     {
+        bool jefePermitido = await ConfigService.ObtenerConfiguracionBoolAsync("jefe_puede_crear_objetivos") ?? false;
+        puedeCrearObjetivo = CurrentUser.EsJefe
+            ? (jefePermitido || CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL")
+            : true;
         await LoadData();
     }
 

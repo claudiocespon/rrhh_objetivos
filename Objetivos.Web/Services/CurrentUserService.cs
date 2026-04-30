@@ -12,6 +12,7 @@ public interface ICurrentUserService {
     bool EstaAutenticado { get; }
     bool DebeCambiarPassword { get; }
     bool EsSuperusuario { get; }
+    bool EsAdmin { get; }
     Task SetUsuarioAsync(int id, string nombreCompleto, string email, string rol, int areaId, bool esJefe, bool debeCambiarPassword, bool esSuperusuario);
     Task CerrarSesionAsync();
     Task InitializeAsync();
@@ -29,6 +30,7 @@ public class SessionCurrentUserService : ICurrentUserService {
     public bool EstaAutenticado { get; private set; }
     public bool DebeCambiarPassword { get; private set; }
     public bool EsSuperusuario { get; private set; }
+    public bool EsAdmin => Rol == "RRHH" || Rol == "DIRECTOR_GENERAL" || EsSuperusuario;
 
     public SessionCurrentUserService(ProtectedSessionStorage sessionStorage)
     {

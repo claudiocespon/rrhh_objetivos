@@ -8,7 +8,7 @@
     <RadzenPanelMenuItem Text="Cursos"                   Icon="school"     Path="cursos" />
     <RadzenPanelMenuItem Text="Guía"                     Icon="help"       Path="guia" />
 
-    @if (IsAdmin())
+    @if (CurrentUser.EsAdmin)
     {
         <RadzenPanelMenuItemSeparator />
         <RadzenPanelMenuItem Text="Administración" Icon="admin_panel_settings">
@@ -19,5 +19,8 @@
 </RadzenPanelMenu>
 
 @code {
-    bool IsAdmin() => CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario;
+    protected override async Task OnInitializedAsync()
+    {
+        await CurrentUser.InitializeAsync();
+    }
 }

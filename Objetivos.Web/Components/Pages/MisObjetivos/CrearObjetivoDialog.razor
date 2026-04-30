@@ -124,7 +124,9 @@
     {
         // VAL-JEFE: Verificar si jefe puede crear objetivos
         bool jefePermitido = await ConfigService.ObtenerConfiguracionBoolAsync("jefe_puede_crear_objetivos") ?? false;
-        if (CurrentUser.EsJefe && !jefePermitido && CurrentUser.Rol == "DIRECTOR" || (CurrentUser.Rol != "RRHH" && CurrentUser.Rol != "DIRECTOR_GENERAL"))
+        if (CurrentUser.EsJefe && !jefePermitido
+            && CurrentUser.Rol != "RRHH"
+            && CurrentUser.Rol != "DIRECTOR_GENERAL")
         {
             errorMsg = "Su rol no tiene permiso para crear objetivos. Contacte al área de RRHH.";
             return;
