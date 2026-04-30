@@ -1,0 +1,27 @@
+@inject ConfiguracionService ConfigService
+
+<RadzenStack Gap="0.5rem">
+    <RadzenDropDown @bind-Value="@SelectedId" Data="@escalas" TextProperty="Etiqueta" ValueProperty="Id"
+                    Style="width: 100%;" Placeholder="Seleccione una valoración..." Name="EscalaValoracion" />
+</RadzenStack>
+
+@code {
+    [Parameter] public int? SelectedId { get; set; }
+    [Parameter] public EventCallback<int?> SelectedIdChanged { get; set; }
+
+    private List<EscalaValoracion> escalas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        escalas = await ConfigService.ObtenerEscalasActivasAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Reload escalas if they might have changed
+        if (escalas.Count == 0)
+        {
+            escalas = await ConfigService.ObtenerEscalasActivasAsync();
+        }
+    }
+}

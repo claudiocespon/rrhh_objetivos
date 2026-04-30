@@ -5,6 +5,7 @@
 @inject ICurrentUserService CurrentUser
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+@inject ConfiguracionService ConfigService
 
 <RadzenTemplateForm TItem="Autoevaluacion" Data="@autoevaluacion" Submit="@OnSubmit">
     @if (objetivo == null)
@@ -18,19 +19,19 @@
             
             <RadzenRow>
                 <RadzenColumn Size="4">
-                    <RadzenText TextStyle="TextStyle.Subtitle2">Valoración (1-5)</RadzenText>
-                    <RadzenRating @bind-Value="@autoevaluacion.Score" Stars="5" Name="Score" />
-                    <RadzenRequiredValidator Component="Score" Text="*" DefaultValue="0" Style="position: absolute" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2">Valoración</RadzenText>
+                    <EscalaSelector @bind-SelectedId="@scoreEscalaId" />
+                    <RadzenRequiredValidator Component="Valoracion" Text="Seleccione una valoración" DefaultValue="0" Style="position: absolute" />
                 </RadzenColumn>
                 <RadzenColumn Size="4">
                     <RadzenText TextStyle="TextStyle.Subtitle2">@objetivo.SoftSkill1.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@autoevaluacion.SoftSkill1Score" Stars="5" Name="Skill1" />
-                    <RadzenRequiredValidator Component="Skill1" Text="*" DefaultValue="0" Style="position: absolute" />
+                    <EscalaSelector @bind-SelectedId="@skill1EscalaId" />
+                    <RadzenRequiredValidator Component="Skill1" Text="Seleccione una valoración" DefaultValue="0" Style="position: absolute" />
                 </RadzenColumn>
                 <RadzenColumn Size="4">
                     <RadzenText TextStyle="TextStyle.Subtitle2">@objetivo.SoftSkill2.Nombre</RadzenText>
-                    <RadzenRating @bind-Value="@autoevaluacion.SoftSkill2Score" Stars="5" Name="Skill2" />
-                    <RadzenRequiredValidator Component="Skill2" Text="*" DefaultValue="0" Style="position: absolute" />
+                    <EscalaSelector @bind-SelectedId="@skill2EscalaId" />
+                    <RadzenRequiredValidator Component="Skill2" Text="Seleccione una valoración" DefaultValue="0" Style="position: absolute" />
                 </RadzenColumn>
             </RadzenRow>
 
@@ -105,9 +106,15 @@
     List<string> adjuntos = new();
     string nuevaEvidencia = "";
 
+    // Escala selector backing fields
+    int? scoreEscalaId;
+    int? skill1EscalaId;
+    int? skill2EscalaId;
+
     protected override async Task OnInitializedAsync()
     {
         objetivo = await AutoevaluacionService.GetObjetivoParaAutoevAsync(ObjetivoId);
+        var escalas = await ConfigService.ObtenerEscalasActivasAsync();
 
         var existing = await AutoevaluacionService.GetExistingAsync(ObjetivoId);
         if (existing != null)
@@ -115,6 +122,14 @@
             autoevaluacion = existing;
             evidencias = JsonSerializer.Deserialize<List<string>>(existing.EvidenciasMencionadasJson) ?? new();
             adjuntos = JsonSerializer.Deserialize<List<string>>(existing.ArchivosAdjuntosJson) ?? new();
+
+            // Map numeric scores to escala IDs
+            if (autoevaluacion.Score > 0)
+                scoreEscalaId = escalas.FirstOrDefault(e => e.ValorNumerico == autoevaluacion.Score)?.Id;
+            if (autoevaluacion.SoftSkill1Score > 0)
+                skill1EscalaId = escalas.FirstOrDefault(e => e.ValorNumerico == autoevaluacion.SoftSkill1Score)?.Id;
+            if (autoevaluacion.SoftSkill2Score > 0)
+                skill2EscalaId = escalas.FirstOrDefault(e => e.ValorNumerico == autoevaluacion.SoftSkill2Score)?.Id;
         }
         else
         {
@@ -159,6 +174,31 @@
 
     async Task OnSubmit()
     {
+        // Map escala IDs back to numeric scores for backward compatibility
+        if (scoreEscalaId.HasValue)
+        {
+            var escalas = await ConfigService.ObtenerEscalasActivasAsync();
+            var escala = escalas.FirstOrDefault(e => e.Id == scoreEscalaId.Value);
+            if (escala?.ValorNumerico.HasValue == true)
+                autoevaluacion.Score = (int)escala.ValorNumerico.Value;
+        }
+
+        if (skill1EscalaId.HasValue)
+        {
+            var escalas = await ConfigService.ObtenerEscalasActivasAsync();
+            var escala = escalas.FirstOrDefault(e => e.Id == skill1EscalaId.Value);
+            if (escala?.ValorNumerico.HasValue == true)
+                autoevaluacion.SoftSkill1Score = (int)escala.ValorNumerico.Value;
+        }
+
+        if (skill2EscalaId.HasValue)
+        {
+            var escalas = await ConfigService.ObtenerEscalasActivasAsync();
+            var escala = escalas.FirstOrDefault(e => e.Id == skill2EscalaId.Value);
+            if (escala?.ValorNumerico.HasValue == true)
+                autoevaluacion.SoftSkill2Score = (int)escala.ValorNumerico.Value;
+        }
+
         var ok = await AutoevaluacionService.GuardarAutoevaluacionAsync(autoevaluacion, evidencias, adjuntos);
         if (ok)
             DialogService.Close(true);
