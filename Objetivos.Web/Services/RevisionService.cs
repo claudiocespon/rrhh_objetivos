@@ -12,13 +12,15 @@ public class RevisionService
     private readonly ICurrentUserService _currentUser;
     private readonly RendimientoService _rendimiento;
     private readonly ObjetivoService _objetivoService;
+    private readonly ConfiguracionService _configuracion;
 
-    public RevisionService(AppDbContext db, ICurrentUserService currentUser, RendimientoService rendimiento, ObjetivoService objetivoService)
+    public RevisionService(AppDbContext db, ICurrentUserService currentUser, RendimientoService rendimiento, ObjetivoService objetivoService, ConfiguracionService configuracion)
     {
         _db = db;
         _currentUser = currentUser;
         _rendimiento = rendimiento;
         _objetivoService = objetivoService;
+        _configuracion = configuracion;
     }
 
     // Carga revisión con Objetivo y SoftSkills para el diálogo de evaluación
@@ -75,7 +77,7 @@ public class RevisionService
         return true;
     }
 
-    // RN-03: Evaluación Final
+    // RN-03: Evaluación Final (respeta configuración resultado_final_manual)
     public async Task<bool> CompletarEvaluacionFinalAsync(int objetivoId, string comentario, ResultadoEval? resultado,
         int? ss1Valoracion = null, string? ss1Comentario = null, int? ss2Valoracion = null, string? ss2Comentario = null, int? escalaValoracionIdFinal = null)
     {
@@ -93,9 +95,17 @@ public class RevisionService
         // sin verificar si el deadline pasó. Este servicio es consistente con esa decisión.
         if (objetivo.EvaluacionFinal != null) return false;
 
+        // TAREA 6: Verificar configuración resultado_final_manual
+        bool resultadoFinalManual = await _configuracion.ObtenerConfiguracionBoolAsync("resultado_final_manual") ?? true;
+
         double valoracionFinal = 0;
         if (escalaValoracionIdFinal == null)
         {
+            // Si resultado_final_manual es true, requerimos ingreso manual
+            if (resultadoFinalManual)
+                return false; // No se permite cálculo automático
+
+            // Si resultado_final_manual es false, permitimos cálculo automático
             valoracionFinal = await _rendimiento.CalcularPonderadoAsync(objetivoId);
         }
 
