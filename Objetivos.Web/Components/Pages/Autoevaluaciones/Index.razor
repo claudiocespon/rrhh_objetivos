@@ -2,6 +2,8 @@
 @using System.Text.Json
 @inject AutoevaluacionService AutoevaluacionService
 @inject ICurrentUserService CurrentUser
+@inject DialogService DialogService
+@inject NotificationService NotificationService
 
 <RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Autoevaluaciones</RadzenText>
 
@@ -26,13 +28,23 @@ else
     }
     else
     {
-        @RenderAutoevaluaciones(autoevaluacionesPersonal, false)
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Pendientes de Autoevaluar">
+                    @RenderPendientes(objetivosPendientes)
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Mis Autoevaluaciones">
+                    @RenderAutoevaluaciones(autoevaluacionesPersonal, false)
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
     }
 }
 
 @code {
     List<Autoevaluacion>? autoevaluacionesPersonal;
     List<Autoevaluacion>? autoevaluacionesEquipo;
+    List<Objetivo>? objetivosPendientes;
     bool loading = true;
 
     protected override async Task OnInitializedAsync()
@@ -40,8 +52,70 @@ else
         var data = await AutoevaluacionService.GetAutoevaluacionesAsync(CurrentUser);
         autoevaluacionesPersonal = data.Personal;
         autoevaluacionesEquipo = data.Equipo;
+
+        // T-07: Cargar objetivos pendientes de autoevaluación para empleados
+        if (!CurrentUser.EsJefe)
+        {
+            objetivosPendientes = await AutoevaluacionService.GetObjetivosPendientesAutoevAsync(CurrentUser);
+        }
+
         loading = false;
     }
+
+    async Task OnAutoevaluarClick(Objetivo obj)
+    {
+        var result = await DialogService.OpenAsync<Autoevaluaciones.AutoevaluarDialog>("Mi Autoevaluación",
+            new Dictionary<string, object?> {
+                { "ObjetivoId", obj.Id },
+                { "ObjetivoNombre", obj.Nombre }
+            },
+            new DialogOptions { Width = "600px" });
+
+        if (result == true)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Autoevaluación guardada correctamente");
+            // Recargar datos
+            var data = await AutoevaluacionService.GetAutoevaluacionesAsync(CurrentUser);
+            autoevaluacionesPersonal = data.Personal;
+            autoevaluacionesEquipo = data.Equipo;
+            if (!CurrentUser.EsJefe)
+            {
+                objetivosPendientes = await AutoevaluacionService.GetObjetivosPendientesAutoevAsync(CurrentUser);
+            }
+            StateHasChanged();
+        }
+    }
+
+    private RenderFragment RenderPendientes(List<Objetivo>? lista) => __builder =>
+    {
+        if (lista == null || !lista.Any())
+        {
+            <EmptyState Message="No hay objetivos pendientes de autoevaluar. ¡Felicidades!" />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@lista" TItem="Objetivo" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar">
+                            <Template Context="obj">
+                                <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Descripcion" Title="Descripción" />
+                        <RadzenDataGridColumn TItem="Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="120px">
+                            <Template Context="obj">
+                                <RadzenButton Icon="rate_review" Text="Autoevaluar" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                              Click="@(() => OnAutoevaluarClick(obj))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
 
     private RenderFragment RenderAutoevaluaciones(List<Autoevaluacion>? lista, bool showEmployee) => __builder =>
     {

@@ -2,7 +2,7 @@
 
 <RadzenStack Gap="0.5rem">
     <RadzenDropDown Value="@SelectedId"
-                    ValueChanged="@OnValueChanged"
+                    ValueChanged="@((int? value) => OnValueChanged(value))"
                     Data="@escalas"
                     TextProperty="Etiqueta"
                     ValueProperty="Id"
@@ -31,9 +31,9 @@
         }
     }
 
-    private async Task OnValueChanged(object? value)
+    private async Task OnValueChanged(int? value)
     {
-        SelectedId = value is int id ? id : (int?)null;
+        SelectedId = value;
         await SelectedIdChanged.InvokeAsync(SelectedId);
     }
 }

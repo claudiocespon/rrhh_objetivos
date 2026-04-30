@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Objetivos.Web.Data;
 using Objetivos.Web.Domain.Entities;
+using Objetivos.Web.Domain.Enums;
 using System.Text.Json;
 
 namespace Objetivos.Web.Services;
@@ -96,6 +97,30 @@ public class AutoevaluacionService
         using var db = await _dbFactory.CreateDbContextAsync();
         var emp = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email.ToLower() && e.Activo);
         return emp?.Id;
+    }
+
+    public async Task<List<Objetivo>> GetObjetivosPendientesAutoevAsync(ICurrentUserService user)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+
+        var empleadoPropio = await db.Empleados
+            .FirstOrDefaultAsync(e => e.Email.ToLower() == user.Email.ToLower() && e.Activo);
+
+        if (empleadoPropio == null)
+            return new();
+
+        // Objetivos activos sin autoevaluación completada
+        var objetivosSinAutoev = await db.Objetivos
+            .Include(o => o.Empleado)
+            .Include(o => o.SoftSkill1)
+            .Include(o => o.SoftSkill2)
+            .Where(o => o.EmpleadoId == empleadoPropio.Id &&
+                        o.Estado == EstadoObjetivo.ACTIVO &&
+                        !db.Autoevaluaciones.Any(ae => ae.ObjetivoId == o.Id))
+            .OrderBy(o => o.Deadline)
+            .ToListAsync();
+
+        return objetivosSinAutoev;
     }
 
     public async Task<bool> GuardarAutoevaluacionAsync(Autoevaluacion ae, List<string> evidencias, List<string> adjuntos)
