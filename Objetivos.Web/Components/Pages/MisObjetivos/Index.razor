@@ -35,6 +35,9 @@ else
                         <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">Los objetivos de tu equipo están pendientes de tu aprobación para poder entrar en evaluación.</RadzenText>
                     </RadzenTabsItem>
                 }
+                <RadzenTabsItem Text="Cuerpo de Objetivos">
+                    @RenderCuerpoObjetivos(roleData.Equipo)
+                </RadzenTabsItem>
                 <RadzenTabsItem Text="Objetivos de mi Equipo">
                     @RenderObjetivos(roleData.Equipo, true)
                 </RadzenTabsItem>
@@ -140,6 +143,81 @@ else
         await JS.InvokeVoidAsync("antigravityDownloadFile", fileName, base64);
     }
 
+    private RenderFragment RenderCuerpoObjetivos(List<Objetivos.Web.Domain.Entities.Objetivo> objetivosLista) => __builder =>
+    {
+        if (objetivosLista == null || !objetivosLista.Any())
+        {
+            <EmptyState Message="No hay objetivos de equipo para mostrar" />
+        }
+        else
+        {
+            // Agrupar objetivos por empleado
+            var objetivosPorEmpleado = objetivosLista
+                .GroupBy(o => o.Empleado)
+                .OrderBy(g => g.Key.Apellido)
+                .ThenBy(g => g.Key.Nombre)
+                .ToList();
+
+            <div class="pt-3">
+                <RadzenAccordion>
+                    @foreach (var grupoEmpleado in objetivosPorEmpleado)
+                    {
+                        var empleado = grupoEmpleado.Key;
+                        var objetivosEmpleado = grupoEmpleado.ToList();
+                        var totalObjetivos = objetivosEmpleado.Count;
+                        var objetivosCompletados = objetivosEmpleado.Count(o => o.Estado == EstadoObjetivo.COMPLETADO);
+                        var progresoPromedio = objetivosEmpleado.Any() ? (int)objetivosEmpleado.Average(o => o.Progreso) : 0;
+
+                        <RadzenAccordionItem Text="@($"{empleado.Apellido}, {empleado.Nombre} ({objetivosCompletados}/{totalObjetivos} completados)")" TItem="string">
+                            <div style="padding: 1rem;">
+                                <RadzenStack Gap="1rem">
+                                    <RadzenRow>
+                                        <RadzenColumn Size="12">
+                                            <RadzenText TextStyle="TextStyle.Subtitle2">Progreso General</RadzenText>
+                                            <RadzenProgressBar Value="@progresoPromedio" ShowValue="true" Max="100" />
+                                        </RadzenColumn>
+                                    </RadzenRow>
+
+                                    <RadzenRow>
+                                        <RadzenColumn Size="12">
+                                            <RadzenDataGrid Data="@objetivosEmpleado" TItem="Objetivos.Web.Domain.Entities.Objetivo" AllowPaging="false" AllowSorting="true" Responsive="true">
+                                                <Columns>
+                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Nombre" Title="Objetivo" />
+                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Pilar.Nombre" Title="Pilar">
+                                                        <Template Context="obj">
+                                                            <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                                                        </Template>
+                                                    </RadzenDataGridColumn>
+                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Estado" Width="120px">
+                                                        <Template Context="obj">
+                                                            <EstadoBadge EstadoObj="@obj.Estado" />
+                                                        </Template>
+                                                    </RadzenDataGridColumn>
+                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Progreso" Width="100px">
+                                                        <Template Context="obj">
+                                                            <RadzenProgressBar Value="@obj.Progreso" ShowValue="true" Max="100" />
+                                                        </Template>
+                                                    </RadzenDataGridColumn>
+                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="100px">
+                                                        <Template Context="obj">
+                                                            <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                                                          Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
+                                                        </Template>
+                                                    </RadzenDataGridColumn>
+                                                </Columns>
+                                            </RadzenDataGrid>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+                                </RadzenStack>
+                            </div>
+                        </RadzenAccordionItem>
+                    }
+                </RadzenAccordion>
+            </div>
+        }
+    };
+
     private RenderFragment RenderObjetivos(List<Objetivos.Web.Domain.Entities.Objetivo> objetivosLista, bool showEmployee) => __builder =>
     {
         if (objetivosLista == null || !objetivosLista.Any())
@@ -181,10 +259,10 @@ else
                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                                     @if (!showEmployee && obj.Estado == EstadoObjetivo.ACTIVO)
                                     {
-                                        <RadzenButton Icon="rate_review" Text="Autoevaluar" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Flat" Size="ButtonSize.Small" 
+                                        <RadzenButton Icon="rate_review" Text="Autoevaluar" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Flat" Size="ButtonSize.Small"
                                                       Click="@(() => OnAutoevaluarClick(obj))" />
                                     }
-                                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" 
+                                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
                                                   Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
                                 </RadzenStack>
                             </Template>
