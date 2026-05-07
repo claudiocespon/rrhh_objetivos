@@ -69,15 +69,22 @@
 
     private async Task OnSubmit()
     {
-        var success = await AdminPilarService.ActualizarAsync(pilar);
+        bool esNuevo = pilar.Id == 0;
+        bool success = esNuevo
+            ? await AdminPilarService.CrearAsync(pilar)
+            : await AdminPilarService.ActualizarAsync(pilar);
+
         if (success)
         {
-            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Pilar actualizado correctamente");
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito",
+                esNuevo ? "Pilar creado correctamente" : "Pilar actualizado correctamente");
             DialogService.Close(true);
         }
         else
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar el pilar");
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                esNuevo ? "No se pudo crear el pilar. Verificá que el nombre no esté repetido."
+                        : "No se pudo actualizar el pilar.");
         }
     }
 }

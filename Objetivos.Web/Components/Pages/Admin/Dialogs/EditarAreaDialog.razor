@@ -56,15 +56,22 @@
 
     private async Task OnSubmit()
     {
-        var success = await AdminAreaService.ActualizarAsync(area);
+        bool esNuevo = area.Id == 0;
+        bool success = esNuevo
+            ? await AdminAreaService.CrearAsync(area)
+            : await AdminAreaService.ActualizarAsync(area);
+
         if (success)
         {
-            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Área actualizada correctamente");
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito",
+                esNuevo ? "Área creada correctamente" : "Área actualizada correctamente");
             DialogService.Close(true);
         }
         else
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar el área");
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                esNuevo ? "No se pudo crear el área. Verificá que el nombre no esté repetido."
+                        : "No se pudo actualizar el área.");
         }
     }
 }

@@ -64,15 +64,22 @@
 
     private async Task OnSubmit()
     {
-        var success = await AdminSoftSkillService.ActualizarAsync(softSkill);
+        bool esNuevo = softSkill.Id == 0;
+        bool success = esNuevo
+            ? await AdminSoftSkillService.CrearAsync(softSkill)
+            : await AdminSoftSkillService.ActualizarAsync(softSkill);
+
         if (success)
         {
-            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Soft Skill actualizado correctamente");
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito",
+                esNuevo ? "Soft Skill creado correctamente" : "Soft Skill actualizado correctamente");
             DialogService.Close(true);
         }
         else
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar el Soft Skill");
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                esNuevo ? "No se pudo crear el Soft Skill. Verificá que el nombre no esté repetido."
+                        : "No se pudo actualizar el Soft Skill.");
         }
     }
 }

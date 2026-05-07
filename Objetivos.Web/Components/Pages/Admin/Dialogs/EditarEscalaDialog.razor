@@ -61,15 +61,22 @@
 
     private async Task OnSubmit()
     {
-        var success = await AdminEscalaService.ActualizarAsync(escala);
+        bool esNuevo = escala.Id == 0;
+        bool success = esNuevo
+            ? await AdminEscalaService.CrearAsync(escala)
+            : await AdminEscalaService.ActualizarAsync(escala);
+
         if (success)
         {
-            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Escala actualizada correctamente");
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito",
+                esNuevo ? "Escala creada correctamente" : "Escala actualizada correctamente");
             DialogService.Close(true);
         }
         else
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo actualizar la escala");
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                esNuevo ? "No se pudo crear la escala. Verificá que la etiqueta no esté repetida."
+                        : "No se pudo actualizar la escala.");
         }
     }
 }
