@@ -215,6 +215,7 @@ public static class SeedData
             new ConfiguracionPlataforma { Clave = "jefe_puede_crear_objetivos", Valor = "true", Descripcion = "Permite a jefes crear objetivos para sus empleados", Tipo = "boolean" },
             new ConfiguracionPlataforma { Clave = "empleado_puede_autoevaluar", Valor = "true", Descripcion = "Habilita el módulo de autoevaluación para empleados", Tipo = "boolean" },
             new ConfiguracionPlataforma { Clave = "nombre_empresa", Valor = "PQ-Talent", Descripcion = "Nombre de la empresa mostrado en la plataforma", Tipo = "string" },
+            new ConfiguracionPlataforma { Clave = "un_objetivo_por_pilar", Valor = "false", Descripcion = "Si es true, un empleado solo puede tener un objetivo activo por pilar por año", Tipo = "boolean" },
             new ConfiguracionPlataforma { Clave = "texto_guia_plataforma", Valor = "", Descripcion = "Contenido del manual de uso en la sección Guía", Tipo = "text" }
         };
         foreach (var conf in configsRequeridas)

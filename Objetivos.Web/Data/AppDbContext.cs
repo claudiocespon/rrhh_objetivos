@@ -32,10 +32,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         base.OnModelCreating(modelBuilder);
 
-        // Constraint único obligatorio: pilarId + empleadoId + año
+        // Índice de performance: pilarId + empleadoId + año.
+        // La unicidad se controla vía ConfiguracionPlataforma "un_objetivo_por_pilar" (default: false).
         modelBuilder.Entity<Objetivo>()
-            .HasIndex(o => new { o.PilarId, o.EmpleadoId, o.Anio })
-            .IsUnique();
+            .HasIndex(o => new { o.PilarId, o.EmpleadoId, o.Anio });
 
         // Soft skills como FKs directas
         modelBuilder.Entity<Objetivo>()

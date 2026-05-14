@@ -37,6 +37,10 @@ public class ObjetivoService
                 .Where(o => o.EmpleadoId == empleadoPropio.Id && o.Anio == anio)
                 .ToListAsync();
         }
+        else
+        {
+            result.Personal = new List<Objetivo>();
+        }
 
         // 2. Fetch Team/Org Data using centralized scope
         var query = _db.Objetivos
@@ -57,8 +61,19 @@ public class ObjetivoService
             .Include(o => o.SoftSkill1)
             .Include(o => o.SoftSkill2)
             .Include(o => o.Revisiones)
+                .ThenInclude(r => r.EscalaValoracion)
+            .Include(o => o.Revisiones)
+                .ThenInclude(r => r.SoftSkill1EscalaValoracion)
+            .Include(o => o.Revisiones)
+                .ThenInclude(r => r.SoftSkill2EscalaValoracion)
             .Include(o => o.EvaluacionFinal)
+                .ThenInclude(ef => ef!.EscalaValoracionFinal)
+            .Include(o => o.EvaluacionFinal)
+                .ThenInclude(ef => ef!.SoftSkill1EscalaValoracion)
+            .Include(o => o.EvaluacionFinal)
+                .ThenInclude(ef => ef!.SoftSkill2EscalaValoracion)
             .Include(o => o.Autoevaluacion)
+                .ThenInclude(ae => ae!.EscalaValoracionScore)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
 
@@ -83,36 +98,24 @@ public class ObjetivoService
         if (nuevo.Deadline <= DateTime.Today)
             return (false, false);
 
-        // VAL-06: Validar suma de porcentajes (backend validation)
-        bool areaHabilitada = await _configuracion.ObtenerConfiguracionBoolAsync("objetivo_area_habilitado") ?? false;
-        if (areaHabilitada && nuevo.AreaEspecificaId.HasValue && nuevo.AreaEspecificaId > 0)
-        {
-            // Área específica seleccionada: suma debe ser 100%
-            var suma = nuevo.PorcentajePilar + nuevo.PorcentajeArea;
-            if (Math.Abs(suma - 100) > 0.01m)
-                return (false, false);
-        }
-        else
-        {
-            // Sin área específica: porcentaje del pilar debe ser 100%
-            if (Math.Abs(nuevo.PorcentajePilar - 100) > 0.01m)
-                return (false, false);
-        }
+        // VAL-06: Validar que la suma total no exceda el 100%
+        var sumaExistente = await _db.Objetivos
+            .Where(o => o.EmpleadoId == nuevo.EmpleadoId && o.Anio == DateTime.Now.Year && o.Estado != EstadoObjetivo.CANCELADO)
+            .SumAsync(o => o.PorcentajePilar);
+        
+        if (sumaExistente + nuevo.PorcentajePilar > 100.01m)
+            return (false, false);
 
-        // VAL-01: Verificar duplicado pilar+empleado+año
-        var existente = await _db.Objetivos.FirstOrDefaultAsync(o =>
-            o.PilarId == nuevo.PilarId &&
-            o.EmpleadoId == nuevo.EmpleadoId &&
-            o.Anio == DateTime.Now.Year &&
-            o.Estado != EstadoObjetivo.CANCELADO);
-
-        if (existente != null)
+        // VAL-01: Unicidad por pilar configurable (default: false = múltiples permitidos)
+        bool unPorPilar = await _configuracion.ObtenerConfiguracionBoolAsync("un_objetivo_por_pilar") ?? false;
+        if (unPorPilar)
         {
-            if (!reemplazar)
-                return (false, true);
-
-            // Cancelar el existente antes de crear el nuevo
-            await CancelarObjetivoAsync(existente.Id, "Reemplazado por nuevo objetivo");
+            bool duplicado = await _db.Objetivos.AnyAsync(o =>
+                o.EmpleadoId == nuevo.EmpleadoId &&
+                o.PilarId == nuevo.PilarId &&
+                o.Anio == DateTime.Now.Year &&
+                o.Estado != EstadoObjetivo.CANCELADO);
+            if (duplicado) return (false, true);
         }
 
         using var transaction = await _db.Database.BeginTransactionAsync();
@@ -221,6 +224,16 @@ public class ObjetivoService
         existing.Estado = objetivo.Estado;
         existing.Progreso = objetivo.Progreso;
 
+        // VAL-06: Validar que la suma total no exceda el 100% en UPDATE
+        var sumaOtros = await _db.Objetivos
+            .Where(o => o.EmpleadoId == existing.EmpleadoId && o.Anio == existing.Anio && o.Id != existing.Id && o.Estado != EstadoObjetivo.CANCELADO)
+            .SumAsync(o => o.PorcentajePilar);
+        
+        if (sumaOtros + objetivo.PorcentajePilar > 100.01m)
+            return false;
+
+        existing.PorcentajePilar = objetivo.PorcentajePilar;
+
         _db.AuditoriaLogs.Add(new AuditoriaLog
         {
             Entidad = "Objetivo",
@@ -308,7 +321,6 @@ public class ObjetivoService
         return true;
     }
 
-    // RN-01C: Obtener objetivos pendientes de aprobación para un jefe
     public async Task<List<Objetivo>> GetObjetivosPendientesAprobacionAsync()
     {
         var empleadosDelJefe = await _db.Empleados
@@ -330,6 +342,31 @@ public class ObjetivoService
             .OrderBy(o => o.FechaCreacion)
             .ToListAsync();
     }
+
+    public async Task<List<PilarConConfig>> GetPilaresDisponiblesAsync(int empleadoId)
+    {
+        var empleado = await _db.Empleados.FindAsync(empleadoId);
+        if (empleado == null) return new();
+
+        var pilares = await _db.Pilares
+            .Where(p => p.Activo && (p.AreaId == null || p.AreaId == empleado.AreaId))
+            .OrderBy(p => p.Orden)
+            .Select(p => new PilarConConfig { 
+                Pilar = p, 
+                EsObligatorio = p.EsObligatorio || p.AreaId == null, // Globales son obligatorios por defecto
+                PesoSugerido = 0 
+            })
+            .ToListAsync();
+
+        return pilares;
+    }
+}
+
+public class PilarConConfig
+{
+    public Pilar Pilar { get; set; } = null!;
+    public bool EsObligatorio { get; set; }
+    public decimal PesoSugerido { get; set; }
 }
 
 public class RoleObjetivosData
