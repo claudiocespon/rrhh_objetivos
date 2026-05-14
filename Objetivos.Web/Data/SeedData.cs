@@ -114,23 +114,37 @@ public static class SeedData
         // ─── SoftSkills ───
         if (!await db.SoftSkills.AnyAsync())
         {
-            var skillNames = new string[]
+            var skillData = new (string Nombre, string Descripcion)[]
             {
-                "Comunicación efectiva", "Liderazgo", "Trabajo en equipo",
-                "Resolución de problemas", "Pensamiento crítico", "Adaptabilidad",
-                "Gestión del tiempo", "Creatividad", "Inteligencia emocional",
-                "Negociación", "Toma de decisiones", "Empatía",
-                "Proactividad", "Resiliencia", "Orientación a resultados",
-                "Planificación estratégica", "Delegación efectiva", "Escucha activa",
-                "Gestión de conflictos", "Mentoría"
+                ("Comunicación efectiva", "Capacidad para transmitir ideas de forma clara, directa y asertiva, asegurando la comprensión del interlocutor."),
+                ("Liderazgo", "Habilidad para guiar, motivar e inspirar a otros hacia el logro de objetivos comunes."),
+                ("Trabajo en equipo", "Colaboración activa con otros para alcanzar metas grupales, priorizando el éxito del conjunto."),
+                ("Resolución de problemas", "Habilidad para identificar desafíos, analizar causas y proponer soluciones creativas y eficientes."),
+                ("Pensamiento crítico", "Capacidad para analizar información de manera objetiva y tomar decisiones fundamentadas."),
+                ("Adaptabilidad", "Flexibilidad para ajustarse a cambios en el entorno, procesos o prioridades sin perder efectividad."),
+                ("Gestión del tiempo", "Organización eficiente de tareas y prioridades para cumplir con plazos y objetivos."),
+                ("Creatividad", "Capacidad para generar ideas innovadoras y enfoques originales ante situaciones diversas."),
+                ("Inteligencia emocional", "Habilidad para reconocer y gestionar las propias emociones y las de los demás."),
+                ("Negociación", "Capacidad para alcanzar acuerdos beneficiosos resolviendo diferencias de manera constructiva."),
+                ("Toma de decisiones", "Habilidad para elegir el mejor curso de acción considerando riesgos y beneficios."),
+                ("Empatía", "Capacidad para comprender la perspectiva y sentimientos de los demás fomentando un clima positivo."),
+                ("Proactividad", "Actitud de iniciativa propia para anticiparse a necesidades y generar mejoras."),
+                ("Resiliencia", "Capacidad para sobreponerse a dificultades y mantener el enfoque en situaciones de presión."),
+                ("Orientación a resultados", "Enfoque constante en el cumplimiento de metas y estándares de excelencia."),
+                ("Planificación estratégica", "Habilidad para diseñar planes de acción a largo plazo alineados con la visión del negocio."),
+                ("Delegación efectiva", "Capacidad para asignar tareas y responsabilidades de manera equilibrada y clara."),
+                ("Escucha activa", "Atención plena a lo que otros comunican para comprender no solo el mensaje sino también el contexto."),
+                ("Gestión de conflictos", "Habilidad para mediar en desacuerdos y convertirlos en oportunidades de mejora."),
+                ("Mentoría", "Capacidad para transmitir conocimientos y guiar el desarrollo profesional de otros.")
             };
-            for (int i = 0; i < skillNames.Length; i++)
+
+            for (int i = 0; i < skillData.Length; i++)
             {
                 db.SoftSkills.Add(new SoftSkill
                 {
                     Id = i + 1,
-                    Nombre = skillNames[i],
-                    Descripcion = $"Definición pendiente de carga por RRHH para: {skillNames[i]}.",
+                    Nombre = skillData[i].Nombre,
+                    Descripcion = skillData[i].Descripcion,
                     Activo = true,
                     Orden = i + 1
                 });
@@ -154,11 +168,11 @@ public static class SeedData
         {
             var escalas = new List<EscalaValoracion>
             {
-                new EscalaValoracion { Etiqueta = "Excelente", ValorNumerico = 5, Orden = 1, Activo = true },
-                new EscalaValoracion { Etiqueta = "Muy bueno", ValorNumerico = 4, Orden = 2, Activo = true },
-                new EscalaValoracion { Etiqueta = "Bueno", ValorNumerico = 3, Orden = 3, Activo = true },
-                new EscalaValoracion { Etiqueta = "Regular", ValorNumerico = 2, Orden = 4, Activo = true },
-                new EscalaValoracion { Etiqueta = "Malo", ValorNumerico = 1, Orden = 5, Activo = true }
+                new EscalaValoracion { Etiqueta = "No cumplido", ValorNumerico = 1, Orden = 1, Activo = true },
+                new EscalaValoracion { Etiqueta = "Parcialmente", ValorNumerico = 2, Orden = 2, Activo = true },
+                new EscalaValoracion { Etiqueta = "En desarrollo", ValorNumerico = 3, Orden = 3, Activo = true },
+                new EscalaValoracion { Etiqueta = "Cumplido", ValorNumerico = 4, Orden = 4, Activo = true },
+                new EscalaValoracion { Etiqueta = "Superado ampliamente", ValorNumerico = 5, Orden = 5, Activo = true }
             };
             db.EscalasValoracion.AddRange(escalas);
         }
@@ -183,10 +197,9 @@ public static class SeedData
         {
             var estadosEvaluacion = new List<EstadoEvaluacionConfig>
             {
-                new EstadoEvaluacionConfig { Nombre = "Pendiente", Slug = "pendiente", ColorHex = "#FF9800", Orden = 1, Activo = true },
-                new EstadoEvaluacionConfig { Nombre = "En progreso", Slug = "en_progreso", ColorHex = "#2196F3", Orden = 2, Activo = true },
-                new EstadoEvaluacionConfig { Nombre = "Completada", Slug = "completada", ColorHex = "#4CAF50", Orden = 3, Activo = true },
-                new EstadoEvaluacionConfig { Nombre = "Próxima a vencer", Slug = "proxima_a_vencer", ColorHex = "#FF5722", Orden = 4, Activo = true }
+                new EstadoEvaluacionConfig { Nombre = "Pendiente", Slug = "pendiente", ColorHex = "#6B7280", Orden = 1, Activo = true },
+                new EstadoEvaluacionConfig { Nombre = "En proceso", Slug = "en_proceso", ColorHex = "#3B82F6", Orden = 2, Activo = true },
+                new EstadoEvaluacionConfig { Nombre = "Completada", Slug = "completada", ColorHex = "#10B981", Orden = 3, Activo = true }
             };
             db.EstadosEvaluacionConfig.AddRange(estadosEvaluacion);
         }
@@ -199,7 +212,9 @@ public static class SeedData
             new ConfiguracionPlataforma { Clave = "objetivo_area_habilitado", Valor = "true", Descripcion = "Habilita objetivo específico por área en evaluaciones", Tipo = "boolean" },
             new ConfiguracionPlataforma { Clave = "calculos_comerciales_habilitados", Valor = "false", Descripcion = "Habilita cálculos del área comercial (diferido)", Tipo = "boolean" },
             new ConfiguracionPlataforma { Clave = "resultado_final_manual", Valor = "true", Descripcion = "Resultado final de evaluación ingresado manualmente por el jefe", Tipo = "boolean" },
-            new ConfiguracionPlataforma { Clave = "jefe_puede_crear_objetivos", Valor = "false", Descripcion = "Si es true, el rol jefe puede crear objetivos. Si es false, solo empleados pueden crearlos", Tipo = "boolean" },
+            new ConfiguracionPlataforma { Clave = "jefe_puede_crear_objetivos", Valor = "true", Descripcion = "Permite a jefes crear objetivos para sus empleados", Tipo = "boolean" },
+            new ConfiguracionPlataforma { Clave = "empleado_puede_autoevaluar", Valor = "true", Descripcion = "Habilita el módulo de autoevaluación para empleados", Tipo = "boolean" },
+            new ConfiguracionPlataforma { Clave = "nombre_empresa", Valor = "PQ-Talent", Descripcion = "Nombre de la empresa mostrado en la plataforma", Tipo = "string" },
             new ConfiguracionPlataforma { Clave = "texto_guia_plataforma", Valor = "", Descripcion = "Contenido del manual de uso en la sección Guía", Tipo = "text" }
         };
         foreach (var conf in configsRequeridas)

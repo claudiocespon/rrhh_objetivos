@@ -73,10 +73,10 @@ Objetivos.sln
 ```csharp
 // Domain/Enums/
 public enum EstadoObjetivo    { BORRADOR, ACTIVO, EN_RIESGO, COMPLETADO, CANCELADO }
-public enum PeriodoRevision   { Q1_ABRIL, Q2_AGOSTO, Q3_NOVIEMBRE }
+public enum PeriodoRevision   { FEEDBACK_MITAD_ANIO }
 public enum ResultadoEval     { CUMPLIDO, PARCIAL, NO_CUMPLIDO, EN_RIESGO }
 public enum EstadoBitacora    { PENDIENTE_REVISION, COMENTADO_JEFE, REQUIERE_AJUSTE, CERRADO }
-public enum TipoEvento        { DEADLINE_OBJETIVO, REVISION_Q1, REVISION_Q2, REVISION_Q3, EVALUACION_FINAL }
+public enum TipoEvento        { DEADLINE_OBJETIVO, FEEDBACK_MITAD_ANIO, EVALUACION_FINAL }
 public enum TipoNotificacion  { SOLICITUD_ACTUALIZACION, NUEVA_EVALUACION, DEADLINE_PROXIMO }
 
 // Domain/Entities/
@@ -297,24 +297,23 @@ PRECONDICIÓN:
 
 POSTCONDICIÓN — ejecutar todo en una transacción:
   1. INSERT Objetivo → estado = ACTIVO
-  2. INSERT RevisionCuatrimestral x3:
-       { ObjetivoId, Periodo=Q1_ABRIL,    Anio=objetivo.Anio, Completada=false }
-       { ObjetivoId, Periodo=Q2_AGOSTO,   Anio=objetivo.Anio, Completada=false }
-       { ObjetivoId, Periodo=Q3_NOVIEMBRE,Anio=objetivo.Anio, Completada=false }
+  2. INSERT RevisionCuatrimestral x1:
+       { ObjetivoId, Periodo=FEEDBACK_MITAD_ANIO, Anio=objetivo.Anio, Completada=false }
   3. INSERT EventoCalendario:
        { Titulo=$"Deadline: {objetivo.Nombre}", Fecha=objetivo.Deadline,
          Tipo=DEADLINE_OBJETIVO, ObjetivoId=id, AreaId=jefe.AreaId }
+       { Titulo=$"Feedback Mitad de Año: {objetivo.Nombre}", Fecha=new DateTime(objetivo.Anio, 7, 15),
+         Tipo=FEEDBACK_MITAD_ANIO, ObjetivoId=id, AreaId=jefe.AreaId }
   4. INSERT AuditoriaLog { Entidad="Objetivo", Accion="CREATE", UsuarioId=jefeActualId }
   5. SaveChanges()
 ```
 
-### RN-02: Completar Revisión Cuatrimestral
+### RN-02: Completar Revisión Feedback Mitad de Año
 
 ```
 PRECONDICIÓN:
   - revision.Completada == false
-  - SECUENCIA: no se puede completar Q2 si Q1.Completada==false
-               no se puede completar Q3 si Q2.Completada==false
+  - Período es FEEDBACK_MITAD_ANIO
   - puntaje entre 1 y 5
   - comentarioJefe no vacío
   - resultado seleccionado
@@ -335,7 +334,7 @@ POSTCONDICIÓN:
 
 ```
 PRECONDICIÓN:
-  - Las 3 RevisionCuatrimestral del objetivo tienen Completada==true
+  - La RevisionCuatrimestral FEEDBACK_MITAD_ANIO tiene Completada==true
   - DateTime.Today >= objetivo.Deadline
   - No existe EvaluacionFinal para ese objetivoId
 
@@ -388,13 +387,11 @@ void EvaluarEstadoRiesgo(int objetivoId):
 ### RN-07: Fórmulas de Cálculo — EXACTAS
 
 ```
-// Puntaje ponderado de un objetivo (1-5)
+// Puntaje ponderado de un objetivo (1-5) — Modelo simplificado
 double CalcularPonderado(int objetivoId):
-  q1 = revisiones.First(r => r.Periodo == Q1_ABRIL).Puntaje ?? 0
-  q2 = revisiones.First(r => r.Periodo == Q2_AGOSTO).Puntaje ?? 0
-  q3 = revisiones.First(r => r.Periodo == Q3_NOVIEMBRE).Puntaje ?? 0
+  feedback = revisiones.First(r => r.Periodo == FEEDBACK_MITAD_ANIO).Puntaje ?? 0
   fin = evaluacionFinal?.PuntajeFinal ?? 0
-  return (q1 * 0.2) + (q2 * 0.3) + (q3 * 0.3) + (fin * 0.2)
+  return (feedback * 0.5) + (fin * 0.5)
 
 // Rendimiento de empleado por pilar (0-5)
 double RendimientoPorPilar(int empleadoId, int pilarId, int anio):
@@ -432,13 +429,14 @@ void RecalcularProgresoObjetivo(int objetivoId):
   objetivo.Progreso = (int)Math.Round(promedio * 20)
 ```
 
-### RN-08: Fechas Fijas de Revisión (por año)
+### RN-08: Fecha Fija de Revisión (por año)
 
 ```
-Q1_ABRIL    → 15 de Abril    del año del objetivo
-Q2_AGOSTO   → 15 de Agosto   del año del objetivo
-Q3_NOVIEMBRE→ 15 de Noviembre del año del objetivo
+FEEDBACK_MITAD_ANIO → 15 de Julio del año del objetivo
 ```
+
+**NOTA:** Modelo simplificado adoptado por decisión de negocio (Mayo 2026). Si se restauran Q1/Q2/Q3 en el futuro, 
+actualizar este documento, los enums en Entities.cs, y la fórmula en RendimientoService.
 
 ---
 
