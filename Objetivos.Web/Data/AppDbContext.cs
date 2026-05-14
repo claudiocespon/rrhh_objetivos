@@ -213,5 +213,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany()
             .HasForeignKey(a => a.EstadoEvaluacionConfigId)
             .OnDelete(DeleteBehavior.SetNull);
+            
+        modelBuilder.Entity<Pilar>()
+            .HasOne(p => p.Area)
+            .WithMany()
+            .HasForeignKey(p => p.AreaId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var ahora = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State == EntityState.Modified)
+            {
+                var prop = entry.Entity.GetType().GetProperty("ActualizadoEn");
+                if (prop != null && prop.CanWrite)
+                    prop.SetValue(entry.Entity, ahora);
+            }
+        }
+        return await base.SaveChangesAsync(cancellationToken);
     }
 }

@@ -1,7 +1,7 @@
 @inject ObjetivoService ObjetivoService
 @inject ICurrentUserService CurrentUser
 @inject NotificationService NotificationService
-@inject AppDbContext Db
+@inject IDbContextFactory<AppDbContext> DbFactory
 @inject DialogService DialogService
 @inject ValidacionObjetivoService ValidacionService
 @inject ConfiguracionService ConfigService
@@ -13,7 +13,8 @@
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Colaborador</RadzenText>
                 <RadzenDropDown @bind-Value="@objetivo.EmpleadoId" Data="@empleados" TextProperty="NombreCompleto" ValueProperty="Id" 
                                 Style="width: 100%;" Name="Empleado" 
-                                AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />
+                                AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                Change="@OnEmpleadoChanged" />
                 <RadzenRequiredValidator Component="Empleado" Text="Este campo es obligatorio" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
@@ -21,8 +22,12 @@
         <RadzenRow>
             <RadzenColumn Size="8">
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Pilar Estratégico</RadzenText>
-                <RadzenDropDown @bind-Value="@objetivo.PilarId" Data="@pilares" TextProperty="Nombre" ValueProperty="Id"
-                                Style="width: 100%;" Name="Pilar" />
+                <RadzenDropDown @bind-Value="@objetivo.PilarId" Data="@pilaresConConfig" TextProperty="Pilar.Nombre" ValueProperty="Pilar.Id"
+                                Style="width: 100%;" Name="Pilar" Change="@OnPilarChanged">
+                    <Template Context="pcc">
+                        @pcc.Pilar.Nombre @(pcc.EsObligatorio ? "(Obligatorio)" : "")
+                    </Template>
+                </RadzenDropDown>
                 <RadzenRequiredValidator Component="Pilar" Text="Este campo es obligatorio" Style="position: absolute" />
             </RadzenColumn>
             <RadzenColumn Size="4">
@@ -114,7 +119,7 @@
 @code {
     Objetivo objetivo = new() { Deadline = DateTime.Today.AddMonths(6) };
     List<EmpleadoItem> empleados = new();
-    List<Pilar> pilares = new();
+    List<PilarConConfig> pilaresConConfig = new();
     List<SoftSkill> softSkills = new();
     List<Area> areas = new();
     bool objetivoAreaHabilitado = false;
@@ -132,14 +137,15 @@
             return;
         }
 
-        pilares = await Db.Pilares.Where(p => p.Activo).ToListAsync();
-        softSkills = await Db.SoftSkills.Where(s => s.Activo).ToListAsync();
-        areas = await Db.Areas.Where(a => a.Activo).ToListAsync();
+        using var db = await DbFactory.CreateDbContextAsync();
+
+        softSkills = await db.SoftSkills.Where(s => s.Activo).ToListAsync();
+        areas = await db.Areas.Where(a => a.Activo).ToListAsync();
 
         // Verificar si objetivo por área está habilitado
         objetivoAreaHabilitado = await ConfigService.ObtenerConfiguracionBoolAsync("objetivo_area_habilitado") ?? false;
 
-        IQueryable<Empleado> query = Db.Empleados;
+        IQueryable<Empleado> query = db.Empleados;
 
         bool canSeeAll = CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario;
 
@@ -167,6 +173,25 @@
             Id = e.Id, 
             NombreCompleto = string.IsNullOrWhiteSpace(e.Apellido) ? e.Nombre : $"{e.Apellido}, {e.Nombre}" 
         }).ToList();
+
+        if (objetivo.EmpleadoId > 0 || (empleados.Count == 1 && (objetivo.EmpleadoId = empleados[0].Id) > 0))
+        {
+            await OnEmpleadoChanged();
+        }
+    }
+
+    async Task OnEmpleadoChanged()
+    {
+        if (objetivo.EmpleadoId > 0)
+        {
+            pilaresConConfig = await ObjetivoService.GetPilaresDisponiblesAsync(objetivo.EmpleadoId);
+            StateHasChanged();
+        }
+    }
+
+    void OnPilarChanged()
+    {
+        // No longer suggesting weight from Pillar as PesoPorcentual was removed
     }
 
     async Task OnSubmit()
@@ -187,49 +212,27 @@
             return;
         }
 
-        // VAL-06: Validar suma de porcentajes
-        if (objetivoAreaHabilitado && objetivo.AreaEspecificaId.HasValue && objetivo.AreaEspecificaId > 0)
+        // VAL-06: Validar que la suma total de todos los objetivos no exceda el 100%
+        using var dbVal = await DbFactory.CreateDbContextAsync();
+        var objetivosExistentes = await dbVal.Objetivos
+            .Where(o => o.EmpleadoId == objetivo.EmpleadoId && o.Anio == DateTime.Now.Year && o.Estado != EstadoObjetivo.CANCELADO)
+            .ToListAsync();
+
+        if (!ValidacionService.ValidarNuevoPeso(objetivosExistentes, objetivo.PorcentajePilar))
         {
-            // Área específica seleccionada: suma debe ser exactamente 100%
-            var suma = objetivo.PorcentajePilar + objetivo.PorcentajeArea;
-            if (Math.Abs(suma - 100) > 0.01m)
-            {
-                errorMsg = $"La suma de porcentajes debe ser 100% (Pilar: {objetivo.PorcentajePilar}% + Área: {objetivo.PorcentajeArea}% = {suma}%)";
-                return;
-            }
-        }
-        else
-        {
-            // Sin área específica: porcentaje del pilar debe ser 100%
-            if (Math.Abs(objetivo.PorcentajePilar - 100) > 0.01m)
-            {
-                errorMsg = "El porcentaje del Pilar debe ser 100% (o seleccione un área específica)";
-                return;
-            }
+            var sumaActual = objetivosExistentes.Sum(o => o.PorcentajePilar);
+            errorMsg = $"La suma total de pesos no puede exceder el 100%. Actualmente suma {sumaActual}%. Estás intentando agregar {objetivo.PorcentajePilar}%.";
+            return;
         }
 
         // VAL-05: Límite de 10 objetivos
-        int count = await Db.Objetivos.CountAsync(o => o.EmpleadoId == objetivo.EmpleadoId && o.Anio == DateTime.Now.Year && o.Estado != EstadoObjetivo.CANCELADO);
-        if (count >= 10)
+        if (objetivosExistentes.Count >= 10)
         {
             errorMsg = "El empleado ya ha alcanzado el límite de 10 objetivos para este año.";
             return;
         }
 
-        // NUEVO-M-13 / VAL-01: El servicio detecta duplicados y permite reemplazo confirmado
-        var (ok, duplicado) = await ObjetivoService.CrearObjetivoAsync(objetivo);
-
-        if (duplicado)
-        {
-            var confirm = await DialogService.Confirm(
-                $"Ya existe un objetivo de este pilar para el empleado en {DateTime.Now.Year}. ¿Desea reemplazarlo?",
-                "Objetivo Duplicado",
-                new ConfirmOptions { OkButtonText = "Sí, reemplazar", CancelButtonText = "No" });
-
-            if (confirm != true) return;
-
-            (ok, _) = await ObjetivoService.CrearObjetivoAsync(objetivo, reemplazar: true);
-        }
+        var (ok, _) = await ObjetivoService.CrearObjetivoAsync(objetivo);
 
         if (ok)
         {
