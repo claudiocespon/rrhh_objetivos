@@ -1,0 +1,65 @@
+@page "/calendario"
+@inject CalendarioService CalendarioService
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Nav
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+             JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 1.5rem;">
+    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Calendario de Eventos</RadzenText>
+    <RadzenNumeric TValue="int" @bind-Value="@anio" Min="2020" Max="2100" Step="1"
+                   Style="width: 110px;" Change="@OnAnioChanged" />
+</RadzenStack>
+
+@if (loading)
+{
+    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    <RadzenCard>
+        <RadzenScheduler Data="@eventos" TItem="Domain.Entities.EventoCalendario"
+                         StartProperty="Fecha" EndProperty="Fecha"
+                         TextProperty="Titulo"
+                         AppointmentRender="@OnAppointmentRender"
+                         Style="height: 600px;">
+            <RadzenMonthView />
+            <RadzenWeekView />
+        </RadzenScheduler>
+    </RadzenCard>
+}
+
+@code {
+    List<Domain.Entities.EventoCalendario> eventos = new();
+    bool loading = true;
+    int anio = DateTime.Today.Year;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CurrentUser.InitializeAsync();
+        await Cargar();
+    }
+
+    async Task Cargar()
+    {
+        loading = true;
+        eventos = await CalendarioService.GetEventosAsync(CurrentUser, anio);
+        loading = false;
+    }
+
+    async Task OnAnioChanged(int nuevoAnio)
+    {
+        anio = nuevoAnio;
+        await Cargar();
+    }
+
+    void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<Domain.Entities.EventoCalendario> args)
+    {
+        args.Attributes["style"] = args.Data.Tipo switch
+        {
+            Domain.Enums.TipoEvento.DEADLINE_OBJETIVO   => "background: var(--rz-danger); color: white;",
+            Domain.Enums.TipoEvento.FEEDBACK_MITAD_ANIO => "background: var(--rz-info); color: white;",
+            Domain.Enums.TipoEvento.EVALUACION_FINAL    => "background: var(--rz-success); color: white;",
+            _                                            => "background: var(--rz-secondary); color: white;"
+        };
+    }
+}

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Objetivos.Web.Data;
+using Objetivos.Web.Domain.Entities;
 using Objetivos.Web.Domain.Enums;
 
 namespace Objetivos.Web.Services;
@@ -102,5 +103,31 @@ public class CalendarioService
             .ThenBy(e => e.Titulo)
             .Take(10)
             .ToList();
+    }
+
+    /// <summary>
+    /// Retorna EventoCalendario desde la BD, filtrado por scope del usuario.
+    /// </summary>
+    public async Task<List<EventoCalendario>> GetEventosAsync(ICurrentUserService user, int anio)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+
+        IQueryable<EventoCalendario> query = db.EventosCalendario
+            .Include(e => e.Objetivo)
+                .ThenInclude(o => o!.Empleado)
+            .Where(e => e.Fecha.Year == anio);
+
+        if (!_dataScope.PuedeVerTodo(user) && !user.EsJefe)
+        {
+            var emp = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == user.Email.ToLower() && e.Activo);
+            if (emp != null)
+                query = query.Where(e => e.Objetivo != null && e.Objetivo.EmpleadoId == emp.Id);
+        }
+        else if (user.EsJefe && !_dataScope.PuedeVerTodo(user))
+        {
+            query = query.Where(e => e.AreaId == user.AreaId);
+        }
+
+        return await query.OrderBy(e => e.Fecha).ToListAsync();
     }
 }
