@@ -6,16 +6,17 @@ namespace Objetivos.Web.Services;
 
 public class ChatService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
 
-    public ChatService(AppDbContext db)
+    public ChatService(IDbContextFactory<AppDbContext> dbFactory)
     {
-        _db = db;
+        _dbFactory = dbFactory;
     }
 
     public async Task<List<MensajeChat>> GetConversacionAsync(int jefeId, int empleadoId)
     {
-        return await _db.MensajesChat
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.MensajesChat
             .Where(m => m.JefeId == jefeId && m.DestinatarioEmpleadoId == empleadoId)
             .OrderBy(m => m.Fecha)
             .ToListAsync();
@@ -23,10 +24,11 @@ public class ChatService
 
     public async Task EnviarMensajeAsync(MensajeChat mensaje)
     {
+        using var db = await _dbFactory.CreateDbContextAsync();
         mensaje.Fecha = DateTime.UtcNow;
         mensaje.Leido = false;
-        _db.MensajesChat.Add(mensaje);
-        await _db.SaveChangesAsync();
+        db.MensajesChat.Add(mensaje);
+        await db.SaveChangesAsync();
     }
 
     /// <summary>
@@ -36,7 +38,8 @@ public class ChatService
     /// </summary>
     public async Task MarcarMensajesComoLeidosAsync(int jefeId, int empleadoId, bool esJefe)
     {
-        var sinLeer = await _db.MensajesChat
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var sinLeer = await db.MensajesChat
             .Where(m => m.JefeId == jefeId
                      && m.DestinatarioEmpleadoId == empleadoId
                      && m.RemitenteEsJefe == !esJefe
@@ -47,7 +50,7 @@ public class ChatService
             m.Leido = true;
 
         if (sinLeer.Count > 0)
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
     }
 
     /// <summary>
@@ -57,7 +60,8 @@ public class ChatService
     /// </summary>
     public async Task<Dictionary<int, int>> GetConversacionesConNoLeidosAsync(int jefeId)
     {
-        var grupos = await _db.MensajesChat
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var grupos = await db.MensajesChat
             .Where(m => m.JefeId == jefeId && !m.RemitenteEsJefe && !m.Leido)
             .GroupBy(m => m.DestinatarioEmpleadoId)
             .Select(g => new { EmpleadoId = g.Key, Count = g.Count() })
@@ -73,9 +77,10 @@ public class ChatService
     /// </summary>
     public async Task<int> GetMensajesNoLeidosCountAsync(int usuarioId, bool esJefe)
     {
+        using var db = await _dbFactory.CreateDbContextAsync();
         if (esJefe)
-            return await _db.MensajesChat.CountAsync(m => m.JefeId == usuarioId && !m.RemitenteEsJefe && !m.Leido);
+            return await db.MensajesChat.CountAsync(m => m.JefeId == usuarioId && !m.RemitenteEsJefe && !m.Leido);
         else
-            return await _db.MensajesChat.CountAsync(m => m.DestinatarioEmpleadoId == usuarioId && m.RemitenteEsJefe && !m.Leido);
+            return await db.MensajesChat.CountAsync(m => m.DestinatarioEmpleadoId == usuarioId && m.RemitenteEsJefe && !m.Leido);
     }
 }

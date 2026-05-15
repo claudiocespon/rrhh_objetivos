@@ -15,10 +15,12 @@ public class AutoevaluacionPageData
 public class AutoevaluacionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly DataScopeService _dataScope;
 
-    public AutoevaluacionService(IDbContextFactory<AppDbContext> dbFactory)
+    public AutoevaluacionService(IDbContextFactory<AppDbContext> dbFactory, DataScopeService dataScope)
     {
         _dbFactory = dbFactory;
+        _dataScope = dataScope;
     }
 
     public async Task<AutoevaluacionPageData> GetAutoevaluacionesAsync(ICurrentUserService user)
@@ -47,7 +49,7 @@ public class AutoevaluacionService
                 .ToListAsync();
         }
 
-        // Equipo (solo jefes)
+        // Equipo (solo jefes) — usa DataScopeService centralizado
         if (user.EsJefe)
         {
             var query = db.Autoevaluaciones
@@ -62,12 +64,7 @@ public class AutoevaluacionService
                 .Include(ae => ae.SoftSkill2EscalaValoracion)
                 .AsQueryable();
 
-            if (!user.EsSuperusuario && user.Rol != "RRHH" && user.Rol != "DIRECTOR_GENERAL")
-            {
-                query = user.Rol == "DIRECTOR"
-                    ? query.Where(ae => ae.Objetivo.Empleado.AreaId == user.AreaId)
-                    : query.Where(ae => ae.Objetivo.Empleado.JefeId == user.UsuarioId);
-            }
+            query = _dataScope.AplicarScope(query, user);
 
             data.Equipo = await query
                 .OrderByDescending(ae => ae.FechaAutoevaluacion)

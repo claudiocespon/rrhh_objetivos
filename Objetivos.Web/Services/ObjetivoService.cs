@@ -8,30 +8,32 @@ namespace Objetivos.Web.Services;
 
 public class ObjetivoService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ICurrentUserService _currentUser;
     private readonly DataScopeService _dataScope;
     private readonly ConfiguracionService _configuracion;
+    private readonly ValidacionObjetivoService _validacion;
 
-    public ObjetivoService(AppDbContext db, ICurrentUserService currentUser, DataScopeService dataScope, ConfiguracionService configuracion)
+    public ObjetivoService(IDbContextFactory<AppDbContext> dbFactory, ICurrentUserService currentUser, DataScopeService dataScope, ConfiguracionService configuracion, ValidacionObjetivoService validacion)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _currentUser = currentUser;
         _dataScope = dataScope;
         _configuracion = configuracion;
+        _validacion = validacion;
     }
 
     public async Task<RoleObjetivosData> GetObjetivosRoleAsync(int anio)
     {
+        using var db = await _dbFactory.CreateDbContextAsync();
         var result = new RoleObjetivosData();
         var email = _currentUser.Email?.ToLower();
 
         // 1. Fetch Personal Data
-        // Search for Empleado by email - handles both employees and managers (jefes) who are also employees
-        var empleadoPropio = await _db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
+        var empleadoPropio = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
         if (empleadoPropio != null)
         {
-            result.Personal = await _db.Objetivos
+            result.Personal = await db.Objetivos
                 .Include(o => o.Empleado)
                 .Include(o => o.Pilar)
                 .Where(o => o.EmpleadoId == empleadoPropio.Id && o.Anio == anio)
@@ -43,7 +45,7 @@ public class ObjetivoService
         }
 
         // 2. Fetch Team/Org Data using centralized scope
-        var query = _db.Objetivos
+        var query = db.Objetivos
             .Include(o => o.Empleado)
             .Include(o => o.Pilar)
             .Where(o => o.Anio == anio);
@@ -55,7 +57,8 @@ public class ObjetivoService
 
     public async Task<Objetivo?> GetByIdAsync(int id)
     {
-        return await _db.Objetivos
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.Objetivos
             .Include(o => o.Empleado)
             .Include(o => o.Pilar)
             .Include(o => o.SoftSkill1)
@@ -98,52 +101,52 @@ public class ObjetivoService
         if (nuevo.Deadline <= DateTime.Today)
             return (false, false);
 
-        // VAL-06: Validar que la suma total no exceda el 100%
-        var sumaExistente = await _db.Objetivos
-            .Where(o => o.EmpleadoId == nuevo.EmpleadoId && o.Anio == DateTime.Now.Year && o.Estado != EstadoObjetivo.CANCELADO)
-            .SumAsync(o => o.PorcentajePilar);
-        
-        if (sumaExistente + nuevo.PorcentajePilar > 100.01m)
+        // VAL-06: Validar que la suma total no exceda el 100% (delegado a ValidacionObjetivoService)
+        var anio = DateTime.Now.Year;
+        var (sumaOk, _) = await _validacion.ValidarSumaPesoAsync(nuevo.EmpleadoId, anio, nuevo.PorcentajePilar);
+        if (!sumaOk)
             return (false, false);
+
+        using var db = await _dbFactory.CreateDbContextAsync();
 
         // VAL-01: Unicidad por pilar configurable (default: false = múltiples permitidos)
         bool unPorPilar = await _configuracion.ObtenerConfiguracionBoolAsync("un_objetivo_por_pilar") ?? false;
         if (unPorPilar)
         {
-            bool duplicado = await _db.Objetivos.AnyAsync(o =>
+            bool duplicado = await db.Objetivos.AnyAsync(o =>
                 o.EmpleadoId == nuevo.EmpleadoId &&
                 o.PilarId == nuevo.PilarId &&
-                o.Anio == DateTime.Now.Year &&
+                o.Anio == anio &&
                 o.Estado != EstadoObjetivo.CANCELADO);
             if (duplicado) return (false, true);
         }
 
-        using var transaction = await _db.Database.BeginTransactionAsync();
+        using var transaction = await db.Database.BeginTransactionAsync();
         try
         {
             nuevo.Estado = EstadoObjetivo.ACTIVO;
             nuevo.FechaCreacion = DateTime.UtcNow;
             nuevo.CreadoPorId = _currentUser.UsuarioId;
-            nuevo.Anio = DateTime.Now.Year;
+            nuevo.Anio = anio;
 
             // Set dynamic approval state to "pendiente_aprobacion"
-            var estadoPendiente = await _db.EstadosObjetivoConfig
+            var estadoPendiente = await db.EstadosObjetivoConfig
                 .FirstOrDefaultAsync(e => e.Slug == "pendiente_aprobacion" && e.Activo);
             if (estadoPendiente != null)
                 nuevo.EstadoObjetivoConfigId = estadoPendiente.Id;
 
-            _db.Objetivos.Add(nuevo);
-            await _db.SaveChangesAsync(); // Save to get Id
+            db.Objetivos.Add(nuevo);
+            await db.SaveChangesAsync(); // Save to get Id
 
             // Insert Revision (Mitad de Año)
             var revisiones = new List<RevisionCuatrimestral>
             {
                 new() { ObjetivoId = nuevo.Id, Periodo = PeriodoRevision.FEEDBACK_MITAD_ANIO, Anio = nuevo.Anio, Completada = false }
             };
-            _db.RevisionesCuatrimestrales.AddRange(revisiones);
+            db.RevisionesCuatrimestrales.AddRange(revisiones);
 
             // Insert EventoCalendario
-            _db.EventosCalendario.Add(new EventoCalendario
+            db.EventosCalendario.Add(new EventoCalendario
             {
                 Titulo = $"Deadline: {nuevo.Nombre}",
                 Fecha = nuevo.Deadline,
@@ -153,7 +156,7 @@ public class ObjetivoService
             });
 
             // Audit
-            _db.AuditoriaLogs.Add(new AuditoriaLog
+            db.AuditoriaLogs.Add(new AuditoriaLog
             {
                 Entidad = "Objetivo",
                 EntidadId = nuevo.Id,
@@ -162,9 +165,14 @@ public class ObjetivoService
                 Fecha = DateTime.UtcNow
             });
 
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             await transaction.CommitAsync();
             return (true, false);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("UNIQUE") == true)
+        {
+            await transaction.RollbackAsync();
+            return (false, true); // Duplicado detectado a nivel BD
         }
         catch
         {
@@ -176,12 +184,13 @@ public class ObjetivoService
     // RN-04: Cancelar Objetivo (soft delete)
     public async Task CancelarObjetivoAsync(int id, string razon)
     {
-        var objetivo = await _db.Objetivos.FindAsync(id);
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var objetivo = await db.Objetivos.FindAsync(id);
         if (objetivo != null)
         {
             objetivo.Estado = EstadoObjetivo.CANCELADO;
-            
-            _db.AuditoriaLogs.Add(new AuditoriaLog
+
+            db.AuditoriaLogs.Add(new AuditoriaLog
             {
                 Entidad = "Objetivo",
                 EntidadId = id,
@@ -191,28 +200,30 @@ public class ObjetivoService
                 CambiosJson = JsonSerializer.Serialize(new { razon, estadoAnterior = "ACTIVO", estadoNuevo = "CANCELADO" })
             });
 
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
     }
 
     // RN-06: Transición Automática de Estado EN_RIESGO
     public async Task EvaluarEstadoRiesgoAsync(int objetivoId)
     {
-        var objetivo = await _db.Objetivos.FindAsync(objetivoId);
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var objetivo = await db.Objetivos.FindAsync(objetivoId);
         if (objetivo != null && objetivo.Estado == EstadoObjetivo.ACTIVO)
         {
             var diasRestantes = (objetivo.Deadline - DateTime.Today).TotalDays;
             if (objetivo.Progreso < 50 && diasRestantes < 60)
             {
                 objetivo.Estado = EstadoObjetivo.EN_RIESGO;
-                await _db.SaveChangesAsync();
+                await db.SaveChangesAsync();
             }
         }
     }
 
     public async Task<bool> UpdateObjetivoAsync(Objetivo objetivo)
     {
-        var existing = await _db.Objetivos.FindAsync(objetivo.Id);
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var existing = await db.Objetivos.FindAsync(objetivo.Id);
         if (existing == null) return false;
 
         existing.Nombre = objetivo.Nombre;
@@ -224,17 +235,14 @@ public class ObjetivoService
         existing.Estado = objetivo.Estado;
         existing.Progreso = objetivo.Progreso;
 
-        // VAL-06: Validar que la suma total no exceda el 100% en UPDATE
-        var sumaOtros = await _db.Objetivos
-            .Where(o => o.EmpleadoId == existing.EmpleadoId && o.Anio == existing.Anio && o.Id != existing.Id && o.Estado != EstadoObjetivo.CANCELADO)
-            .SumAsync(o => o.PorcentajePilar);
-        
-        if (sumaOtros + objetivo.PorcentajePilar > 100.01m)
+        // VAL-06: Validar que la suma total no exceda el 100% en UPDATE (delegado a ValidacionObjetivoService)
+        var (sumaOk, _) = await _validacion.ValidarSumaPesoAsync(existing.EmpleadoId, existing.Anio, objetivo.PorcentajePilar, existing.Id);
+        if (!sumaOk)
             return false;
 
         existing.PorcentajePilar = objetivo.PorcentajePilar;
 
-        _db.AuditoriaLogs.Add(new AuditoriaLog
+        db.AuditoriaLogs.Add(new AuditoriaLog
         {
             Entidad = "Objetivo",
             EntidadId = objetivo.Id,
@@ -243,9 +251,9 @@ public class ObjetivoService
             Fecha = DateTime.UtcNow
         });
 
-        var saved = await _db.SaveChangesAsync() > 0;
+        var saved = await db.SaveChangesAsync() > 0;
 
-        // M-07: Re-evaluar riesgo al actualizar progreso o deadline
+        // M-07: Re-evaluar riesgo al actualizar progreso o deadline (nuevo contexto)
         if (saved)
             await EvaluarEstadoRiesgoAsync(objetivo.Id);
 
@@ -255,7 +263,8 @@ public class ObjetivoService
     // RN-01A: Aprobar Objetivo (flujo de aprobación por jefe)
     public async Task<bool> AprobarObjetivoAsync(int objetivoId)
     {
-        var objetivo = await _db.Objetivos
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var objetivo = await db.Objetivos
             .Include(o => o.Empleado)
             .FirstOrDefaultAsync(o => o.Id == objetivoId);
 
@@ -266,14 +275,14 @@ public class ObjetivoService
             return false;
 
         // Obtener estado "aprobado"
-        var estadoAprobado = await _db.EstadosObjetivoConfig
+        var estadoAprobado = await db.EstadosObjetivoConfig
             .FirstOrDefaultAsync(e => e.Slug == "aprobado" && e.Activo);
         if (estadoAprobado == null) return false;
 
         objetivo.EstadoObjetivoConfigId = estadoAprobado.Id;
         objetivo.AprobadoPorJefe = true;
 
-        _db.AuditoriaLogs.Add(new AuditoriaLog
+        db.AuditoriaLogs.Add(new AuditoriaLog
         {
             Entidad = "Objetivo",
             EntidadId = objetivoId,
@@ -283,14 +292,15 @@ public class ObjetivoService
             CambiosJson = JsonSerializer.Serialize(new { accion = "APROBACIÓN", estado = "aprobado" })
         });
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
         return true;
     }
 
     // RN-01B: Rechazar Objetivo (vuelve a "pendiente_aprobacion")
     public async Task<bool> RechazarObjetivoAsync(int objetivoId, string comentario)
     {
-        var objetivo = await _db.Objetivos
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var objetivo = await db.Objetivos
             .Include(o => o.Empleado)
             .FirstOrDefaultAsync(o => o.Id == objetivoId);
 
@@ -301,13 +311,13 @@ public class ObjetivoService
             return false;
 
         // Vuelve a "pendiente_aprobacion" sin cambiar AprobadoPorJefe (permanece false)
-        var estadoPendiente = await _db.EstadosObjetivoConfig
+        var estadoPendiente = await db.EstadosObjetivoConfig
             .FirstOrDefaultAsync(e => e.Slug == "pendiente_aprobacion" && e.Activo);
         if (estadoPendiente == null) return false;
 
         objetivo.EstadoObjetivoConfigId = estadoPendiente.Id;
 
-        _db.AuditoriaLogs.Add(new AuditoriaLog
+        db.AuditoriaLogs.Add(new AuditoriaLog
         {
             Entidad = "Objetivo",
             EntidadId = objetivoId,
@@ -317,22 +327,23 @@ public class ObjetivoService
             CambiosJson = JsonSerializer.Serialize(new { accion = "RECHAZO", estado = "pendiente_aprobacion", comentario })
         });
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
         return true;
     }
 
     public async Task<List<Objetivo>> GetObjetivosPendientesAprobacionAsync()
     {
-        var empleadosDelJefe = await _db.Empleados
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var empleadosDelJefe = await db.Empleados
             .Where(e => e.JefeId == _currentUser.UsuarioId && e.Activo)
             .Select(e => e.Id)
             .ToListAsync();
 
-        var estadoPendiente = await _db.EstadosObjetivoConfig
+        var estadoPendiente = await db.EstadosObjetivoConfig
             .FirstOrDefaultAsync(e => e.Slug == "pendiente_aprobacion" && e.Activo);
         if (estadoPendiente == null) return new();
 
-        return await _db.Objetivos
+        return await db.Objetivos
             .Include(o => o.Empleado)
             .Include(o => o.Pilar)
             .Include(o => o.EstadoObjetivoConfig)
@@ -345,16 +356,17 @@ public class ObjetivoService
 
     public async Task<List<PilarConConfig>> GetPilaresDisponiblesAsync(int empleadoId)
     {
-        var empleado = await _db.Empleados.FindAsync(empleadoId);
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var empleado = await db.Empleados.FindAsync(empleadoId);
         if (empleado == null) return new();
 
-        var pilares = await _db.Pilares
+        var pilares = await db.Pilares
             .Where(p => p.Activo && (p.AreaId == null || p.AreaId == empleado.AreaId))
             .OrderBy(p => p.Orden)
-            .Select(p => new PilarConConfig { 
-                Pilar = p, 
+            .Select(p => new PilarConConfig {
+                Pilar = p,
                 EsObligatorio = p.EsObligatorio || p.AreaId == null, // Globales son obligatorios por defecto
-                PesoSugerido = 0 
+                PesoSugerido = 0
             })
             .ToListAsync();
 

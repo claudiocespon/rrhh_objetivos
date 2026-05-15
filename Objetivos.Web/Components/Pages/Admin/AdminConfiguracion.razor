@@ -98,6 +98,16 @@
                             <div style="@($"background-color: {p.ColorHex}; width: 30px; height: 30px; border-radius: 4px;")"></div>
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Pilar" Title="Área" Width="150px">
+                        <Template Context="p">
+                            @(p.Area?.Nombre ?? "Global")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Pilar" Title="Oblig." Width="80px">
+                        <Template Context="p">
+                            <RadzenCheckBox @bind-Value="@p.EsObligatorio" Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Pilar" Title="Activo" Width="80px">
                         <Template Context="p">
                             <RadzenCheckBox @bind-Value="@p.Activo" Disabled="true" />

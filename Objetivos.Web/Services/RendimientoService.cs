@@ -7,11 +7,11 @@ namespace Objetivos.Web.Services;
 
 public class RendimientoService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
 
-    public RendimientoService(AppDbContext db)
+    public RendimientoService(IDbContextFactory<AppDbContext> dbFactory)
     {
-        _db = db;
+        _dbFactory = dbFactory;
     }
 
     /// <summary>
@@ -46,7 +46,8 @@ public class RendimientoService
     // Valoracion ponderada de un objetivo (1-5) - RN-07
     public async Task<double> CalcularPonderadoAsync(int objetivoId)
     {
-        var objetivo = await _db.Objetivos
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var objetivo = await db.Objetivos
             .Include(o => o.Revisiones)
             .Include(o => o.EvaluacionFinal)
             .FirstOrDefaultAsync(o => o.Id == objetivoId);
@@ -57,35 +58,47 @@ public class RendimientoService
     // Rendimiento de empleado por pilar (0-5) - RN-07
     public async Task<double> RendimientoPorPilarAsync(int empleadoId, int pilarId, int anio)
     {
-        var objetivo = await _db.Objetivos
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var objetivo = await db.Objetivos
             .Include(o => o.Revisiones)
             .Include(o => o.EvaluacionFinal)
-            .FirstOrDefaultAsync(o => o.EmpleadoId == empleadoId 
-                                   && o.PilarId == pilarId 
+            .FirstOrDefaultAsync(o => o.EmpleadoId == empleadoId
+                                   && o.PilarId == pilarId
                                    && o.Anio == anio);
-        
+
         if (objetivo == null) return 0;
-        
+
         return CalcularPonderadoInterno(objetivo);
     }
 
-    // Promedio general del empleado (0-5) - RN-07
+    // Promedio general del empleado (0-5) - RN-07 - AHORA PONDERADO POR PORCENTAJE DE OBJETIVO
     public async Task<double> PromedioGeneralAsync(int empleadoId, int anio)
     {
-        var objetivos = await _db.Objetivos
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var objetivos = await db.Objetivos
             .Include(o => o.Revisiones)
             .Include(o => o.EvaluacionFinal)
             .Where(o => o.EmpleadoId == empleadoId && o.Anio == anio && o.Estado != EstadoObjetivo.CANCELADO)
             .ToListAsync();
-
         if (!objetivos.Any()) return 0;
 
-        var scores = objetivos.Select(CalcularPonderadoInterno).ToList();
+        double sumaPonderada = 0;
+        decimal sumaPesos = 0;
 
-        var objetivosConDatos = scores.Where(v => v > 0).ToList();
-        if (!objetivosConDatos.Any()) return 0;
-        
-        return objetivosConDatos.Average();
+        foreach (var obj in objetivos)
+        {
+            double score = CalcularPonderadoInterno(obj);
+            if (score > 0)
+            {
+                sumaPonderada += score * (double)obj.PorcentajePilar;
+                sumaPesos += obj.PorcentajePilar;
+            }
+        }
+
+        if (sumaPesos == 0) return 0;
+
+        // Retornar promedio ponderado (normalizado a escala 1-5 si los pesos suman 100)
+        return sumaPonderada / (double)sumaPesos;
     }
 
     // Semáforo (usar para badges y cards) - RN-07
@@ -105,7 +118,8 @@ public class RendimientoService
     // Recalcular progreso objetivo - RN-07
     public async Task RecalcularProgresoObjetivoAsync(int objetivoId)
     {
-        var objetivo = await _db.Objetivos
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var objetivo = await db.Objetivos
             .Include(o => o.Revisiones)
             .FirstOrDefaultAsync(o => o.Id == objetivoId);
 
@@ -122,6 +136,6 @@ public class RendimientoService
             objetivo.Progreso = (int)Math.Round(promedio * 20);
         }
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
     }
 }

@@ -75,13 +75,13 @@ else
                                 <RadzenStack>
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                                         <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: bold;">Revisión: @rev.Periodo.ToString().Replace("_", " ")</RadzenText>
-                                        <RadzenRating Value="@(rev.Puntaje ?? 0)" ReadOnly="true" Stars="5" />
+                                        <RadzenBadge Text="@(rev.EscalaValoracion?.Etiqueta ?? "Sin valoración")" BadgeStyle="BadgeStyle.Secondary" Variant="Variant.Flat" />
                                     </RadzenStack>
                                     
                                     <RadzenRow>
                                         <RadzenColumn Size="6">
                                             <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill1.Nombre</RadzenText>
-                                            <RadzenRating Value="@(rev.SoftSkill1Puntaje ?? 0)" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                            <RadzenBadge Text="@(rev.SoftSkill1EscalaValoracion?.Etiqueta ?? "-")" IsPill="true" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" />
                                             @if (!string.IsNullOrEmpty(rev.SoftSkill1Comentario))
                                             {
                                                 <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@rev.SoftSkill1Comentario"</RadzenText>
@@ -89,7 +89,7 @@ else
                                         </RadzenColumn>
                                         <RadzenColumn Size="6">
                                             <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill2.Nombre</RadzenText>
-                                            <RadzenRating Value="@(rev.SoftSkill2Puntaje ?? 0)" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                            <RadzenBadge Text="@(rev.SoftSkill2EscalaValoracion?.Etiqueta ?? "-")" IsPill="true" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" />
                                             @if (!string.IsNullOrEmpty(rev.SoftSkill2Comentario))
                                             {
                                                 <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@rev.SoftSkill2Comentario"</RadzenText>
@@ -112,15 +112,12 @@ else
                                         <RadzenBadge Text="@objetivo.EvaluacionFinal.ResultadoFinal.ToString()" BadgeStyle="BadgeStyle.Success" />
                                     </RadzenStack>
 
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success)">Valoración: @objetivo.EvaluacionFinal.PuntajeFinal.ToString("N1")</RadzenText>
-                                        <RadzenRating Value="@((int)Math.Round(objetivo.EvaluacionFinal.PuntajeFinal))" ReadOnly="true" Stars="5" />
-                                    </div>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success)">Valoración Final: @(objetivo.EvaluacionFinal.EscalaValoracionFinal?.Etiqueta ?? "Pendiente")</RadzenText>
 
                                     <RadzenRow>
                                         <RadzenColumn Size="6">
                                             <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill1.Nombre (Final)</RadzenText>
-                                            <RadzenRating Value="@(objetivo.EvaluacionFinal.SoftSkill1Puntaje ?? 0)" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                            <RadzenBadge Text="@(objetivo.EvaluacionFinal.SoftSkill1EscalaValoracion?.Etiqueta ?? "-")" IsPill="true" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" />
                                             @if (!string.IsNullOrEmpty(objetivo.EvaluacionFinal.SoftSkill1Comentario))
                                             {
                                                 <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@objetivo.EvaluacionFinal.SoftSkill1Comentario"</RadzenText>
@@ -128,7 +125,7 @@ else
                                         </RadzenColumn>
                                         <RadzenColumn Size="6">
                                             <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill2.Nombre (Final)</RadzenText>
-                                            <RadzenRating Value="@(objetivo.EvaluacionFinal.SoftSkill2Puntaje ?? 0)" ReadOnly="true" Stars="5" Size="RatingSize.Small" />
+                                            <RadzenBadge Text="@(objetivo.EvaluacionFinal.SoftSkill2EscalaValoracion?.Etiqueta ?? "-")" IsPill="true" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" />
                                             @if (!string.IsNullOrEmpty(objetivo.EvaluacionFinal.SoftSkill2Comentario))
                                             {
                                                 <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@objetivo.EvaluacionFinal.SoftSkill2Comentario"</RadzenText>
@@ -196,7 +193,7 @@ else
             <RadzenCard>
                 <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Evolución del Objetivo</RadzenText>
                 <RadzenChart Style="height: 250px;">
-                    <RadzenLineSeries Data="@evolucion" CategoryProperty="Periodo" ValueProperty="Puntaje" Title="Valoración (1-5)">
+                    <RadzenLineSeries Data="@evolucion" CategoryProperty="Periodo" ValueProperty="Puntaje" Title="Evolución de Valoración">
                         <ChildContent>
                             <RadzenMarkers Visible="true" MarkerType="MarkerType.Circle" />
                         </ChildContent>

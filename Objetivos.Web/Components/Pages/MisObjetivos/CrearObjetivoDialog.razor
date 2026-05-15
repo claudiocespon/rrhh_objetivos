@@ -1,26 +1,17 @@
 @inject ObjetivoService ObjetivoService
 @inject ICurrentUserService CurrentUser
 @inject NotificationService NotificationService
-@inject IDbContextFactory<AppDbContext> DbFactory
 @inject DialogService DialogService
 @inject ValidacionObjetivoService ValidacionService
 @inject ConfiguracionService ConfigService
+@inject UsuarioService UsuarioService
+@inject AdminAreaService AdminAreaService
+@inject AdminSoftSkillService AdminSoftSkillService
 
 <RadzenTemplateForm TItem="Objetivo" Data="@objetivo" Submit="@OnSubmit">
     <RadzenStack Gap="1rem">
         <RadzenRow>
             <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Colaborador</RadzenText>
-                <RadzenDropDown @bind-Value="@objetivo.EmpleadoId" Data="@empleados" TextProperty="NombreCompleto" ValueProperty="Id" 
-                                Style="width: 100%;" Name="Empleado" 
-                                AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                Change="@OnEmpleadoChanged" />
-                <RadzenRequiredValidator Component="Empleado" Text="Este campo es obligatorio" Style="position: absolute" />
-            </RadzenColumn>
-        </RadzenRow>
-
-        <RadzenRow>
-            <RadzenColumn Size="8">
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Pilar Estratégico</RadzenText>
                 <RadzenDropDown @bind-Value="@objetivo.PilarId" Data="@pilaresConConfig" TextProperty="Pilar.Nombre" ValueProperty="Pilar.Id"
                                 Style="width: 100%;" Name="Pilar" Change="@OnPilarChanged">
@@ -30,19 +21,19 @@
                 </RadzenDropDown>
                 <RadzenRequiredValidator Component="Pilar" Text="Este campo es obligatorio" Style="position: absolute" />
             </RadzenColumn>
-            <RadzenColumn Size="4">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Ponderación (%)</RadzenText>
-                <RadzenNumeric @bind-Value="@objetivo.PorcentajePilar" Min="0" Max="100" Step="5" Style="width: 100%;" Name="Porcentaje" />
-                <RadzenRangeValidator Component="Porcentaje" Min="0" Max="100" Text="El porcentaje debe estar entre 0 y 100" Style="position: absolute" />
-            </RadzenColumn>
         </RadzenRow>
 
         <RadzenRow>
-            <RadzenColumn Size="12">
+            <RadzenColumn Size="8">
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Nombre del Objetivo</RadzenText>
                 <RadzenTextBox @bind-Value="@objetivo.Nombre" Style="width: 100%;" Name="Nombre" />
                 <RadzenRequiredValidator Component="Nombre" Text="Este campo es obligatorio" Style="position: absolute" />
                 <RadzenLengthValidator Component="Nombre" Min="5" Max="100" Text="El nombre debe tener entre 5 y 100 caracteres" Style="position: absolute" />
+            </RadzenColumn>
+            <RadzenColumn Size="4">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Ponderación (%)</RadzenText>
+                <RadzenNumeric @bind-Value="@objetivo.PorcentajePilar" Min="0" Max="100" Step="5" Style="width: 100%;" Name="Porcentaje" />
+                <RadzenRangeValidator Component="Porcentaje" Min="0" Max="100" Text="El porcentaje debe estar entre 0 y 100" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -68,13 +59,13 @@
 
         <RadzenRow>
             <RadzenColumn Size="6">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Soft Skill 1</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Competencia 1</RadzenText>
                 <RadzenDropDown @bind-Value="@objetivo.SoftSkill1Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id"
                                 Style="width: 100%;" Name="SS1" />
                 <RadzenRequiredValidator Component="SS1" Text="Este campo es obligatorio" Style="position: absolute" />
             </RadzenColumn>
             <RadzenColumn Size="6">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Soft Skill 2</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Competencia 2</RadzenText>
                 <RadzenDropDown @bind-Value="@objetivo.SoftSkill2Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id"
                                 Style="width: 100%;" Name="SS2" />
                 <RadzenRequiredValidator Component="SS2" Text="Este campo es obligatorio" Style="position: absolute" />
@@ -90,14 +81,10 @@
                 </RadzenColumn>
             </RadzenRow>
             <RadzenRow>
-                <RadzenColumn Size="8">
+                <RadzenColumn Size="12">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Área Específica</RadzenText>
                     <RadzenDropDown @bind-Value="@objetivo.AreaEspecificaId" Data="@areas" TextProperty="Nombre" ValueProperty="Id"
                                     Style="width: 100%;" Name="AreaEspecifica" AllowClear="true" Placeholder="Seleccione un área..." />
-                </RadzenColumn>
-                <RadzenColumn Size="4">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Ponderación Área (%)</RadzenText>
-                    <RadzenNumeric @bind-Value="@objetivo.PorcentajeArea" Min="0" Max="100" Step="5" Style="width: 100%;" Name="PorcentajeArea" />
                 </RadzenColumn>
             </RadzenRow>
         }
@@ -124,6 +111,7 @@
     List<Area> areas = new();
     bool objetivoAreaHabilitado = false;
     string? errorMsg;
+    int objetivosExistentesCount = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -137,47 +125,36 @@
             return;
         }
 
-        using var db = await DbFactory.CreateDbContextAsync();
-
-        softSkills = await db.SoftSkills.Where(s => s.Activo).ToListAsync();
-        areas = await db.Areas.Where(a => a.Activo).ToListAsync();
-
-        // Verificar si objetivo por área está habilitado
+        // Cargar datos a través de servicios (no más IDbContextFactory en UI)
+        softSkills = (await AdminSoftSkillService.ObtenerTodosAsync()).Where(s => s.Activo).ToList();
+        areas = (await AdminAreaService.ObtenerTodosAsync()).Where(a => a.Activo).ToList();
         objetivoAreaHabilitado = await ConfigService.ObtenerConfiguracionBoolAsync("objetivo_area_habilitado") ?? false;
 
-        IQueryable<Empleado> query = db.Empleados;
+        // Lista de empleados disponibles según rol (scope manejado en UsuarioService)
+        var todosUsuarios = await UsuarioService.GetUsuariosAsync();
+        IEnumerable<UsuarioDto> empleadosFiltrados = todosUsuarios.Where(u => !u.EsJefe && u.Activo);
 
         bool canSeeAll = CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario;
-
-        if (canSeeAll)
+        if (!canSeeAll)
         {
-            // RRHH, Director General, Superusuario → all employees
-        }
-        else if (CurrentUser.Rol == "DIRECTOR")
-        {
-            // Directors see all employees in their area
-            query = query.Where(e => e.AreaId == CurrentUser.AreaId);
-        }
-        else
-        {
-            // Standard bosses see only direct subordinates
-            query = query.Where(e => e.JefeId == CurrentUser.UsuarioId);
+            if (CurrentUser.Rol == "DIRECTOR")
+                empleadosFiltrados = empleadosFiltrados.Where(e => e.AreaId == CurrentUser.AreaId);
+            else
+                empleadosFiltrados = empleadosFiltrados.Where(e => e.JefeId == CurrentUser.UsuarioId);
         }
 
-        var rawEmpleados = await query.OrderBy(e => e.Apellido).ToListAsync();
-        if (rawEmpleados.Count == 0)
+        var lista = empleadosFiltrados.OrderBy(e => e.Apellido).ToList();
+        if (lista.Count == 0)
         {
             errorMsg = "No hay empleados asignados a su área. Contacte a RRHH.";
         }
-        empleados = rawEmpleados.Select(e => new EmpleadoItem { 
-            Id = e.Id, 
-            NombreCompleto = string.IsNullOrWhiteSpace(e.Apellido) ? e.Nombre : $"{e.Apellido}, {e.Nombre}" 
+        empleados = lista.Select(e => new EmpleadoItem {
+            Id = e.Id,
+            NombreCompleto = e.NombreCompleto
         }).ToList();
 
-        if (objetivo.EmpleadoId > 0 || (empleados.Count == 1 && (objetivo.EmpleadoId = empleados[0].Id) > 0))
-        {
-            await OnEmpleadoChanged();
-        }
+        objetivo.EmpleadoId = CurrentUser.UsuarioId;
+        await OnEmpleadoChanged();
     }
 
     async Task OnEmpleadoChanged()
@@ -185,6 +162,8 @@
         if (objetivo.EmpleadoId > 0)
         {
             pilaresConConfig = await ObjetivoService.GetPilaresDisponiblesAsync(objetivo.EmpleadoId);
+            // Pre-check VAL-05 count for el empleado actual
+            var (_, _) = await ValidacionService.ValidarSumaPesoAsync(objetivo.EmpleadoId, DateTime.Now.Year, 0);
             StateHasChanged();
         }
     }
@@ -201,7 +180,7 @@
         // VAL-03
         if (objetivo.SoftSkill1Id == objetivo.SoftSkill2Id)
         {
-            errorMsg = "Las dos soft skills deben ser diferentes";
+            errorMsg = "Las dos competencias deben ser diferentes";
             return;
         }
 
@@ -212,27 +191,22 @@
             return;
         }
 
-        // VAL-06: Validar que la suma total de todos los objetivos no exceda el 100%
-        using var dbVal = await DbFactory.CreateDbContextAsync();
-        var objetivosExistentes = await dbVal.Objetivos
-            .Where(o => o.EmpleadoId == objetivo.EmpleadoId && o.Anio == DateTime.Now.Year && o.Estado != EstadoObjetivo.CANCELADO)
-            .ToListAsync();
-
-        if (!ValidacionService.ValidarNuevoPeso(objetivosExistentes, objetivo.PorcentajePilar))
+        // VAL-06 centralizado (delegado a ValidacionObjetivoService)
+        var (sumaOk, sumaActual) = await ValidacionService.ValidarSumaPesoAsync(
+            objetivo.EmpleadoId, DateTime.Now.Year, objetivo.PorcentajePilar);
+        if (!sumaOk)
         {
-            var sumaActual = objetivosExistentes.Sum(o => o.PorcentajePilar);
             errorMsg = $"La suma total de pesos no puede exceder el 100%. Actualmente suma {sumaActual}%. Estás intentando agregar {objetivo.PorcentajePilar}%.";
             return;
         }
 
-        // VAL-05: Límite de 10 objetivos
-        if (objetivosExistentes.Count >= 10)
+        var (ok, duplicado) = await ObjetivoService.CrearObjetivoAsync(objetivo);
+
+        if (duplicado)
         {
-            errorMsg = "El empleado ya ha alcanzado el límite de 10 objetivos para este año.";
+            errorMsg = "Ya existe un objetivo activo para este pilar/empleado/año. Cancele el existente o cambie el pilar.";
             return;
         }
-
-        var (ok, _) = await ObjetivoService.CrearObjetivoAsync(objetivo);
 
         if (ok)
         {

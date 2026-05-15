@@ -22,12 +22,12 @@ public class AuthResult
 
 public class AuthService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IEmailService _emailService;
 
-    public AuthService(AppDbContext db, IEmailService emailService)
+    public AuthService(IDbContextFactory<AppDbContext> dbFactory, IEmailService emailService)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _emailService = emailService;
     }
 
@@ -64,8 +64,10 @@ public class AuthService
 
         email = email.Trim().ToLowerInvariant();
 
+        using var db = await _dbFactory.CreateDbContextAsync();
+
         // Check Jefe first
-        var jefe = await _db.Jefes
+        var jefe = await db.Jefes
             .Include(j => j.Area)
             .FirstOrDefaultAsync(j => j.Email.ToLower() == email && j.Activo);
 
@@ -89,7 +91,7 @@ public class AuthService
         }
 
         // Check Empleado
-        var empleado = await _db.Empleados
+        var empleado = await db.Empleados
             .Include(e => e.Area)
             .FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
 
@@ -128,22 +130,24 @@ public class AuthService
 
         var hash = HashPassword(nuevaPassword);
 
+        using var db = await _dbFactory.CreateDbContextAsync();
+
         if (esJefe)
         {
-            var jefe = await _db.Jefes.FindAsync(usuarioId);
+            var jefe = await db.Jefes.FindAsync(usuarioId);
             if (jefe == null) return false;
             jefe.PasswordHash = hash;
             jefe.DebeCambiarPassword = false;
         }
         else
         {
-            var empleado = await _db.Empleados.FindAsync(usuarioId);
+            var empleado = await db.Empleados.FindAsync(usuarioId);
             if (empleado == null) return false;
             empleado.PasswordHash = hash;
             empleado.DebeCambiarPassword = false;
         }
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
         return true;
     }
 
@@ -153,25 +157,27 @@ public class AuthService
         var randomPassword = GenerarPasswordAleatorio();
         var hash = HashPassword(randomPassword);
 
-        var jefe = await _db.Jefes.FirstOrDefaultAsync(j => j.Email.ToLower() == email && j.Activo);
+        using var db = await _dbFactory.CreateDbContextAsync();
+
+        var jefe = await db.Jefes.FirstOrDefaultAsync(j => j.Email.ToLower() == email && j.Activo);
         if (jefe != null)
         {
             jefe.PasswordHash = hash;
             jefe.DebeCambiarPassword = true;
-            await _db.SaveChangesAsync();
-            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - PQ-Talent", 
+            await db.SaveChangesAsync();
+            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - PQ-Talent",
                 $"Hola {jefe.Nombre},<br/><br/>Tu nueva contraseña temporal es: <b>{randomPassword}</b><br/>" +
                 "Deberás cambiarla en tu próximo inicio de sesión.<br/><br/>Saludos,<br/>Equipo de RRHH");
             return true;
         }
 
-        var empleado = await _db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
+        var empleado = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
         if (empleado != null)
         {
             empleado.PasswordHash = hash;
             empleado.DebeCambiarPassword = true;
-            await _db.SaveChangesAsync();
-            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - PQ-Talent", 
+            await db.SaveChangesAsync();
+            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - PQ-Talent",
                 $"Hola {empleado.Nombre},<br/><br/>Tu nueva contraseña temporal es: <b>{randomPassword}</b><br/>" +
                 "Deberás cambiarla en tu próximo inicio de sesión.<br/><br/>Saludos,<br/>Equipo de RRHH");
             return true;
@@ -192,4 +198,3 @@ public class AuthService
         return sb.ToString();
     }
 }
-

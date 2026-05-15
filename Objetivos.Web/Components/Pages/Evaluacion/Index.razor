@@ -168,7 +168,7 @@ else
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Valoración" Width="120px">
                             <Template Context="rev">
-                                <RadzenRating Value="@(rev.Puntaje ?? 0)" ReadOnly="true" Stars="5" />
+                                @(rev.EscalaValoracion?.Etiqueta ?? "-")
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="ComentarioJefe" Title="Resumen de Evaluación" />

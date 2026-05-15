@@ -172,10 +172,11 @@
 
     async Task OnSubmit()
     {
-        // Map escala IDs back to numeric scores for backward compatibility
+        // N-06: Cargar escalas UNA sola vez (antes se llamaba 3 veces a la BD)
+        var escalas = await ConfigService.ObtenerEscalasActivasAsync();
+
         if (scoreEscalaId.HasValue)
         {
-            var escalas = await ConfigService.ObtenerEscalasActivasAsync();
             var escala = escalas.FirstOrDefault(e => e.Id == scoreEscalaId.Value);
             if (escala?.ValorNumerico.HasValue == true)
                 autoevaluacion.Score = (int)escala.ValorNumerico.Value;
@@ -183,7 +184,6 @@
 
         if (skill1EscalaId.HasValue)
         {
-            var escalas = await ConfigService.ObtenerEscalasActivasAsync();
             var escala = escalas.FirstOrDefault(e => e.Id == skill1EscalaId.Value);
             if (escala?.ValorNumerico.HasValue == true)
                 autoevaluacion.SoftSkill1Score = (int)escala.ValorNumerico.Value;
@@ -191,7 +191,6 @@
 
         if (skill2EscalaId.HasValue)
         {
-            var escalas = await ConfigService.ObtenerEscalasActivasAsync();
             var escala = escalas.FirstOrDefault(e => e.Id == skill2EscalaId.Value);
             if (escala?.ValorNumerico.HasValue == true)
                 autoevaluacion.SoftSkill2Score = (int)escala.ValorNumerico.Value;

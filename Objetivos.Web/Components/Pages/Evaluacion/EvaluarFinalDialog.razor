@@ -39,15 +39,12 @@
                 <RadzenText TextStyle="TextStyle.Subtitle2">Resultado Final</RadzenText>
                 @if (resultadoFinalManual)
                 {
-                    <RadzenDropDown @bind-Value="@model.EscalaValoracionId" Data="@escalas" TextProperty="Etiqueta" ValueProperty="Id"
-                                    Placeholder="Seleccione valoración final" Style="width: 100%;" Name="ResultadoEscala" />
+                    <EscalaSelector @bind-SelectedId="@model.EscalaValoracionId" />
                     <RadzenRequiredValidator Component="ResultadoEscala" Text="Debe seleccionar una valoración final" Style="position: absolute" />
                 }
                 else
                 {
-                    <RadzenDropDown @bind-Value="@model.Resultado" Data="@resultados"
-                                    Placeholder="Seleccione resultado final" Style="width: 100%;" Name="Resultado" />
-                    <RadzenRequiredValidator Component="Resultado" Text="El resultado final es obligatorio" Style="position: absolute" />
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Text">La valoración se calculará automáticamente.</RadzenAlert>
                 }
             </RadzenColumn>
         </RadzenRow>
@@ -102,7 +99,7 @@
         var success = await RevisionService.CompletarEvaluacionFinalAsync(
             ObjetivoId,
             model.Comentario,
-            resultadoFinalManual ? null : model.Resultado,
+            null,
             model.SoftSkill1EscalaValoracionId,
             model.SoftSkill1Comentario,
             model.SoftSkill2EscalaValoracionId,
@@ -122,7 +119,6 @@
 
     class FinalEvaluationModel
     {
-        public ResultadoEval? Resultado { get; set; }
         public int? EscalaValoracionId { get; set; }
         public string Comentario { get; set; } = "";
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Objetivos.Web.Data;
 
@@ -10,9 +11,11 @@ using Objetivos.Web.Data;
 namespace Objetivos.Web.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260511134001_AddAreaPilarSupport")]
+    partial class AddAreaPilarSupport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
@@ -43,6 +46,34 @@ namespace Objetivos.Web.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Areas");
+                });
+
+            modelBuilder.Entity("Objetivos.Web.Domain.Entities.AreaPilar", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AreaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("EsObligatorio")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("PesoPorcentual")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PilarId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PilarId");
+
+                    b.HasIndex("AreaId", "PilarId")
+                        .IsUnique();
+
+                    b.ToTable("AreaPilares");
                 });
 
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.AuditoriaLog", b =>
@@ -749,7 +780,8 @@ namespace Objetivos.Web.Migrations
 
                     b.HasIndex("SoftSkill2Id");
 
-                    b.HasIndex("PilarId", "EmpleadoId", "Anio");
+                    b.HasIndex("PilarId", "EmpleadoId", "Anio")
+                        .IsUnique();
 
                     b.ToTable("Objetivos");
                 });
@@ -781,9 +813,6 @@ namespace Objetivos.Web.Migrations
                     b.Property<DateTime>("ActualizadoEn")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("AreaId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("ColorHex")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -795,7 +824,7 @@ namespace Objetivos.Web.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("EsObligatorio")
+                    b.Property<bool>("EsGlobal")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Nombre")
@@ -806,8 +835,6 @@ namespace Objetivos.Web.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AreaId");
 
                     b.HasIndex("Orden");
 
@@ -924,6 +951,25 @@ namespace Objetivos.Web.Migrations
                     b.HasIndex("Orden");
 
                     b.ToTable("SoftSkills");
+                });
+
+            modelBuilder.Entity("Objetivos.Web.Domain.Entities.AreaPilar", b =>
+                {
+                    b.HasOne("Objetivos.Web.Domain.Entities.Area", "Area")
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Objetivos.Web.Domain.Entities.Pilar", "Pilar")
+                        .WithMany()
+                        .HasForeignKey("PilarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Area");
+
+                    b.Navigation("Pilar");
                 });
 
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.Autoevaluacion", b =>
@@ -1143,16 +1189,6 @@ namespace Objetivos.Web.Migrations
                     b.Navigation("SoftSkill1");
 
                     b.Navigation("SoftSkill2");
-                });
-
-            modelBuilder.Entity("Objetivos.Web.Domain.Entities.Pilar", b =>
-                {
-                    b.HasOne("Objetivos.Web.Domain.Entities.Area", "Area")
-                        .WithMany()
-                        .HasForeignKey("AreaId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Area");
                 });
 
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.RevisionCuatrimestral", b =>

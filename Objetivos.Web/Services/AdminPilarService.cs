@@ -16,7 +16,7 @@ public class AdminPilarService
     public async Task<List<Pilar>> ObtenerTodosAsync()
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.Pilares.OrderBy(p => p.Orden).ToListAsync();
+        return await db.Pilares.Include(p => p.Area).OrderBy(p => p.Orden).ToListAsync();
     }
 
     public async Task<Pilar?> ObtenerPorIdAsync(int id)
@@ -33,6 +33,8 @@ public class AdminPilarService
 
         pilar.CreadoEn = DateTime.UtcNow;
         pilar.ActualizadoEn = DateTime.UtcNow;
+        pilar.AreaId = pilar.AreaId;
+        pilar.EsObligatorio = pilar.EsObligatorio;
         db.Pilares.Add(pilar);
         await db.SaveChangesAsync();
         return true;
@@ -49,6 +51,8 @@ public class AdminPilarService
         existing.ColorHex = pilar.ColorHex;
         existing.Activo = pilar.Activo;
         existing.Orden = pilar.Orden;
+        existing.AreaId = pilar.AreaId;
+        existing.EsObligatorio = pilar.EsObligatorio;
         existing.ActualizadoEn = DateTime.UtcNow;
 
         await db.SaveChangesAsync();

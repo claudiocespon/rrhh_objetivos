@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(xargs grep -l \"PeriodoRevision\")",
+      "Bash(dotnet ef *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(awk '{print $NF}')",
+      "Bash(grep -v \"^$\")",
+      "Bash(xargs -I{} basename {})"
+    ]
+  }
+}

@@ -9,12 +9,10 @@ namespace Objetivos.Web.Services
     public class ExportService
     {
         private readonly IDbContextFactory<AppDbContext> _dbFactory;
-        private readonly RendimientoService _rendimiento;
 
-        public ExportService(IDbContextFactory<AppDbContext> dbFactory, RendimientoService rendimiento)
+        public ExportService(IDbContextFactory<AppDbContext> dbFactory)
         {
             _dbFactory = dbFactory;
-            _rendimiento = rendimiento;
         }
 
         // ── Exportación genérica (usada desde MisObjetivos) ──────────────────

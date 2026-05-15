@@ -1,7 +1,9 @@
 @inject ObjetivoService ObjetivoService
 @inject NotificationService NotificationService
 @inject DialogService DialogService
-@inject IDbContextFactory<AppDbContext> DbFactory
+@inject ValidacionObjetivoService ValidacionService
+@inject AdminPilarService AdminPilarService
+@inject AdminSoftSkillService AdminSoftSkillService
 
 <RadzenTemplateForm TItem="Objetivo" Data="@Objetivo" Submit="@OnSubmit">
     <RadzenStack Gap="1.5rem" Style="padding: 1rem;">
@@ -66,24 +68,38 @@
 
 @code {
     [Parameter] public Objetivo Objetivo { get; set; } = null!;
-    
+
     List<Pilar> pilares = new();
     List<SoftSkill> softSkills = new();
 
     protected override async Task OnInitializedAsync()
     {
-        using var db = await DbFactory.CreateDbContextAsync();
-        pilares = await db.Pilares.ToListAsync();
-        softSkills = await db.SoftSkills.ToListAsync();
+        // Cargar datos a través de servicios (no más IDbContextFactory en UI)
+        pilares = await AdminPilarService.ObtenerTodosAsync();
+        softSkills = (await AdminSoftSkillService.ObtenerTodosAsync()).Where(s => s.Activo).ToList();
     }
 
     async Task OnSubmit()
     {
+        // VAL-06 centralizado (delegado a ValidacionObjetivoService)
+        var (sumaOk, sumaActual) = await ValidacionService.ValidarSumaPesoAsync(
+            Objetivo.EmpleadoId, Objetivo.Anio, Objetivo.PorcentajePilar, Objetivo.Id);
+
+        if (!sumaOk)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error de Ponderación",
+                $"La suma total excedería el 100%. Los otros objetivos ya suman {sumaActual}%.");
+            return;
+        }
+
         var ok = await ObjetivoService.UpdateObjetivoAsync(Objetivo);
-        if (ok) {
-            NotificationService.Notify(NotificationSeverity.Success, "Objetivo actualizado", "Los cambios han sido guardados por Superusuario.");
+        if (ok)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Objetivo actualizado", "Los cambios han sido guardados.");
             DialogService.Close(true);
-        } else {
+        }
+        else
+        {
             NotificationService.Notify(NotificationSeverity.Error, "Error", "No se pudo guardar los cambios.");
         }
     }

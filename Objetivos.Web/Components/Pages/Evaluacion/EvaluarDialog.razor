@@ -30,15 +30,6 @@
 
         <RadzenRow>
             <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2">Resultado</RadzenText>
-                <RadzenDropDown @bind-Value="@model.Resultado" Data="@resultados" 
-                                Placeholder="Seleccione resultado" Style="width: 100%;" Name="Resultado" />
-                <RadzenRequiredValidator Component="Resultado" Text="El resultado es obligatorio" Style="position: absolute" />
-            </RadzenColumn>
-        </RadzenRow>
-
-        <RadzenRow>
-            <RadzenColumn Size="12">
                 <RadzenText TextStyle="TextStyle.Subtitle2">Comentario del Jefe</RadzenText>
                 <RadzenTextArea @bind-Value="@model.Comentario" Style="width: 100%;" Rows="3" Name="Comentario" />
                 <RadzenRequiredValidator Component="Comentario" Text="El comentario es obligatorio" Style="position: absolute" />
@@ -46,6 +37,35 @@
             </RadzenColumn>
         </RadzenRow>
 
+        @* M-10: Evidencias seleccionables desde la bitácora del objetivo *@
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2">Evidencias respaldatorias</RadzenText>
+                @if (bitacora == null)
+                {
+                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="height: 4px;" />
+                }
+                else if (!bitacora.Any())
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true" AllowClose="false">
+                        El empleado aún no ha cargado entradas de bitácora para este objetivo.
+                    </RadzenAlert>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Marque las entradas de bitácora que respaldan esta valoración</RadzenText>
+                    <RadzenStack Gap="0.4rem" Style="margin-top: 0.5rem; max-height: 200px; overflow-y: auto;">
+                        @foreach (var entrada in bitacora)
+                        {
+                            var clave = $"{entrada.Fecha:dd/MM/yyyy} — {(entrada.Texto.Length > 100 ? entrada.Texto[..100] + "…" : entrada.Texto)}";
+                            <RadzenCheckBox @bind-Value="@(evidenciasSeleccionadas[entrada.Id])"
+                                            Name="@($"ev_{entrada.Id}")" />
+                            <RadzenLabel Component="@($"ev_{entrada.Id}")" Text="@clave" Style="margin-left: 0.5rem; font-size: 0.85rem;" />
+                        }
+                    </RadzenStack>
+                }
+            </RadzenColumn>
+        </RadzenRow>
 
         @if (errorMsg != null)
         {
@@ -61,8 +81,10 @@
 
 @code {
     [Parameter] public int RevisionId { get; set; }
-    
+
     RevisionCuatrimestral? revision;
+    List<BitacoraEntrada>? bitacora;
+    Dictionary<int, bool> evidenciasSeleccionadas = new();
     EvaluationModel model = new();
     List<ResultadoEval> resultados = Enum.GetValues<ResultadoEval>().ToList();
     string? errorMsg;
@@ -71,6 +93,18 @@
     protected override async Task OnInitializedAsync()
     {
         revision = await RevisionService.GetRevisionDetalleAsync(RevisionId);
+
+        if (revision?.Objetivo != null)
+        {
+            // M-10: Cargar entradas de bitácora del objetivo
+            bitacora = await RevisionService.GetBitacoraDelObjetivoAsync(revision.ObjetivoId);
+            foreach (var entrada in bitacora)
+                evidenciasSeleccionadas[entrada.Id] = false;
+        }
+        else
+        {
+            bitacora = new List<BitacoraEntrada>();
+        }
     }
 
     async Task OnSubmit()
@@ -78,18 +112,28 @@
         submitted = true;
         errorMsg = null;
 
+        // Mapear evidencias seleccionadas a strings (formato fecha + texto)
+        var evidenciasMarcadas = new List<string>();
+        if (bitacora != null)
+        {
+            foreach (var entrada in bitacora.Where(e => evidenciasSeleccionadas.GetValueOrDefault(e.Id)))
+            {
+                evidenciasMarcadas.Add($"{entrada.Fecha:dd/MM/yyyy} — {entrada.Texto}");
+            }
+        }
+
         var success = await RevisionService.CompletarRevisionAsync(
             RevisionId,
             model.EscalaValoracionId,
             model.Comentario,
-            model.Resultado!.Value,
-            new List<string>(),
+            null,
+            evidenciasMarcadas,
             model.SoftSkill1EscalaValoracionId,
             model.SoftSkill1Comentario,
             model.SoftSkill2EscalaValoracionId,
             model.SoftSkill2Comentario
         );
-        
+
         if (success)
         {
             DialogService.Close(true);

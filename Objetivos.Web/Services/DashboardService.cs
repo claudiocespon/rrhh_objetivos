@@ -7,14 +7,14 @@ namespace Objetivos.Web.Services;
 
 public class DashboardService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ICurrentUserService _currentUser;
     private readonly DataScopeService _dataScope;
     private readonly ConfiguracionService _configuracion;
 
-    public DashboardService(AppDbContext db, ICurrentUserService currentUser, DataScopeService dataScope, ConfiguracionService configuracion)
+    public DashboardService(IDbContextFactory<AppDbContext> dbFactory, ICurrentUserService currentUser, DataScopeService dataScope, ConfiguracionService configuracion)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _currentUser = currentUser;
         _dataScope = dataScope;
         _configuracion = configuracion;
@@ -22,6 +22,7 @@ public class DashboardService
 
     public async Task<RoleDashboardData> GetDashboardDataAsync()
     {
+        using var db = await _dbFactory.CreateDbContextAsync();
         var result = new RoleDashboardData();
         var hoy = DateTime.Today;
 
@@ -30,10 +31,10 @@ public class DashboardService
         var proximaFecha = hoy.AddDays(diasProximoVencimiento);
 
         // 1. Fetch Personal Data (for Colaborador, or for Jefe/Gerente's own objectives)
-        var empleadoPropio = await _db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == _currentUser.Email.ToLower() && e.Activo);
+        var empleadoPropio = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == _currentUser.Email.ToLower() && e.Activo);
         if (empleadoPropio != null)
         {
-            var misObjetivos = await _db.Objetivos
+            var misObjetivos = await db.Objetivos
                 .Where(o => o.EmpleadoId == empleadoPropio.Id && o.Anio == hoy.Year)
                 .ToListAsync();
 
@@ -44,7 +45,7 @@ public class DashboardService
                 EnRiesgo = misObjetivos.Count(o => o.Estado == EstadoObjetivo.EN_RIESGO),
                 Completados = misObjetivos.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
                 VencenPronto = misObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO && o.Deadline <= proximaFecha),
-                PendientesRevision = await _db.RevisionesCuatrimestrales
+                PendientesRevision = await db.RevisionesCuatrimestrales
                     .CountAsync(r => !r.Completada && r.Objetivo.EmpleadoId == empleadoPropio.Id && r.Anio == hoy.Year && r.Objetivo.Estado != EstadoObjetivo.CANCELADO)
             };
         }
@@ -52,8 +53,8 @@ public class DashboardService
         // 2. Fetch Team/Org Data using centralized scope
         if (_currentUser.EsJefe || _dataScope.PuedeVerTodo(_currentUser))
         {
-            IQueryable<Objetivo> query = _db.Objetivos.Include(o => o.Empleado).Where(o => o.Anio == hoy.Year);
-            IQueryable<RevisionCuatrimestral> revisionQuery = _db.RevisionesCuatrimestrales.Where(r => r.Anio == hoy.Year && r.Objetivo.Estado != EstadoObjetivo.CANCELADO && !r.Completada);
+            IQueryable<Objetivo> query = db.Objetivos.Include(o => o.Empleado).Where(o => o.Anio == hoy.Year);
+            IQueryable<RevisionCuatrimestral> revisionQuery = db.RevisionesCuatrimestrales.Where(r => r.Anio == hoy.Year && r.Objetivo.Estado != EstadoObjetivo.CANCELADO && !r.Completada);
 
             query = _dataScope.AplicarScope(query, _currentUser);
             revisionQuery = _dataScope.AplicarScope(revisionQuery, _currentUser);

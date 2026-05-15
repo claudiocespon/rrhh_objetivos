@@ -8,15 +8,15 @@ namespace Objetivos.Web.Services;
 
 public class RevisionService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly ICurrentUserService _currentUser;
     private readonly RendimientoService _rendimiento;
     private readonly ObjetivoService _objetivoService;
     private readonly ConfiguracionService _configuracion;
 
-    public RevisionService(AppDbContext db, ICurrentUserService currentUser, RendimientoService rendimiento, ObjetivoService objetivoService, ConfiguracionService configuracion)
+    public RevisionService(IDbContextFactory<AppDbContext> dbFactory, ICurrentUserService currentUser, RendimientoService rendimiento, ObjetivoService objetivoService, ConfiguracionService configuracion)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _currentUser = currentUser;
         _rendimiento = rendimiento;
         _objetivoService = objetivoService;
@@ -26,7 +26,8 @@ public class RevisionService
     // Carga revisión con Objetivo y SoftSkills para el diálogo de evaluación
     public async Task<RevisionCuatrimestral?> GetRevisionDetalleAsync(int revisionId)
     {
-        return await _db.RevisionesCuatrimestrales
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.RevisionesCuatrimestrales
             .Include(r => r.Objetivo)
                 .ThenInclude(o => o.SoftSkill1)
             .Include(r => r.Objetivo)
@@ -34,11 +35,22 @@ public class RevisionService
             .FirstOrDefaultAsync(r => r.Id == revisionId);
     }
 
+    // M-10: Carga las entradas de bitácora del objetivo para mostrarlas como evidencias seleccionables
+    public async Task<List<BitacoraEntrada>> GetBitacoraDelObjetivoAsync(int objetivoId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.BitacoraEntradas
+            .Where(b => b.ObjetivoId == objetivoId)
+            .OrderByDescending(b => b.Fecha)
+            .ToListAsync();
+    }
+
     // RN-02: Completar Revisión Cuatrimestral
-    public async Task<bool> CompletarRevisionAsync(int revisionId, int? escalaValoracionId, string comentario, ResultadoEval resultado, List<string> evidencias,
+    public async Task<bool> CompletarRevisionAsync(int revisionId, int? escalaValoracionId, string comentario, ResultadoEval? resultado = null, List<string> evidencias = null!,
         int? ss1EscalaValoracionId = null, string? ss1Comentario = null, int? ss2EscalaValoracionId = null, string? ss2Comentario = null)
     {
-        var revision = await _db.RevisionesCuatrimestrales
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var revision = await db.RevisionesCuatrimestrales
             .Include(r => r.Objetivo)
                 .ThenInclude(o => o.Revisiones)
             .FirstOrDefaultAsync(r => r.Id == revisionId);
@@ -48,7 +60,7 @@ public class RevisionService
         revision.EscalaValoracionId = escalaValoracionId;
         revision.ComentarioJefe = comentario;
         revision.Resultado = resultado;
-        revision.EvidenciasRevisadasJson = JsonSerializer.Serialize(evidencias);
+        revision.EvidenciasRevisadasJson = JsonSerializer.Serialize(evidencias ?? new List<string>());
         revision.Completada = true;
         revision.FechaEvaluacion = DateTime.UtcNow;
         revision.EvaluadorId = _currentUser.UsuarioId;
@@ -59,7 +71,7 @@ public class RevisionService
         revision.SoftSkill2EscalaValoracionId = ss2EscalaValoracionId;
         revision.SoftSkill2Comentario = ss2Comentario ?? "";
 
-        _db.AuditoriaLogs.Add(new AuditoriaLog
+        db.AuditoriaLogs.Add(new AuditoriaLog
         {
             Entidad = "RevisionCuatrimestral",
             EntidadId = revision.Id,
@@ -68,9 +80,9 @@ public class RevisionService
             Fecha = DateTime.UtcNow
         });
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
 
-        // Recalcular progreso y evaluar riesgo
+        // Recalcular progreso y evaluar riesgo (cada uno crea su propio contexto)
         await _rendimiento.RecalcularProgresoObjetivoAsync(revision.ObjetivoId);
         await _objetivoService.EvaluarEstadoRiesgoAsync(revision.ObjetivoId);
 
@@ -81,7 +93,8 @@ public class RevisionService
     public async Task<bool> CompletarEvaluacionFinalAsync(int objetivoId, string comentario, ResultadoEval? resultado,
         int? ss1EscalaValoracionId = null, string? ss1Comentario = null, int? ss2EscalaValoracionId = null, string? ss2Comentario = null, int? escalaValoracionIdFinal = null)
     {
-        var objetivo = await _db.Objetivos
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var objetivo = await db.Objetivos
             .Include(o => o.Revisiones)
             .Include(o => o.EvaluacionFinal)
             .FirstOrDefaultAsync(o => o.Id == objetivoId);
@@ -124,11 +137,11 @@ public class RevisionService
             SoftSkill2EscalaValoracionId = ss2EscalaValoracionId,
             SoftSkill2Comentario = ss2Comentario ?? ""
         };
-        _db.EvaluacionesFinales.Add(evalFinal);
+        db.EvaluacionesFinales.Add(evalFinal);
 
         objetivo.Estado = EstadoObjetivo.COMPLETADO;
 
-        _db.AuditoriaLogs.Add(new AuditoriaLog
+        db.AuditoriaLogs.Add(new AuditoriaLog
         {
             Entidad = "EvaluacionFinal",
             EntidadId = objetivoId,
@@ -137,7 +150,7 @@ public class RevisionService
             Fecha = DateTime.UtcNow
         });
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
         return true;
     }
 }

@@ -7,6 +7,7 @@
 @inject Radzen.NotificationService NotificationService
 @inject Objetivos.Web.Services.ExportService ExportService
 @inject IJSRuntime JS
+@inject Objetivos.Web.Services.ValidacionObjetivoService ValidacionService
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 1.5rem;">
     <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Objetivos y Competencias</RadzenText>
@@ -53,6 +54,14 @@ else
     }
     else if (roleData.Personal != null)
     {
+        var sumaPersonal = roleData.Personal.Sum(o => o.PorcentajePilar);
+        @if (!ValidacionService.ValidarTotalExacto(sumaPersonal))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true" Style="margin-bottom: 1rem;">
+                <b>Atención:</b> La suma total de tus objetivos es <b>@sumaPersonal%</b>. Debe ser exactamente <b>100%</b> para que la evaluación sea válida.
+                @(sumaPersonal < 100 ? $"Faltan {100 - sumaPersonal}%." : $"Excedes en {sumaPersonal - 100}%.")
+            </RadzenAlert>
+        }
         @RenderObjetivos(roleData.Personal, false)
     }
     else
@@ -150,14 +159,15 @@ else
                         var objetivosEmpleado = grupoEmpleado.ToList();
                         var totalObjetivos = objetivosEmpleado.Count;
                         var objetivosCompletados = objetivosEmpleado.Count(o => o.Estado == EstadoObjetivo.COMPLETADO);
-                        var progresoPromedio = objetivosEmpleado.Any() ? (int)objetivosEmpleado.Average(o => o.Progreso) : 0;
+                        decimal sumaPesos = objetivosEmpleado.Sum(o => o.PorcentajePilar);
+                        var progresoPromedio = sumaPesos > 0 ? (int)Math.Round(objetivosEmpleado.Sum(o => (decimal)o.Progreso * o.PorcentajePilar) / sumaPesos) : 0;
 
                         <RadzenAccordionItem Text="@($"{empleado.Apellido}, {empleado.Nombre} ({objetivosCompletados}/{totalObjetivos} completados)")" TItem="string">
                             <div style="padding: 1rem;">
                                 <RadzenStack Gap="1rem">
                                     <RadzenRow>
                                         <RadzenColumn Size="12">
-                                            <RadzenText TextStyle="TextStyle.Subtitle2">Progreso General</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Subtitle2">Progreso General (Ponderado)</RadzenText>
                                             <RadzenProgressBar Value="@progresoPromedio" ShowValue="true" Max="100" />
                                         </RadzenColumn>
                                     </RadzenRow>
@@ -170,6 +180,11 @@ else
                                                     <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Pilar.Nombre" Title="Pilar">
                                                         <Template Context="obj">
                                                             <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                                                        </Template>
+                                                    </RadzenDataGridColumn>
+                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="PorcentajePilar" Title="Peso" Width="80px">
+                                                        <Template Context="obj">
+                                                            @obj.PorcentajePilar%
                                                         </Template>
                                                     </RadzenDataGridColumn>
                                                     <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
@@ -217,6 +232,11 @@ else
                         <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Pilar.Nombre" Title="Pilar">
                             <Template Context="obj">
                                 <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="PorcentajePilar" Title="Peso" Width="80px">
+                            <Template Context="obj">
+                                @obj.PorcentajePilar%
                             </Template>
                         </RadzenDataGridColumn>
                         @if (showEmployee)

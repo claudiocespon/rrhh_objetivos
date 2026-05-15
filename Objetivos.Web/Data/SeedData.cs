@@ -112,43 +112,55 @@ public static class SeedData
         }
 
         // ─── SoftSkills ───
-        if (!await db.SoftSkills.AnyAsync())
+        var skillData = new string[]
         {
-            var skillData = new (string Nombre, string Descripcion)[]
-            {
-                ("Comunicación efectiva", "Capacidad para transmitir ideas de forma clara, directa y asertiva, asegurando la comprensión del interlocutor."),
-                ("Liderazgo", "Habilidad para guiar, motivar e inspirar a otros hacia el logro de objetivos comunes."),
-                ("Trabajo en equipo", "Colaboración activa con otros para alcanzar metas grupales, priorizando el éxito del conjunto."),
-                ("Resolución de problemas", "Habilidad para identificar desafíos, analizar causas y proponer soluciones creativas y eficientes."),
-                ("Pensamiento crítico", "Capacidad para analizar información de manera objetiva y tomar decisiones fundamentadas."),
-                ("Adaptabilidad", "Flexibilidad para ajustarse a cambios en el entorno, procesos o prioridades sin perder efectividad."),
-                ("Gestión del tiempo", "Organización eficiente de tareas y prioridades para cumplir con plazos y objetivos."),
-                ("Creatividad", "Capacidad para generar ideas innovadoras y enfoques originales ante situaciones diversas."),
-                ("Inteligencia emocional", "Habilidad para reconocer y gestionar las propias emociones y las de los demás."),
-                ("Negociación", "Capacidad para alcanzar acuerdos beneficiosos resolviendo diferencias de manera constructiva."),
-                ("Toma de decisiones", "Habilidad para elegir el mejor curso de acción considerando riesgos y beneficios."),
-                ("Empatía", "Capacidad para comprender la perspectiva y sentimientos de los demás fomentando un clima positivo."),
-                ("Proactividad", "Actitud de iniciativa propia para anticiparse a necesidades y generar mejoras."),
-                ("Resiliencia", "Capacidad para sobreponerse a dificultades y mantener el enfoque en situaciones de presión."),
-                ("Orientación a resultados", "Enfoque constante en el cumplimiento de metas y estándares de excelencia."),
-                ("Planificación estratégica", "Habilidad para diseñar planes de acción a largo plazo alineados con la visión del negocio."),
-                ("Delegación efectiva", "Capacidad para asignar tareas y responsabilidades de manera equilibrada y clara."),
-                ("Escucha activa", "Atención plena a lo que otros comunican para comprender no solo el mensaje sino también el contexto."),
-                ("Gestión de conflictos", "Habilidad para mediar en desacuerdos y convertirlos en oportunidades de mejora."),
-                ("Mentoría", "Capacidad para transmitir conocimientos y guiar el desarrollo profesional de otros.")
-            };
+            "Orientación al cliente",
+            "Visión estratégica",
+            "Agilidad y adaptabilidad",
+            "Iniciativa",
+            "Pensamiento creativo e innovación",
+            "Colaboración y trabajo en equipo",
+            "Compromiso con la excelencia",
+            "Comunicación efectiva",
+            "Liderazgo del cambio",
+            "Desarrollo de personas"
+        };
 
-            for (int i = 0; i < skillData.Length; i++)
+        var existingSkills = await db.SoftSkills.ToListAsync();
+        
+        // Desactivar todas las que no están en la nueva lista
+        foreach (var s in existingSkills)
+        {
+            if (!skillData.Contains(s.Nombre))
             {
+                s.Activo = false;
+            }
+        }
+
+        // Agregar o actualizar las de la nueva lista
+        int maxId = existingSkills.Any() ? existingSkills.Max(s => s.Id) : 0;
+        int orden = 1;
+        foreach (var skillName in skillData)
+        {
+            var existing = existingSkills.FirstOrDefault(s => s.Nombre == skillName);
+            if (existing != null)
+            {
+                existing.Activo = true;
+                existing.Orden = orden;
+            }
+            else
+            {
+                maxId++;
                 db.SoftSkills.Add(new SoftSkill
                 {
-                    Id = i + 1,
-                    Nombre = skillData[i].Nombre,
-                    Descripcion = skillData[i].Descripcion,
+                    Id = maxId,
+                    Nombre = skillName,
+                    Descripcion = "",
                     Activo = true,
-                    Orden = i + 1
+                    Orden = orden
                 });
             }
+            orden++;
         }
 
         // ─── Cursos ───

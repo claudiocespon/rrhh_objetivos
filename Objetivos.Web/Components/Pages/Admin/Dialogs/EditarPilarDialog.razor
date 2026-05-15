@@ -20,20 +20,36 @@
             </RadzenRow>
 
             <RadzenRow>
-                <RadzenColumn Size="6">
+                <RadzenColumn Size="12">
                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Color</RadzenText>
                     <input type="color" @bind="@pilar.ColorHex" style="width: 100%; height: 40px; cursor: pointer;" />
-                </RadzenColumn>
-                <RadzenColumn Size="6">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Orden</RadzenText>
-                    <RadzenNumeric @bind-Value="@pilar.Orden" Style="width: 100%;" Name="Orden" />
                 </RadzenColumn>
             </RadzenRow>
 
             <RadzenRow>
                 <RadzenColumn Size="12">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Estado</RadzenText>
-                    <RadzenCheckBox @bind-Value="@pilar.Activo" Text="Activo" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Área (Dejar vacío para Global)</RadzenText>
+                    <RadzenDropDown TValue="int?" @bind-Value="@pilar.AreaId" Data="@areas" TextProperty="Nombre" ValueProperty="Id" 
+                                    Style="width: 100%;" AllowClear="true" Placeholder="Seleccione un área..." />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="6">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Obligatorio</RadzenText>
+                    <div style="margin-top: 0.5rem;">
+                        <RadzenCheckBox @bind-Value="@pilar.EsObligatorio" Name="Obligatorio" />
+                        <label for="Obligatorio" style="margin-left: 0.5rem; vertical-align: middle;">Es Obligatorio</label>
+                    </div>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <div style="margin-top: 0.5rem;">
+                        <RadzenCheckBox @bind-Value="@pilar.Activo" Name="Activo" />
+                        <label for="Activo" style="margin-left: 0.5rem; vertical-align: middle;">Activo</label>
+                    </div>
                 </RadzenColumn>
             </RadzenRow>
 
@@ -48,11 +64,14 @@
 @code {
     [Parameter] public Pilar? Pilar { get; set; }
     [Inject] DialogService DialogService { get; set; } = null!;
+    [Inject] AdminAreaService AdminAreaService { get; set; } = null!;
 
     private Pilar pilar = new();
+    private List<Area> areas = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        areas = await AdminAreaService.ObtenerTodosAsync();
         if (Pilar != null)
         {
             pilar = new()
@@ -62,7 +81,9 @@
                 Descripcion = Pilar.Descripcion,
                 ColorHex = Pilar.ColorHex,
                 Activo = Pilar.Activo,
-                Orden = Pilar.Orden
+                Orden = Pilar.Orden,
+                AreaId = Pilar.AreaId,
+                EsObligatorio = Pilar.EsObligatorio
             };
         }
     }

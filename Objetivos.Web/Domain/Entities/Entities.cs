@@ -64,10 +64,14 @@ public class Pilar {
     public string Descripcion { get; set; } = "";
     public string ColorHex { get; set; } = "#000000";
     public bool Activo { get; set; } = true;
+    public int? AreaId { get; set; } // Null = Global
+    public Area? Area { get; set; }
+    public bool EsObligatorio { get; set; } = false;
     public int Orden { get; set; } = 0;
     public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
     public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
 }
+
 
 public class SoftSkill {
     public int Id { get; set; }

@@ -15,12 +15,12 @@ builder.Services.AddControllers();
 // Radzen Services
 builder.Services.AddRadzenComponents();
 
-// EF Core SQLite with Factory
+// EF Core SQLite with Factory.
+// Ciclo 4: TODOS los servicios usan IDbContextFactory para evitar conflictos de lifetime.
+// El registro Scoped<AppDbContext> fue ELIMINADO porque generaba dos contextos en paralelo
+// (uno scoped, uno del factory) durante la misma request, con riesgo de inconsistencias.
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite($"Data Source={Path.Combine(builder.Environment.ContentRootPath, "objetivos.db")}"));
-
-// Register AppDbContext as Scoped using the factory to avoid lifetime conflicts
-builder.Services.AddScoped(p => p.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext());
 
 // Business Services
 builder.Services.AddScoped<ICurrentUserService, SessionCurrentUserService>();
@@ -56,7 +56,9 @@ var app = builder.Build();
 // Database Initialization and Seeding
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    // Para inicialización usamos el factory una vez (no hay Scoped<AppDbContext> ya)
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    using var db = await factory.CreateDbContextAsync();
     // H-10: Estrategia de inicialización robusta (Usa migraciones)
     await db.Database.MigrateAsync();
     await SeedData.InitializeAsync(db, app.Environment, app.Configuration);
