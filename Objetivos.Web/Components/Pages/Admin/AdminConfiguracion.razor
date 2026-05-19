@@ -88,7 +88,7 @@
     {
         <div class="pt-3">
             <RadzenButton Icon="add" Text="Agregar Pilar" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarPilar())" Style="margin-bottom: 1rem;" />
-            <RadzenDataGrid Data="@pilares" TItem="Pilar" AllowPaging="true" PageSize="10" Responsive="true">
+            <RadzenDataGrid Data="@pilares" TItem="Pilar" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
                     <RadzenDataGridColumn TItem="Pilar" Property="Nombre" Title="Nombre" />
                     <RadzenDataGridColumn TItem="Pilar" Property="Descripcion" Title="Descripción" Width="250px" />
@@ -128,7 +128,7 @@
     {
         <div class="pt-3">
             <RadzenButton Icon="add" Text="Agregar Soft Skill" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarSoftSkill())" Style="margin-bottom: 1rem;" />
-            <RadzenDataGrid Data="@softSkills" TItem="SoftSkill" AllowPaging="true" PageSize="10" Responsive="true">
+            <RadzenDataGrid Data="@softSkills" TItem="SoftSkill" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
                     <RadzenDataGridColumn TItem="SoftSkill" Property="Nombre" Title="Nombre" />
                     <RadzenDataGridColumn TItem="SoftSkill" Property="Descripcion" Title="Descripción" Width="250px" />
@@ -153,7 +153,7 @@
     {
         <div class="pt-3">
             <RadzenButton Icon="add" Text="Agregar Escala" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarEscala())" Style="margin-bottom: 1rem;" />
-            <RadzenDataGrid Data="@escalas" TItem="EscalaValoracion" AllowPaging="true" PageSize="10" Responsive="true">
+            <RadzenDataGrid Data="@escalas" TItem="EscalaValoracion" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
                     <RadzenDataGridColumn TItem="EscalaValoracion" Property="Etiqueta" Title="Etiqueta" />
                     <RadzenDataGridColumn TItem="EscalaValoracion" Property="ValorNumerico" Title="Valor Numérico" Width="120px" />
@@ -177,7 +177,7 @@
     private RenderFragment RenderEstadosObjetivo() => __builder =>
     {
         <div class="pt-3">
-            <RadzenDataGrid Data="@estadosObjetivo" TItem="EstadoObjetivoConfig" AllowPaging="true" PageSize="10" Responsive="true">
+            <RadzenDataGrid Data="@estadosObjetivo" TItem="EstadoObjetivoConfig" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
                     <RadzenDataGridColumn TItem="EstadoObjetivoConfig" Property="Nombre" Title="Nombre" />
                     <RadzenDataGridColumn TItem="EstadoObjetivoConfig" Property="Slug" Title="Slug" Width="150px" />
@@ -205,7 +205,7 @@
     private RenderFragment RenderEstadosEvaluacion() => __builder =>
     {
         <div class="pt-3">
-            <RadzenDataGrid Data="@estadosEvaluacion" TItem="EstadoEvaluacionConfig" AllowPaging="true" PageSize="10" Responsive="true">
+            <RadzenDataGrid Data="@estadosEvaluacion" TItem="EstadoEvaluacionConfig" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
                     <RadzenDataGridColumn TItem="EstadoEvaluacionConfig" Property="Nombre" Title="Nombre" />
                     <RadzenDataGridColumn TItem="EstadoEvaluacionConfig" Property="Slug" Title="Slug" Width="150px" />
@@ -234,7 +234,7 @@
     {
         <div class="pt-3">
             <RadzenButton Icon="add" Text="Agregar Área" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarArea())" Style="margin-bottom: 1rem;" />
-            <RadzenDataGrid Data="@areas" TItem="Area" AllowPaging="true" PageSize="10" Responsive="true">
+            <RadzenDataGrid Data="@areas" TItem="Area" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
                     <RadzenDataGridColumn TItem="Area" Property="Nombre" Title="Nombre" />
                     <RadzenDataGridColumn TItem="Area" Property="Descripcion" Title="Descripción" Width="250px" />
@@ -257,7 +257,7 @@
     private RenderFragment RenderConfiguraciones() => __builder =>
     {
         <div class="pt-3">
-            <RadzenDataGrid Data="@configuraciones" TItem="ConfiguracionPlataforma" AllowPaging="true" PageSize="10" Responsive="true">
+            <RadzenDataGrid Data="@configuraciones" TItem="ConfiguracionPlataforma" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
                     <RadzenDataGridColumn TItem="ConfiguracionPlataforma" Property="Clave" Title="Clave" Width="200px" />
                     <RadzenDataGridColumn TItem="ConfiguracionPlataforma" Property="Descripcion" Title="Descripción" Width="250px" />

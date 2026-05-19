@@ -12,6 +12,8 @@
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 1.5rem;">
     <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Objetivos y Competencias</RadzenText>
     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+        <RadzenCheckBox Value="verHistorial" TValue="bool" Name="VerHistorial" Change="@OnVerHistorialChanged" />
+        <RadzenLabel Text="Ver historial" Component="VerHistorial" Style="margin-right: 1rem;" />
         <RadzenButton Icon="download" Text="Exportar CSV" Click="@OnExportClick" ButtonStyle="ButtonStyle.Success" Visible="@(CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario)" />
         <RadzenButton Icon="add" Text="Nuevo Objetivo" Click="@OnCreateClick" ButtonStyle="ButtonStyle.Primary" Visible="@puedeCrearObjetivo" />
     </RadzenStack>
@@ -36,11 +38,8 @@ else
                         <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">Los objetivos de tu equipo están pendientes de tu aprobación para poder entrar en evaluación.</RadzenText>
                     </RadzenTabsItem>
                 }
-                <RadzenTabsItem Text="Cuerpo de Objetivos">
-                    @RenderCuerpoObjetivos(roleData.Equipo)
-                </RadzenTabsItem>
                 <RadzenTabsItem Text="Objetivos de mi Equipo">
-                    @RenderObjetivos(roleData.Equipo, true)
+                    @RenderObjetivosEquipo(roleData.Equipo)
                 </RadzenTabsItem>
                 <RadzenTabsItem Text="Mis Objetivos">
                     @RenderObjetivos(roleData.Personal, false)
@@ -50,7 +49,7 @@ else
     }
     else if (roleData.Equipo != null)
     {
-        @RenderObjetivos(roleData.Equipo, true)
+        @RenderObjetivosEquipo(roleData.Equipo)
     }
     else if (roleData.Personal != null)
     {
@@ -73,6 +72,7 @@ else
 @code {
     Objetivos.Web.Services.RoleObjetivosData? roleData;
     bool puedeCrearObjetivo;
+    bool verHistorial = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -85,7 +85,13 @@ else
 
     async Task LoadData()
     {
-        roleData = await ObjetivoService.GetObjetivosRoleAsync(DateTime.Now.Year);
+        roleData = await ObjetivoService.GetObjetivosRoleAsync(verHistorial ? null : DateTime.Now.Year);
+    }
+
+    async Task OnVerHistorialChanged(bool value)
+    {
+        verHistorial = value;
+        await LoadData();
     }
 
     [Inject] NavigationManager Nav { get; set; } = null!;
@@ -136,7 +142,7 @@ else
         await JS.InvokeVoidAsync("antigravityDownloadFile", fileName, base64);
     }
 
-    private RenderFragment RenderCuerpoObjetivos(List<Objetivos.Web.Domain.Entities.Objetivo> objetivosLista) => __builder =>
+    private RenderFragment RenderObjetivosEquipo(List<Objetivos.Web.Domain.Entities.Objetivo> objetivosLista) => __builder =>
     {
         if (objetivosLista == null || !objetivosLista.Any())
         {
@@ -144,75 +150,81 @@ else
         }
         else
         {
-            // Agrupar objetivos por empleado
-            var objetivosPorEmpleado = objetivosLista
-                .GroupBy(o => o.Empleado)
-                .OrderBy(g => g.Key.Apellido)
-                .ThenBy(g => g.Key.Nombre)
+            var grupos = objetivosLista
+                .GroupBy(o => new { o.Empleado, o.Anio })
+                .Select(g => {
+                    var objetivosEmpleado = g.ToList();
+                    decimal sumaPesos = objetivosEmpleado.Sum(o => o.PorcentajePilar);
+                    return new UserYearGroup {
+                        Empleado = g.Key.Empleado,
+                        Anio = g.Key.Anio,
+                        Cantidad = objetivosEmpleado.Count,
+                        Completados = objetivosEmpleado.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
+                        ProgresoPromedio = sumaPesos > 0 ? (int)Math.Round(objetivosEmpleado.Sum(o => (decimal)o.Progreso * o.PorcentajePilar) / sumaPesos) : 0,
+                        Objetivos = objetivosEmpleado
+                    };
+                })
+                .OrderBy(g => g.Empleado.Apellido)
+                .ThenBy(g => g.Empleado.Nombre)
+                .ThenByDescending(g => g.Anio)
                 .ToList();
 
             <div class="pt-3">
-                <RadzenAccordion>
-                    @foreach (var grupoEmpleado in objetivosPorEmpleado)
-                    {
-                        var empleado = grupoEmpleado.Key;
-                        var objetivosEmpleado = grupoEmpleado.ToList();
-                        var totalObjetivos = objetivosEmpleado.Count;
-                        var objetivosCompletados = objetivosEmpleado.Count(o => o.Estado == EstadoObjetivo.COMPLETADO);
-                        decimal sumaPesos = objetivosEmpleado.Sum(o => o.PorcentajePilar);
-                        var progresoPromedio = sumaPesos > 0 ? (int)Math.Round(objetivosEmpleado.Sum(o => (decimal)o.Progreso * o.PorcentajePilar) / sumaPesos) : 0;
-
-                        <RadzenAccordionItem Text="@($"{empleado.Apellido}, {empleado.Nombre} ({objetivosCompletados}/{totalObjetivos} completados)")" TItem="string">
-                            <div style="padding: 1rem;">
-                                <RadzenStack Gap="1rem">
-                                    <RadzenRow>
-                                        <RadzenColumn Size="12">
-                                            <RadzenText TextStyle="TextStyle.Subtitle2">Progreso General (Ponderado)</RadzenText>
-                                            <RadzenProgressBar Value="@progresoPromedio" ShowValue="true" Max="100" />
-                                        </RadzenColumn>
-                                    </RadzenRow>
-
-                                    <RadzenRow>
-                                        <RadzenColumn Size="12">
-                                            <RadzenDataGrid Data="@objetivosEmpleado" TItem="Objetivos.Web.Domain.Entities.Objetivo" AllowPaging="false" AllowSorting="true" Responsive="true">
-                                                <Columns>
-                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Nombre" Title="Objetivo" />
-                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Pilar.Nombre" Title="Pilar">
-                                                        <Template Context="obj">
-                                                            <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
-                                                        </Template>
-                                                    </RadzenDataGridColumn>
-                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="PorcentajePilar" Title="Peso" Width="80px">
-                                                        <Template Context="obj">
-                                                            @obj.PorcentajePilar%
-                                                        </Template>
-                                                    </RadzenDataGridColumn>
-                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
-                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Estado" Width="120px">
-                                                        <Template Context="obj">
-                                                            <EstadoBadge EstadoObj="@obj.Estado" />
-                                                        </Template>
-                                                    </RadzenDataGridColumn>
-                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Progreso" Width="100px">
-                                                        <Template Context="obj">
-                                                            <RadzenProgressBar Value="@obj.Progreso" ShowValue="true" Max="100" />
-                                                        </Template>
-                                                    </RadzenDataGridColumn>
-                                                    <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="100px">
-                                                        <Template Context="obj">
-                                                            <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
-                                                                          Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
-                                                        </Template>
-                                                    </RadzenDataGridColumn>
-                                                </Columns>
-                                            </RadzenDataGrid>
-                                        </RadzenColumn>
-                                    </RadzenRow>
-                                </RadzenStack>
-                            </div>
-                        </RadzenAccordionItem>
-                    }
-                </RadzenAccordion>
+                <RadzenDataGrid Data="@grupos" TItem="UserYearGroup" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                    <Template Context="grupo">
+                        <RadzenDataGrid Data="@grupo.Objetivos" TItem="Objetivos.Web.Domain.Entities.Objetivo" AllowPaging="false" AllowSorting="true" Responsive="true">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Nombre" Title="Objetivo" />
+                                <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Pilar.Nombre" Title="Pilar">
+                                    <Template Context="obj">
+                                        <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="PorcentajePilar" Title="Peso" Width="80px">
+                                    <Template Context="obj">
+                                        @obj.PorcentajePilar%
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                                <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Estado" Width="120px">
+                                    <Template Context="obj">
+                                        <EstadoBadge EstadoObj="@obj.Estado" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Progreso" Width="100px">
+                                    <Template Context="obj">
+                                        <RadzenProgressBar Value="@obj.Progreso" ShowValue="true" Max="100" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
+                                    <Template Context="obj">
+                                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                                      Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </Template>
+                    <Columns>
+                        <RadzenDataGridColumn TItem="UserYearGroup" Title="Usuario">
+                            <Template Context="g">
+                                @(string.IsNullOrWhiteSpace(g.Empleado.Apellido) ? g.Empleado.Nombre : $"{g.Empleado.Apellido}, {g.Empleado.Nombre}")
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="UserYearGroup" Property="Anio" Title="Año" Width="100px" />
+                        <RadzenDataGridColumn TItem="UserYearGroup" Property="Cantidad" Title="Cantidad" Width="100px" />
+                        <RadzenDataGridColumn TItem="UserYearGroup" Title="Completados" Width="120px">
+                            <Template Context="g">
+                                @g.Completados / @g.Cantidad
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="UserYearGroup" Title="Progreso Ponderado">
+                            <Template Context="g">
+                                <RadzenProgressBar Value="@g.ProgresoPromedio" ShowValue="true" Max="100" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
             </div>
         }
     };
@@ -247,6 +259,7 @@ else
                                 </Template>
                             </RadzenDataGridColumn>
                         }
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Anio" Title="Año" Visible="@verHistorial" Width="80px" />
                         <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
                         <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Estado" Width="120px">
                             <Template Context="obj">
@@ -258,7 +271,7 @@ else
                                 <RadzenProgressBar Value="@obj.Progreso" ShowValue="true" Max="100" />
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="100px">
+                        <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
                             <Template Context="obj">
                                 <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
                                               Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
@@ -269,4 +282,14 @@ else
             </div>
         }
     };
+
+    class UserYearGroup 
+    {
+        public Objetivos.Web.Domain.Entities.Empleado Empleado { get; set; } = null!;
+        public int Anio { get; set; }
+        public int Cantidad { get; set; }
+        public int Completados { get; set; }
+        public int ProgresoPromedio { get; set; }
+        public List<Objetivos.Web.Domain.Entities.Objetivo> Objetivos { get; set; } = new();
+    }
 }

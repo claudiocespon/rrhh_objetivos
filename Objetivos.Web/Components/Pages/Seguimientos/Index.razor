@@ -90,7 +90,7 @@ else
         else
         {
             <div class="pt-3">
-                <RadzenDataGrid Data="@empleadosEquipo" TItem="Empleado" AllowPaging="true" PageSize="10" Responsive="true">
+                <RadzenDataGrid Data="@empleadosEquipo" TItem="Empleado" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
                         <RadzenDataGridColumn TItem="Empleado" Property="Nombre" Title="Nombre">
                             <Template Context="emp">
@@ -109,7 +109,7 @@ else
                                 <SemaforoIndicador Promedio="@GetPromedio(emp.Id)" />
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Empleado" Context="emp" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="100px">
+                        <RadzenDataGridColumn TItem="Empleado" Context="emp" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
                             <Template Context="emp">
                                 <RadzenButton Icon="visibility" Text="Ver Detalle" ButtonStyle="ButtonStyle.Info" Variant="Variant.Flat" Size="ButtonSize.Small" 
                                               Click="@(() => OnViewDetalle(emp.Id))" />

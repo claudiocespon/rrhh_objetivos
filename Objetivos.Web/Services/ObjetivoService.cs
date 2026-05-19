@@ -23,7 +23,7 @@ public class ObjetivoService
         _validacion = validacion;
     }
 
-    public async Task<RoleObjetivosData> GetObjetivosRoleAsync(int anio)
+    public async Task<RoleObjetivosData> GetObjetivosRoleAsync(int? anio)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var result = new RoleObjetivosData();
@@ -36,7 +36,7 @@ public class ObjetivoService
             result.Personal = await db.Objetivos
                 .Include(o => o.Empleado)
                 .Include(o => o.Pilar)
-                .Where(o => o.EmpleadoId == empleadoPropio.Id && o.Anio == anio)
+                .Where(o => o.EmpleadoId == empleadoPropio.Id && (anio == null || o.Anio == anio))
                 .ToListAsync();
         }
         else
@@ -48,7 +48,7 @@ public class ObjetivoService
         var query = db.Objetivos
             .Include(o => o.Empleado)
             .Include(o => o.Pilar)
-            .Where(o => o.Anio == anio);
+            .Where(o => anio == null || o.Anio == anio);
 
         result.Equipo = await _dataScope.AplicarScope(query, _currentUser).ToListAsync();
 

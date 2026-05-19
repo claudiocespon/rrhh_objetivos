@@ -33,7 +33,7 @@
             <RadzenColumn Size="4">
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Ponderación (%)</RadzenText>
                 <RadzenNumeric @bind-Value="@objetivo.PorcentajePilar" Min="0" Max="100" Step="5" Style="width: 100%;" Name="Porcentaje" />
-                <RadzenRangeValidator Component="Porcentaje" Min="0" Max="100" Text="El porcentaje debe estar entre 0 y 100" Style="position: absolute" />
+                <RadzenNumericRangeValidator Component="Porcentaje" Min="0" Max="100" Text="El porcentaje debe estar entre 0 y 100" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -58,17 +58,12 @@
         </RadzenRow>
 
         <RadzenRow>
-            <RadzenColumn Size="6">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Competencia 1</RadzenText>
-                <RadzenDropDown @bind-Value="@objetivo.SoftSkill1Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id"
-                                Style="width: 100%;" Name="SS1" />
-                <RadzenRequiredValidator Component="SS1" Text="Este campo es obligatorio" Style="position: absolute" />
-            </RadzenColumn>
-            <RadzenColumn Size="6">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Competencia 2</RadzenText>
-                <RadzenDropDown @bind-Value="@objetivo.SoftSkill2Id" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id"
-                                Style="width: 100%;" Name="SS2" />
-                <RadzenRequiredValidator Component="SS2" Text="Este campo es obligatorio" Style="position: absolute" />
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Competencias</RadzenText>
+                <RadzenDropDown @bind-Value="@selectedCompetencias" Data="@softSkills" TextProperty="Nombre" ValueProperty="Id"
+                                Multiple="true" AllowClear="true" Placeholder="Seleccione 2 competencias..."
+                                MaxSelectedLabels="2" Style="width: 100%;" Name="Competencias"
+                                TValue="IEnumerable<int>" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -111,7 +106,7 @@
     List<Area> areas = new();
     bool objetivoAreaHabilitado = false;
     string? errorMsg;
-    int objetivosExistentesCount = 0;
+    IEnumerable<int> selectedCompetencias = new List<int>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -177,12 +172,15 @@
     {
         errorMsg = null;
 
-        // VAL-03
-        if (objetivo.SoftSkill1Id == objetivo.SoftSkill2Id)
+        // VAL-03: Validar que se seleccionen exactamente 2 competencias distintas
+        var competenciasList = selectedCompetencias?.ToList() ?? new List<int>();
+        if (competenciasList.Count != 2)
         {
-            errorMsg = "Las dos competencias deben ser diferentes";
+            errorMsg = "Debe seleccionar exactamente 2 competencias";
             return;
         }
+        objetivo.SoftSkill1Id = competenciasList[0];
+        objetivo.SoftSkill2Id = competenciasList[1];
 
         // VAL-04
         if (objetivo.Deadline <= DateTime.Today)

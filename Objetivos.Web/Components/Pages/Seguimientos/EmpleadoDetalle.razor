@@ -19,7 +19,9 @@ else
         <div class="col-md-4">
             <RadzenCard>
                 <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
-                    <RadzenAvatar Text="@($"{(string.IsNullOrEmpty(empleado.Nombre) ? "" : empleado.Nombre[0].ToString())}{(string.IsNullOrEmpty(empleado.Apellido) ? "" : empleado.Apellido[0].ToString())}".ToUpper())" Style="width: 80px; height: 80px; font-size: 2rem;" />
+                    <div class="rz-avatar" style="width: 80px; height: 80px; font-size: 2rem; border-radius: 50%; background-color: var(--rz-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                        @($"{(string.IsNullOrEmpty(empleado.Nombre) ? "" : empleado.Nombre[0].ToString())}{(string.IsNullOrEmpty(empleado.Apellido) ? "" : empleado.Apellido[0].ToString())}".ToUpper())
+                    </div>
                     <RadzenStack Gap="0" AlignItems="AlignItems.Center">
                         <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">@empleado.Nombre @empleado.Apellido</RadzenText>
                         <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">@empleado.Puesto</RadzenText>
@@ -43,8 +45,8 @@ else
             <RadzenCard Style="height: 100%;">
                 <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Rendimiento por Pilar</RadzenText>
                 <RadzenChart Style="height: 250px;">
-                    <RadzenRadarSeries Data="@radarData" CategoryProperty="Pilar" ValueProperty="Score" Title="Rendimiento" TItem="RadarPilarItem" />
-                    <RadzenValueAxis Min="0" Max="5" />
+                    <RadzenColumnSeries Data="@radarData" CategoryProperty="Pilar" ValueProperty="Score" Title="Rendimiento" TItem="RadarPilarItem" />
+                    <RadzenValueAxis Min="0" Max="5" Step="1" />
                 </RadzenChart>
             </RadzenCard>
         </div>
@@ -76,7 +78,7 @@ else
                             <SemaforoIndicador Promedio="@GetPonderado(obj.Id)" />
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="100px">
+                    <RadzenDataGridColumn TItem="Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
                         <Template Context="obj">
                             <RadzenButton Icon="search" Text="Ver" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
                                           Click="@(() => Nav.NavigateTo($"seguimientos/{EmpleadoId}/objetivo/{obj.Id}"))" />

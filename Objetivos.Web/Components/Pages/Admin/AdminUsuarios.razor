@@ -42,7 +42,7 @@
                         <RadzenIcon Icon="@(u.Activo ? "check_circle" : "cancel")" Style="@(u.Activo ? "color: green;" : "color: red;")" />
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="UsuarioDto" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" Title="Acciones">
+                <RadzenDataGridColumn TItem="UsuarioDto" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="160px" Title="Acciones">
                     <Template Context="u">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => EditarSub(u))" />
                         <RadzenButton Icon="key" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" Click="@(() => ResetPassSub(u))" Style="margin-left: 4px;" />

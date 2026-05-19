@@ -11,8 +11,8 @@
     <div class="login-card">
         <div class="login-header">
             <img src="logo.png" class="login-logo-img" alt="PQ-Talent Logo" />
-            <h1>PQ-Talent</h1>
-            <p>Sistema de Gestión de Talento y Objetivos</p>
+            <h1>Plataforma de gestión de Talento</h1>
+            <p>Por favor ingrese su Usuario y Contraseña</p>
         </div>
 
         @if (!mostrarCambioPassword && !mostrarRecuperacion)
@@ -20,60 +20,111 @@
             <!-- Login Form -->
             <RadzenTemplateForm TItem="LoginModel" Data="@loginModel" Submit="@OnLogin">
                 <RadzenStack Gap="1.5rem">
-                    <RadzenFormField Text="Email" Variant="Variant.Outlined">
-                        <RadzenTextBox @bind-Value="loginModel.Email" Name="Email" Placeholder="nombre@permaquim.com" Style="width: 100%;" />
-                        <RadzenRequiredValidator Component="Email" Text="Debe ingresar su email" />
-                    </RadzenFormField>
+                    <div>
+                        <RadzenFormField Variant="Variant.Flat" class="login-input-field">
+                            <Start>
+                                <RadzenIcon Icon="person_outline" class="login-input-icon" />
+                            </Start>
+                            <ChildContent>
+                                <RadzenTextBox @bind-Value="loginModel.Email" Name="Email" Placeholder="Usuario o Email" class="login-input" />
+                            </ChildContent>
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="Email" Text="Debe ingresar su email" Style="color: #ffb3b3; display: block; font-size: 0.8rem; margin-top: 4px;" />
+                    </div>
 
-                    <RadzenFormField Text="Contraseña" Variant="Variant.Outlined">
-                        <RadzenPassword @bind-Value="loginModel.Password" Name="Password" Placeholder="••••••••" Style="width: 100%;" />
-                        <RadzenRequiredValidator Component="Password" Text="Debe ingresar su contraseña" />
-                    </RadzenFormField>
+                    <div>
+                        <RadzenFormField Variant="Variant.Flat" class="login-input-field">
+                            <Start>
+                                <RadzenIcon Icon="lock_outline" class="login-input-icon" />
+                            </Start>
+                            <ChildContent>
+                                @if(showPassword) {
+                                    <RadzenTextBox @bind-Value="loginModel.Password" Name="Password" Placeholder="Contraseña" class="login-input" />
+                                } else {
+                                    <RadzenPassword @bind-Value="loginModel.Password" Name="Password" Placeholder="Contraseña" class="login-input" />
+                                }
+                            </ChildContent>
+                            <End>
+                                <RadzenIcon Icon="@(showPassword ? "visibility_off" : "visibility")" class="login-input-icon" Style="cursor:pointer; margin-right:0.75rem; font-size: 1.1rem; color: rgba(255,255,255,0.7) !important;" @onclick="() => showPassword = !showPassword" />
+                            </End>
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="Password" Text="Debe ingresar su contraseña" Style="color: #ffb3b3; display: block; font-size: 0.8rem; margin-top: 4px;" />
+                        
+                        <div style="text-align: right; margin-top: 8px;">
+                            <RadzenLink Text="¿Olvidó su contraseña?" @onclick="@(() => mostrarRecuperacion = true)" class="login-forgot-link" />
+                        </div>
+                    </div>
 
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
-                        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small" Style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); color: #ffb3b3;">
                             @errorMessage
                         </RadzenAlert>
                     }
 
-                    <RadzenButton Text="Iniciar Sesión" ButtonType="ButtonType.Submit" Style="width: 100%;" 
+                    <RadzenButton Text="Ingresar" ButtonType="ButtonType.Submit" class="login-btn" 
                                   IsBusy="@isLoading" BusyText="Verificando..." />
 
-                    <RadzenLink Text="¿Olvidaste tu contraseña?" Style="text-align: center; display: block;" 
-                                @onclick="@(() => mostrarRecuperacion = true)" />
                 </RadzenStack>
             </RadzenTemplateForm>
         }
         else if (mostrarCambioPassword)
         {
             <!-- Change Password Form -->
-            <RadzenStack Gap="1rem">
-                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+            <RadzenStack Gap="1.5rem">
+                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small" Style="background: rgba(0,150,255,0.1); border: 1px solid rgba(0,150,255,0.3); color: #b3e0ff;">
                     Debe cambiar su contraseña antes de continuar. Mínimo 8 caracteres, incluyendo al menos una letra y un número.
                 </RadzenAlert>
 
                 <RadzenTemplateForm TItem="CambioPasswordModel" Data="@cambioModel" Submit="@OnCambiarPassword">
                     <RadzenStack Gap="1.5rem">
-                        <RadzenFormField Text="Nueva Contraseña" Variant="Variant.Outlined">
-                            <RadzenPassword @bind-Value="cambioModel.NuevaPassword" Name="NuevaPassword" Style="width: 100%;" />
-                            <RadzenRequiredValidator Component="NuevaPassword" Text="Debe ingresar una nueva contraseña" />
-                        </RadzenFormField>
+                        <div>
+                            <RadzenFormField Variant="Variant.Flat" class="login-input-field">
+                                <Start>
+                                    <RadzenIcon Icon="lock_outline" class="login-input-icon" />
+                                </Start>
+                                <ChildContent>
+                                    @if(showNuevaPassword) {
+                                        <RadzenTextBox @bind-Value="cambioModel.NuevaPassword" Name="NuevaPassword" Placeholder="Nueva Contraseña" class="login-input" />
+                                    } else {
+                                        <RadzenPassword @bind-Value="cambioModel.NuevaPassword" Name="NuevaPassword" Placeholder="Nueva Contraseña" class="login-input" />
+                                    }
+                                </ChildContent>
+                                <End>
+                                    <RadzenIcon Icon="@(showNuevaPassword ? "visibility_off" : "visibility")" class="login-input-icon" Style="cursor:pointer; margin-right:0.75rem; font-size: 1.1rem; color: rgba(255,255,255,0.7) !important;" @onclick="() => showNuevaPassword = !showNuevaPassword" />
+                                </End>
+                            </RadzenFormField>
+                            <RadzenRequiredValidator Component="NuevaPassword" Text="Debe ingresar una nueva contraseña" Style="color: #ffb3b3; display: block; font-size: 0.8rem; margin-top: 4px;" />
+                        </div>
 
-                        <RadzenFormField Text="Confirmar Contraseña" Variant="Variant.Outlined">
-                            <RadzenPassword @bind-Value="cambioModel.ConfirmarPassword" Name="ConfirmarPassword" Style="width: 100%;" />
-                            <RadzenRequiredValidator Component="ConfirmarPassword" Text="Debe confirmar la contraseña" />
-                            <RadzenCompareValidator Value="@cambioModel.NuevaPassword" Component="ConfirmarPassword" Text="Las contraseñas no coinciden" />
-                        </RadzenFormField>
+                        <div>
+                            <RadzenFormField Variant="Variant.Flat" class="login-input-field">
+                                <Start>
+                                    <RadzenIcon Icon="lock_reset" class="login-input-icon" />
+                                </Start>
+                                <ChildContent>
+                                    @if(showConfirmarPassword) {
+                                        <RadzenTextBox @bind-Value="cambioModel.ConfirmarPassword" Name="ConfirmarPassword" Placeholder="Confirmar Contraseña" class="login-input" />
+                                    } else {
+                                        <RadzenPassword @bind-Value="cambioModel.ConfirmarPassword" Name="ConfirmarPassword" Placeholder="Confirmar Contraseña" class="login-input" />
+                                    }
+                                </ChildContent>
+                                <End>
+                                    <RadzenIcon Icon="@(showConfirmarPassword ? "visibility_off" : "visibility")" class="login-input-icon" Style="cursor:pointer; margin-right:0.75rem; font-size: 1.1rem; color: rgba(255,255,255,0.7) !important;" @onclick="() => showConfirmarPassword = !showConfirmarPassword" />
+                                </End>
+                            </RadzenFormField>
+                            <RadzenRequiredValidator Component="ConfirmarPassword" Text="Debe confirmar la contraseña" Style="color: #ffb3b3; display: block; font-size: 0.8rem; margin-top: 4px;" />
+                            <RadzenCompareValidator Value="@cambioModel.NuevaPassword" Component="ConfirmarPassword" Text="Las contraseñas no coinciden" Style="color: #ffb3b3; display: block; font-size: 0.8rem; margin-top: 4px;" />
+                        </div>
 
                         @if (!string.IsNullOrEmpty(errorMessage))
                         {
-                            <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                            <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small" Style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); color: #ffb3b3;">
                                 @errorMessage
                             </RadzenAlert>
                         }
 
-                        <RadzenButton Text="Cambiar Contraseña" ButtonType="ButtonType.Submit" Style="width: 100%;"
+                        <RadzenButton Text="Cambiar Contraseña" ButtonType="ButtonType.Submit" class="login-btn"
                                       IsBusy="@isLoading" BusyText="Guardando..." />
                     </RadzenStack>
                 </RadzenTemplateForm>
@@ -82,37 +133,45 @@
         else if (mostrarRecuperacion)
         {
             <!-- Password Recovery Form -->
-            <RadzenStack Gap="1rem">
-                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+            <RadzenStack Gap="1.5rem">
+                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small" Style="background: rgba(0,150,255,0.1); border: 1px solid rgba(0,150,255,0.3); color: #b3e0ff;">
                     Ingrese su email y se le generará una nueva contraseña provisional.
                 </RadzenAlert>
 
                 <RadzenTemplateForm TItem="RecuperacionModel" Data="@recuperacionModel" Submit="@OnRecuperar">
                     <RadzenStack Gap="1.5rem">
-                        <RadzenFormField Text="Email" Variant="Variant.Outlined">
-                            <RadzenTextBox @bind-Value="recuperacionModel.Email" Name="RecupEmail" Placeholder="nombre@permaquim.com" Style="width: 100%;" />
-                            <RadzenRequiredValidator Component="RecupEmail" Text="Debe ingresar su email" />
-                        </RadzenFormField>
+                        <div>
+                            <RadzenFormField Variant="Variant.Flat" class="login-input-field">
+                                <Start>
+                                    <RadzenIcon Icon="mail_outline" class="login-input-icon" />
+                                </Start>
+                                <ChildContent>
+                                    <RadzenTextBox @bind-Value="recuperacionModel.Email" Name="RecupEmail" Placeholder="nombre@permaquim.com" class="login-input" />
+                                </ChildContent>
+                            </RadzenFormField>
+                            <RadzenRequiredValidator Component="RecupEmail" Text="Debe ingresar su email" Style="color: #ffb3b3; display: block; font-size: 0.8rem; margin-top: 4px;" />
+                        </div>
 
                         @if (recuperacionExitosa)
                         {
-                            <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                            <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small" Style="background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); color: #a8e6cf;">
                                 Si el email existe en el sistema, recibirá instrucciones para restablecer su contraseña.
                             </RadzenAlert>
                         }
 
                         @if (!string.IsNullOrEmpty(errorMessage))
                         {
-                            <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small">
+                            <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small" Style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); color: #ffb3b3;">
                                 @errorMessage
                             </RadzenAlert>
                         }
 
-                        <RadzenButton Text="Recuperar Contraseña" ButtonType="ButtonType.Submit" Style="width: 100%;"
+                        <RadzenButton Text="Recuperar Contraseña" ButtonType="ButtonType.Submit" class="login-btn"
                                       IsBusy="@isLoading" BusyText="Procesando..." />
 
-                        <RadzenLink Text="Volver al inicio de sesión" Style="text-align: center; display: block;"
-                                    @onclick="@(() => { mostrarRecuperacion = false; errorMessage = null; recuperacionExitosa = false; })" />
+                        <div style="text-align: center;">
+                            <RadzenLink Text="Volver al inicio de sesión" @onclick="@(() => { mostrarRecuperacion = false; errorMessage = null; recuperacionExitosa = false; })" class="login-forgot-link" />
+                        </div>
                     </RadzenStack>
                 </RadzenTemplateForm>
             </RadzenStack>
@@ -129,6 +188,9 @@
     bool isLoading;
     bool mostrarCambioPassword;
     bool mostrarRecuperacion;
+    bool showPassword;
+    bool showNuevaPassword;
+    bool showConfirmarPassword;
     int loginUserId;
     bool loginEsJefe;
 
@@ -218,6 +280,3 @@
         finally { isLoading = false; }
     }
 }
-
-@* B-01: estilos de login movidos a wwwroot/css/site.css *@
-

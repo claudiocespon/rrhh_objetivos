@@ -54,12 +54,15 @@ else
 
     void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<Domain.Entities.EventoCalendario> args)
     {
-        args.Attributes["style"] = args.Data.Tipo switch
+        if (args.Data != null)
         {
-            Domain.Enums.TipoEvento.DEADLINE_OBJETIVO   => "background: var(--rz-danger); color: white;",
-            Domain.Enums.TipoEvento.FEEDBACK_MITAD_ANIO => "background: var(--rz-info); color: white;",
-            Domain.Enums.TipoEvento.EVALUACION_FINAL    => "background: var(--rz-success); color: white;",
-            _                                            => "background: var(--rz-secondary); color: white;"
-        };
+            args.Attributes["style"] = args.Data.Tipo switch
+            {
+                Domain.Enums.TipoEvento.DEADLINE_OBJETIVO   => "background: var(--rz-danger); color: white;",
+                Domain.Enums.TipoEvento.FEEDBACK_MITAD_ANIO => "background: var(--rz-info); color: white;",
+                Domain.Enums.TipoEvento.EVALUACION_FINAL    => "background: var(--rz-success); color: white;",
+                _                                            => "background: var(--rz-secondary); color: white;"
+            };
+        }
     }
 }
