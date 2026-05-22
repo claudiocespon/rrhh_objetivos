@@ -8,7 +8,18 @@
       "Bash(git commit -m ' *)",
       "Bash(awk '{print $NF}')",
       "Bash(grep -v \"^$\")",
-      "Bash(xargs -I{} basename {})"
+      "Bash(xargs -I{} basename {})",
+      "Bash(Get-ChildItem -Path . -Recurse -Include \"*.tsx\", \"*.ts\" -Name)",
+      "Bash(Select-Object -First 20)",
+      "Bash(dotnet publish *)",
+      "Bash(ls -lah /x/wwwroot/Objetivos/ | head -20)",
+      "Bash(./Objetivos.Web.exe)",
+      "PowerShell($env:ASPNETCORE_URLS=\"http://0.0.0.0:8080\"; cd X:\\\\wwwroot\\\\Objetivos; Start-Process -FilePath \".\\\\Objetivos.Web.exe\" -NoNewWindow -PassThru | Select-Object -Property ProcessName, Id; Start-Sleep -Seconds 3; \"Iniciando servidor en http://localhost:8080\")",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "PowerShell(Get-Process \"Objetivos.Web\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)",
+      "PowerShell(\"? Proceso detenido\")",
+      "Bash(ls -lah \"X:\\\\wwwroot\\\\Objetivos\\\\\" 2>/dev/null | head -5 && echo \"---\" && ls -lah \"X:\\\\wwwrootObjetivos\\\\\" 2>/dev/null | head -5)"
     ]
   }
 }

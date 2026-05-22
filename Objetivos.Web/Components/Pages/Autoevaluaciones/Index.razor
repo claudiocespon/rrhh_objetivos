@@ -49,17 +49,26 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var data = await AutoevaluacionService.GetAutoevaluacionesAsync(CurrentUser);
-        autoevaluacionesPersonal = data.Personal;
-        autoevaluacionesEquipo = data.Equipo;
-
-        // T-07: Cargar objetivos pendientes de autoevaluación para empleados
-        if (!CurrentUser.EsJefe)
+        try
         {
-            objetivosPendientes = await AutoevaluacionService.GetObjetivosPendientesAutoevAsync(CurrentUser);
-        }
+            var data = await AutoevaluacionService.GetAutoevaluacionesAsync(CurrentUser);
+            autoevaluacionesPersonal = data.Personal;
+            autoevaluacionesEquipo = data.Equipo;
 
-        loading = false;
+            // T-07: Cargar objetivos pendientes de autoevaluación para empleados
+            if (!CurrentUser.EsJefe)
+            {
+                objetivosPendientes = await AutoevaluacionService.GetObjetivosPendientesAutoevAsync(CurrentUser);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error al cargar autoevaluaciones: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
     }
 
     async Task OnAutoevaluarClick(Objetivo obj)
@@ -100,7 +109,14 @@ else
                         <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
                         <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar">
                             <Template Context="obj">
-                                <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                                @if (obj.Pilar != null)
+                                {
+                                    <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
@@ -132,7 +148,14 @@ else
                         {
                             <RadzenDataGridColumn TItem="Autoevaluacion" Property="Objetivo.Empleado.Nombre" Title="Colaborador">
                                 <Template Context="ae">
-                                    @ae.Objetivo.Empleado.Nombre @ae.Objetivo.Empleado.Apellido
+                                    @if (ae.Objetivo?.Empleado != null)
+                                    {
+                                        @ae.Objetivo.Empleado.Nombre @ae.Objetivo.Empleado.Apellido
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
                                 </Template>
                             </RadzenDataGridColumn>
                         }
@@ -146,14 +169,20 @@ else
                         <RadzenDataGridColumn TItem="Autoevaluacion" Title="Habilidades Blandas" Width="220px">
                             <Template Context="ae">
                                 <RadzenStack Gap="0.5rem">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin:0; flex: 1;">@ae.Objetivo.SoftSkill1.Nombre</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin:0;">@(ae.SoftSkill1EscalaValoracion?.Etiqueta ?? "-")</RadzenText>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin:0; flex: 1;">@ae.Objetivo.SoftSkill2.Nombre</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin:0;">@(ae.SoftSkill2EscalaValoracion?.Etiqueta ?? "-")</RadzenText>
-                                    </div>
+                                    @if (ae.Objetivo?.SoftSkill1 != null)
+                                    {
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin:0; flex: 1;">@ae.Objetivo.SoftSkill1.Nombre</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin:0;">@(ae.SoftSkill1EscalaValoracion?.Etiqueta ?? "-")</RadzenText>
+                                        </div>
+                                    }
+                                    @if (ae.Objetivo?.SoftSkill2 != null)
+                                    {
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin:0; flex: 1;">@ae.Objetivo.SoftSkill2.Nombre</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin:0;">@(ae.SoftSkill2EscalaValoracion?.Etiqueta ?? "-")</RadzenText>
+                                        </div>
+                                    }
                                 </RadzenStack>
                             </Template>
                         </RadzenDataGridColumn>

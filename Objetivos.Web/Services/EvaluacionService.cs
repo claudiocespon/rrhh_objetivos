@@ -36,6 +36,8 @@ public class EvaluacionService
             data.Recibidas = await db.RevisionesCuatrimestrales
                 .Include(r => r.Objetivo)
                     .ThenInclude(o => o.Empleado)
+                .Include(r => r.Objetivo)
+                    .ThenInclude(o => o.Pilar)
                 .Include(r => r.EscalaValoracion)
                 .Where(r => r.Completada && r.Objetivo.EmpleadoId == empleadoPropio.Id)
                 .OrderByDescending(r => r.FechaEvaluacion)
@@ -49,6 +51,8 @@ public class EvaluacionService
             var queryRev = db.RevisionesCuatrimestrales
                 .Include(r => r.Objetivo)
                     .ThenInclude(o => o.Empleado)
+                .Include(r => r.Objetivo)
+                    .ThenInclude(o => o.Pilar)
                 .Where(r => !r.Completada
                          && r.Objetivo.Empleado.Activo
                          && r.Objetivo.Estado != EstadoObjetivo.CANCELADO);
@@ -56,6 +60,7 @@ public class EvaluacionService
             // Objetivos para Evaluación Final
             var queryFinal = db.Objetivos
                 .Include(o => o.Empleado)
+                .Include(o => o.Pilar)
                 .Include(o => o.Revisiones)
                 .Include(o => o.EvaluacionFinal)
                 .Where(o => o.Estado != EstadoObjetivo.CANCELADO

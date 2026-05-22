@@ -10,7 +10,7 @@
 <div class="login-container">
     <div class="login-card">
         <div class="login-header">
-            <img src="logo.png" class="login-logo-img" alt="PQ-Talent Logo" />
+            <img src="Pqtalent.png" class="login-logo-img" alt="PQ-Talent Logo" />
             <h1>Plataforma de gestión de Talento</h1>
             <p>Por favor ingrese su Usuario y Contraseña</p>
         </div>
@@ -50,8 +50,8 @@
                         </RadzenFormField>
                         <RadzenRequiredValidator Component="Password" Text="Debe ingresar su contraseña" Style="color: #ffb3b3; display: block; font-size: 0.8rem; margin-top: 4px;" />
                         
-                        <div style="text-align: right; margin-top: 8px;">
-                            <RadzenLink Text="¿Olvidó su contraseña?" @onclick="@(() => mostrarRecuperacion = true)" class="login-forgot-link" />
+                        <div style="text-align: center; margin-top: 10px;">
+                            <span @onclick="@(() => mostrarRecuperacion = true)" class="login-forgot-link" style="cursor: pointer;">¿Olvidó su contraseña?</span>
                         </div>
                     </div>
 
@@ -62,8 +62,8 @@
                         </RadzenAlert>
                     }
 
-                    <RadzenButton Text="Ingresar" ButtonType="ButtonType.Submit" class="login-btn" 
-                                  IsBusy="@isLoading" BusyText="Verificando..." />
+                    <RadzenButton Text="Ingresar" ButtonType="ButtonType.Submit" class="login-btn"
+                                  IsBusy="@isLoading" BusyText="Verificando..." Style="margin-top: 0.5rem;" />
 
                 </RadzenStack>
             </RadzenTemplateForm>

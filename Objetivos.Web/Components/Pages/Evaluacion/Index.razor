@@ -60,7 +60,7 @@ else
 
     async Task OnEvaluarClick(RevisionCuatrimestral rev)
     {
-        var result = await DialogService.OpenAsync<EvaluarDialog>($"Evaluar: {rev.Periodo.ToString().Replace("_", " ").Replace("ANIO", "AÑO")}",
+        var result = await DialogService.OpenAsync<EvaluarDialog>($"Evaluar: {rev.Periodo.ToString().Replace("FEEDBACK_MITAD_ANIO", "FEEDBACK MITAD DE AÑO")}",
             new Dictionary<string, object?> { { "RevisionId", rev.Id } },
             new DialogOptions { Width = "600px" });
 
@@ -101,9 +101,14 @@ else
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Pilar.Nombre" Title="Pilar" Width="180px">
+                            <Template Context="rev">
+                                <RadzenBadge Text="@rev.Objetivo.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {rev.Objetivo.Pilar.ColorHex}; color: white;")" />
+                            </Template>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Período" Width="150px">
                             <Template Context="rev">
-                                <RadzenBadge Text="@rev.Periodo.ToString().Replace("_", " ").Replace("ANIO", "AÑO")" BadgeStyle="BadgeStyle.Info" />
+                                <RadzenBadge Text="@rev.Periodo.ToString().Replace("FEEDBACK_MITAD_ANIO", "FEEDBACK MITAD DE AÑO")" BadgeStyle="BadgeStyle.Info" />
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Anio" Title="Año" Width="80px" />
@@ -136,6 +141,11 @@ else
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar" Width="180px">
+                            <Template Context="obj">
+                                <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                            </Template>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="150px" />
                         <RadzenDataGridColumn TItem="Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="180px">
                             <Template Context="obj">
@@ -161,9 +171,14 @@ else
                 <RadzenDataGrid Data="@recibidas" TItem="RevisionCuatrimestral" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Pilar.Nombre" Title="Pilar" Width="180px">
+                            <Template Context="rev">
+                                <RadzenBadge Text="@rev.Objetivo.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {rev.Objetivo.Pilar.ColorHex}; color: white;")" />
+                            </Template>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Período" Width="150px">
                             <Template Context="rev">
-                                <RadzenBadge Text="@rev.Periodo.ToString().Replace("_", " ").Replace("ANIO", "AÑO")" BadgeStyle="BadgeStyle.Success" />
+                                <RadzenBadge Text="@rev.Periodo.ToString().Replace("FEEDBACK_MITAD_ANIO", "FEEDBACK MITAD DE AÑO")" BadgeStyle="BadgeStyle.Success" />
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Valoración" Width="120px">

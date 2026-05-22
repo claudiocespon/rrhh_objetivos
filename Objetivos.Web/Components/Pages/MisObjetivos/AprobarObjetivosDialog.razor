@@ -20,15 +20,31 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="Objetivo" Property="Empleado.Nombre" Title="Colaborador" Width="150px">
                         <Template Context="obj">
-                            @obj.Empleado.Nombre @obj.Empleado.Apellido
+                            <div style="white-space: normal;">
+                                @obj.Empleado.Nombre @obj.Empleado.Apellido
+                            </div>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
-                    <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar" Width="120px" />
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" Width="220px">
+                        <Template Context="obj">
+                            <div title="@obj.Nombre" style="width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                @obj.Nombre
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar" Width="120px">
+                        <Template Context="obj">
+                            <div style="white-space: normal;">
+                                @obj.Pilar.Nombre
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Objetivo" Property="Deadline" Title="Vencimiento" FormatString="{0:dd/MM/yyyy}" Width="120px" />
                     <RadzenDataGridColumn TItem="Objetivo" Property="Descripcion" Title="Descripción" Width="200px">
                         <Template Context="obj">
-                            <RadzenText TextStyle="TextStyle.Caption" Style="white-space: pre-wrap; word-break: break-word;">@obj.Descripcion</RadzenText>
+                            <div title="@obj.Descripcion" style="width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@obj.Descripcion</RadzenText>
+                            </div>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="200px">

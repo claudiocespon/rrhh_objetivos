@@ -2,15 +2,28 @@
 @inject DialogService DialogService
 @inject ConfiguracionService ConfigService
 
-<RadzenTemplateForm TItem="EvaluationModel" Data="@model" Submit="@OnSubmit">
+<div>
     <RadzenStack Gap="1.5rem">
         <RadzenRow>
             <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Valoración General</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Valoración General *</RadzenText>
                 <EscalaSelector @bind-SelectedId="@model.EscalaValoracionId" />
-                <RadzenRequiredValidator Component="Valoracion" Text="Debe seleccionar una valoración" DefaultValue="0" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
+
+        @if (revision?.Objetivo != null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="false" Style="margin-bottom: 1rem;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <div>
+                        <strong>Pilar:</strong> <RadzenBadge Text="@revision.Objetivo.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {revision.Objetivo.Pilar.ColorHex}; color: white;")" />
+                    </div>
+                    <div>
+                        <strong>Objetivo:</strong> @revision.Objetivo.Nombre
+                    </div>
+                </RadzenStack>
+            </RadzenAlert>
+        }
 
         @if (revision?.Objetivo != null)
         {
@@ -30,10 +43,8 @@
 
         <RadzenRow>
             <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2">Comentario del Jefe</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle2">Comentario del Jefe * (mínimo 10 caracteres)</RadzenText>
                 <RadzenTextArea @bind-Value="@model.Comentario" Style="width: 100%;" Rows="3" Name="Comentario" />
-                <RadzenRequiredValidator Component="Comentario" Text="El comentario es obligatorio" Style="position: absolute" />
-                <RadzenLengthValidator Component="Comentario" Min="10" Text="El comentario debe tener al menos 10 caracteres" Style="position: absolute" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -73,11 +84,11 @@
         }
 
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
-            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" />
-            <RadzenButton ButtonType="ButtonType.Submit" Text="Confirmar Evaluación" ButtonStyle="ButtonStyle.Primary" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" Disabled="@guardando" />
+            <RadzenButton Text="Confirmar Evaluación" ButtonStyle="ButtonStyle.Primary" Click="@OnSubmit" Disabled="@guardando" IsBusy="@guardando" BusyText="Guardando..." />
         </RadzenStack>
     </RadzenStack>
-</RadzenTemplateForm>
+</div>
 
 @code {
     [Parameter] public int RevisionId { get; set; }
@@ -88,6 +99,7 @@
     EvaluationModel model = new();
     List<ResultadoEval> resultados = Enum.GetValues<ResultadoEval>().ToList();
     string? errorMsg;
+    bool guardando = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -108,37 +120,65 @@
 
     async Task OnSubmit()
     {
+        if (guardando) return; // Prevenir doble submit
         errorMsg = null;
 
-        // Mapear evidencias seleccionadas a strings (formato fecha + texto)
-        var evidenciasMarcadas = new List<string>();
-        if (bitacora != null)
+        // Validación manual
+        if (!model.EscalaValoracionId.HasValue)
         {
-            foreach (var entrada in bitacora.Where(e => evidenciasSeleccionadas.GetValueOrDefault(e.Id)))
+            errorMsg = "Debe seleccionar una valoración general.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(model.Comentario) || model.Comentario.Trim().Length < 10)
+        {
+            errorMsg = "El comentario es obligatorio y debe tener al menos 10 caracteres.";
+            return;
+        }
+
+        guardando = true;
+        StateHasChanged();
+
+        try
+        {
+            // Mapear evidencias seleccionadas a strings (formato fecha + texto)
+            var evidenciasMarcadas = new List<string>();
+            if (bitacora != null)
             {
-                evidenciasMarcadas.Add($"{entrada.Fecha:dd/MM/yyyy} — {entrada.Texto}");
+                foreach (var entrada in bitacora.Where(e => evidenciasSeleccionadas.GetValueOrDefault(e.Id)))
+                {
+                    evidenciasMarcadas.Add($"{entrada.Fecha:dd/MM/yyyy} — {entrada.Texto}");
+                }
+            }
+
+            var success = await RevisionService.CompletarRevisionAsync(
+                RevisionId,
+                model.EscalaValoracionId,
+                model.Comentario,
+                null,
+                evidenciasMarcadas,
+                model.SoftSkill1EscalaValoracionId,
+                model.SoftSkill1Comentario,
+                model.SoftSkill2EscalaValoracionId,
+                model.SoftSkill2Comentario
+            );
+
+            if (success)
+            {
+                DialogService.Close(true);
+            }
+            else
+            {
+                errorMsg = "No se pudo completar la revisión. Verifique que el período anterior esté cerrado.";
             }
         }
-
-        var success = await RevisionService.CompletarRevisionAsync(
-            RevisionId,
-            model.EscalaValoracionId,
-            model.Comentario,
-            null,
-            evidenciasMarcadas,
-            model.SoftSkill1EscalaValoracionId,
-            model.SoftSkill1Comentario,
-            model.SoftSkill2EscalaValoracionId,
-            model.SoftSkill2Comentario
-        );
-
-        if (success)
+        catch (Exception ex)
         {
-            DialogService.Close(true);
+            errorMsg = $"Error al guardar: {ex.Message}";
         }
-        else
+        finally
         {
-            errorMsg = "No se pudo completar la revisión. Verifique que el período anterior esté cerrado.";
+            guardando = false;
+            StateHasChanged();
         }
     }
 

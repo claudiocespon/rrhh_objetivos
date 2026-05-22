@@ -9,7 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            options.DetailedErrors = true;
+        }
+    });
 builder.Services.AddControllers();
 
 // Radzen Services
@@ -76,6 +83,10 @@ if (!string.IsNullOrEmpty(pathBase))
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
+}
+else
+{
+    app.UseDeveloperExceptionPage();
 }
 
 // HTTPS redirect deshabilitado: el proxy inverso maneja TLS externamente.

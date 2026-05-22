@@ -29,6 +29,8 @@ public class RevisionService
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.RevisionesCuatrimestrales
             .Include(r => r.Objetivo)
+                .ThenInclude(o => o.Pilar)
+            .Include(r => r.Objetivo)
                 .ThenInclude(o => o.SoftSkill1)
             .Include(r => r.Objetivo)
                 .ThenInclude(o => o.SoftSkill2)

@@ -78,6 +78,7 @@ public class AutoevaluacionService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Objetivos
+            .Include(o => o.Pilar)
             .Include(o => o.SoftSkill1)
             .Include(o => o.SoftSkill2)
             .FirstOrDefaultAsync(o => o.Id == objetivoId);
@@ -109,6 +110,7 @@ public class AutoevaluacionService
         // Objetivos activos sin autoevaluación completada
         var objetivosSinAutoev = await db.Objetivos
             .Include(o => o.Empleado)
+            .Include(o => o.Pilar)
             .Include(o => o.SoftSkill1)
             .Include(o => o.SoftSkill2)
             .Where(o => o.EmpleadoId == empleadoPropio.Id &&
@@ -120,7 +122,7 @@ public class AutoevaluacionService
         return objetivosSinAutoev;
     }
 
-    public async Task<bool> GuardarAutoevaluacionAsync(Autoevaluacion ae, List<string> evidencias, List<string> adjuntos)
+    public async Task<(bool success, string errorMsg)> GuardarAutoevaluacionAsync(Autoevaluacion ae, List<string> evidencias, List<string> adjuntos)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         try
@@ -134,8 +136,12 @@ public class AutoevaluacionService
             else
                 db.Entry(ae).State = EntityState.Modified;
 
-            return await db.SaveChangesAsync() > 0;
+            await db.SaveChangesAsync();
+            return (true, "");
         }
-        catch { return false; }
+        catch (Exception ex)
+        { 
+            return (false, ex.InnerException?.Message ?? ex.Message); 
+        }
     }
 }

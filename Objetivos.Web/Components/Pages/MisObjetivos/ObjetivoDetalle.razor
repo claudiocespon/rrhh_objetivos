@@ -222,10 +222,15 @@ else
                         <RadzenStack Gap="0.5rem">
                             @foreach (var msg in mensajes)
                             {
-                                <div class="@(msg.RemitenteEsJefe ? "align-self-end text-end" : "align-self-start")" style="max-width: 80%;">
-                                    <div class="p-2" style="@(msg.RemitenteEsJefe ? "background-color: var(--rz-primary); color: white;" : "background-color: var(--rz-base-background-color); border: 1px solid var(--rz-border-color); color: var(--rz-text-color);") border-radius: 8px;">
-                                        <RadzenText TextStyle="TextStyle.Body2">@msg.Texto</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="@(msg.RemitenteEsJefe ? "color: rgba(255,255,255,0.7); font-size: 0.7rem;" : "opacity: 0.5; font-size: 0.7rem;")">@msg.Fecha.ToString("HH:mm")</RadzenText>
+                                var esPropio = msg.RemitenteId == CurrentUser.UsuarioId;
+                                <div style="display: flex; justify-content: @(esPropio ? "flex-end" : "flex-start"); margin-bottom: 0.25rem;">
+                                    <div style="max-width: 75%; background-color: @(esPropio ? "var(--rz-primary)" : "var(--rz-base-200, #f0f0f0)"); color: @(esPropio ? "white" : "var(--rz-text-color)"); border-radius: @(esPropio ? "12px 12px 2px 12px" : "12px 12px 12px 2px"); padding: 0.5rem 0.75rem;">
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="@($"color: {(esPropio ? "white" : "inherit")}; margin: 0; word-break: break-word;")">
+                                            @msg.Texto
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="@($"color: {(esPropio ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.45)")}; font-size: 0.68rem; margin: 0; text-align: right;")">
+                                            @msg.Fecha.ToLocalTime().ToString("dd/MM HH:mm")
+                                        </RadzenText>
                                     </div>
                                 </div>
                             }
