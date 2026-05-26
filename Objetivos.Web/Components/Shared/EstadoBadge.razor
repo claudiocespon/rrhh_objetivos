@@ -1,7 +1,7 @@
 
 @if (EstadoObj != null)
 {
-    <RadzenBadge BadgeStyle="@GetStyle(EstadoObj.Value)" Text="@EstadoObj.ToString()" />
+    <RadzenBadge BadgeStyle="@GetStyle(EstadoObj.Value)" Text="@(EstadoObj.Value == EstadoObjetivo.COMPLETADO ? "FINALIZADO" : EstadoObj.ToString())" />
 }
 else if (EstadoBit != null)
 {

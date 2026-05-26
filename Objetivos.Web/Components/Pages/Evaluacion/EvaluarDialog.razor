@@ -29,12 +29,12 @@
         {
             <RadzenRow>
                 <RadzenColumn Size="6">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @revision.Objetivo.SoftSkill1.Nombre</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Competencia: @revision.Objetivo.SoftSkill1.Nombre</RadzenText>
                     <EscalaSelector @bind-SelectedId="@model.SoftSkill1EscalaValoracionId" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill1Comentario" Placeholder="Comentario sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>
                 <RadzenColumn Size="6">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Habilidad: @revision.Objetivo.SoftSkill2.Nombre</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Competencia: @revision.Objetivo.SoftSkill2.Nombre</RadzenText>
                     <EscalaSelector @bind-SelectedId="@model.SoftSkill2EscalaValoracionId" />
                     <RadzenTextArea @bind-Value="@model.SoftSkill2Comentario" Placeholder="Comentario sobre esta habilidad..." Style="width: 100%; margin-top: 0.5rem;" Rows="2" />
                 </RadzenColumn>

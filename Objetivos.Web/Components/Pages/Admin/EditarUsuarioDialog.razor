@@ -102,7 +102,7 @@
         </RadzenRow>
 
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="margin-top: 1rem;">
-            <RadzenButton Text="Cancelar" Click="@(() => DialogService.Close(false))" ButtonStyle="ButtonStyle.Light" />
+            <RadzenButton ButtonType="ButtonType.Button" Text="Cancelar" Click="@(() => DialogService.Close(false))" ButtonStyle="ButtonStyle.Light" />
             <RadzenButton Text="Guardar" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" />
         </RadzenStack>
     </RadzenStack>

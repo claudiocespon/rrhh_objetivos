@@ -19,8 +19,14 @@ else
                 <RadzenTabsItem Text="Feedback Mitad de Año (Equipo)">
                     @RenderPendientes()
                 </RadzenTabsItem>
+                <RadzenTabsItem Text="Feedback Mitad de Año Realizados (Equipo)">
+                    @RenderRealizadas()
+                </RadzenTabsItem>
                 <RadzenTabsItem Text="Evaluaciones Finales Pendientes">
                     @RenderFinalesPendientes()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Evaluaciones Finales Realizadas">
+                    @RenderFinalesRealizadas()
                 </RadzenTabsItem>
                 <RadzenTabsItem Text="Mis Evaluaciones Recibidas">
                     @RenderRecibidas()
@@ -30,15 +36,26 @@ else
     }
     else
     {
-        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Mis Evaluaciones Recibidas</RadzenText>
-        @RenderRecibidas()
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Feedback Mitad de Año">
+                    @RenderRecibidas()
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Evaluaciones Finales">
+                    @RenderFinalesRecibidas()
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
     }
 }
 
 @code {
     List<RevisionCuatrimestral>? pendientes;
+    List<RevisionCuatrimestral>? realizadas;
     List<Objetivo>? finalesPendientes;
     List<RevisionCuatrimestral>? recibidas;
+    List<Objetivo>? finalesRealizadas;
+    List<EvaluacionFinal>? finalesRecibidas;
     bool loading = true;
 
     protected override async Task OnInitializedAsync()
@@ -52,8 +69,11 @@ else
         var data = await EvaluacionService.GetEvaluacionDataAsync(CurrentUser);
         
         pendientes = data.Pendientes;
+        realizadas = data.Realizadas;
         finalesPendientes = data.FinalesPendientes;
         recibidas = data.Recibidas;
+        finalesRealizadas = data.FinalesRealizadas;
+        finalesRecibidas = data.FinalesRecibidas;
 
         loading = false;
     }
@@ -159,11 +179,51 @@ else
         }
     };
 
+    private RenderFragment RenderRealizadas() => __builder =>
+    {
+        if (realizadas == null || !realizadas.Any())
+        {
+            <EmptyState Message="Aún no has realizado revisiones de mitad de año." />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@realizadas" TItem="RevisionCuatrimestral" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Empleado.Nombre" Title="Colaborador">
+                            <Template Context="rev">
+                                @rev.Objetivo.Empleado.Nombre @rev.Objetivo.Empleado.Apellido
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Pilar.Nombre" Title="Pilar" Width="180px">
+                            <Template Context="rev">
+                                <RadzenBadge Text="@rev.Objetivo.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {rev.Objetivo.Pilar.ColorHex}; color: white;")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Período" Width="150px">
+                            <Template Context="rev">
+                                <RadzenBadge Text="@rev.Periodo.ToString().Replace("FEEDBACK_MITAD_ANIO", "FEEDBACK MITAD DE AÑO")" BadgeStyle="BadgeStyle.Info" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Title="Valoración" Width="120px">
+                            <Template Context="rev">
+                                @(rev.EscalaValoracion?.Etiqueta ?? "-")
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="ComentarioJefe" Title="Resumen de Evaluación" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="FechaEvaluacion" Title="Fecha" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+
     private RenderFragment RenderRecibidas() => __builder =>
     {
         if (recibidas == null || !recibidas.Any())
         {
-            <EmptyState Message="Aún no has recibido evaluaciones formales finalizadas." />
+            <EmptyState Message="Aún no has recibido revisiones cuatrimestrales." />
         }
         else
         {
@@ -188,6 +248,70 @@ else
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="ComentarioJefe" Title="Resumen de Evaluación" />
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="FechaEvaluacion" Title="Fecha" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+
+    private RenderFragment RenderFinalesRealizadas() => __builder =>
+    {
+        if (finalesRealizadas == null || !finalesRealizadas.Any())
+        {
+            <EmptyState Message="Aún no has realizado evaluaciones finales." />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@finalesRealizadas" TItem="Objetivo" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Empleado.Nombre" Title="Colaborador">
+                            <Template Context="obj">
+                                @obj.Empleado.Nombre @obj.Empleado.Apellido
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar" Width="180px">
+                            <Template Context="obj">
+                                <RadzenBadge Text="@obj.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {obj.Pilar.ColorHex}; color: white;")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Objetivo" Title="Valoración Final" Width="150px">
+                            <Template Context="obj">
+                                @(obj.EvaluacionFinal?.EscalaValoracionFinal?.Etiqueta ?? "-")
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Objetivo" Property="EvaluacionFinal.FechaEvaluacion" Title="Fecha" FormatString="{0:dd/MM/yyyy}" Width="150px" />
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+    };
+
+    private RenderFragment RenderFinalesRecibidas() => __builder =>
+    {
+        if (finalesRecibidas == null || !finalesRecibidas.Any())
+        {
+            <EmptyState Message="Aún no has recibido evaluaciones finales." />
+        }
+        else
+        {
+            <div class="pt-3">
+                <RadzenDataGrid Data="@finalesRecibidas" TItem="EvaluacionFinal" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="EvaluacionFinal" Property="Objetivo.Nombre" Title="Objetivo" />
+                        <RadzenDataGridColumn TItem="EvaluacionFinal" Property="Objetivo.Pilar.Nombre" Title="Pilar" Width="180px">
+                            <Template Context="ef">
+                                <RadzenBadge Text="@ef.Objetivo.Pilar.Nombre.Replace("_", " ")" Style="@($"background-color: {ef.Objetivo.Pilar.ColorHex}; color: white;")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="EvaluacionFinal" Title="Valoración" Width="120px">
+                            <Template Context="ef">
+                                <RadzenBadge Text="@(ef.EscalaValoracionFinal?.Etiqueta ?? "-")" BadgeStyle="BadgeStyle.Primary" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="EvaluacionFinal" Property="ComentarioJefe" Title="Resumen Final" />
+                        <RadzenDataGridColumn TItem="EvaluacionFinal" Property="FechaEvaluacion" Title="Fecha" FormatString="{0:dd/MM/yyyy}" Width="150px" />
                     </Columns>
                 </RadzenDataGrid>
             </div>

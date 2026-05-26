@@ -38,7 +38,7 @@
             <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">@errorMsg</RadzenAlert>
         }
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
-            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="CANCELAR" Click="@(() => DialogService.Close(false))" />
+            <RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="CANCELAR" Click="@(() => DialogService.Close(false))" />
             <RadzenButton ButtonType="ButtonType.Submit" Text="GUARDAR" ButtonStyle="ButtonStyle.Primary" />
         </RadzenStack>
     </RadzenStack>

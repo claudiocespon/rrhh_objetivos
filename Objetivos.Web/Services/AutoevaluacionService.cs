@@ -114,7 +114,7 @@ public class AutoevaluacionService
             .Include(o => o.SoftSkill1)
             .Include(o => o.SoftSkill2)
             .Where(o => o.EmpleadoId == empleadoPropio.Id &&
-                        o.Estado == EstadoObjetivo.ACTIVO &&
+                        (o.Estado == EstadoObjetivo.ACTIVO || o.Estado == EstadoObjetivo.EN_RIESGO) &&
                         !db.Autoevaluaciones.Any(ae => ae.ObjetivoId == o.Id))
             .OrderBy(o => o.Deadline)
             .ToListAsync();

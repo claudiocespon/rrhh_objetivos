@@ -121,7 +121,7 @@ public class SeguimientoService
         // Calcular radar en memoria (sin N+1)
         var radarData = pilares.Select(pilar =>
         {
-            var obj = empleado.Objetivos.FirstOrDefault(o => o.PilarId == pilar.Id);
+            var obj = empleado.Objetivos.FirstOrDefault(o => o.PilarId == pilar.Id && o.Estado != EstadoObjetivo.CANCELADO);
             return new RadarPilarItem
             {
                 Pilar = pilar.Nombre.Replace("_", " "),
@@ -131,7 +131,7 @@ public class SeguimientoService
 
         // Calcular ponderados en memoria (sin N+1)
         var ponderados = empleado.Objetivos
-            .ToDictionary(o => o.Id, o => RendimientoService.CalcularPonderadoStatic(o));
+            .ToDictionary(o => o.Id, o => o.Estado == EstadoObjetivo.CANCELADO ? 0.0 : RendimientoService.CalcularPonderadoStatic(o));
 
         return new EmpleadoDetalleData
         {

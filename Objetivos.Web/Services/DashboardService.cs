@@ -35,6 +35,8 @@ public class DashboardService
         if (empleadoPropio != null)
         {
             var misObjetivos = await db.Objetivos
+                .Include(o => o.Revisiones)
+                .Include(o => o.EvaluacionFinal)
                 .Where(o => o.EmpleadoId == empleadoPropio.Id && o.Anio == hoy.Year)
                 .ToListAsync();
 
@@ -44,23 +46,24 @@ public class DashboardService
                 EnCurso = misObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO),
                 EnRiesgo = misObjetivos.Count(o => o.Estado == EstadoObjetivo.EN_RIESGO),
                 Completados = misObjetivos.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
-                VencenPronto = misObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO && o.Deadline <= proximaFecha),
-                PendientesRevision = await db.RevisionesCuatrimestrales
-                    .CountAsync(r => !r.Completada && r.Objetivo.EmpleadoId == empleadoPropio.Id && r.Anio == hoy.Year && r.Objetivo.Estado != EstadoObjetivo.CANCELADO)
+                 VencenPronto = misObjetivos.Count(o => (o.Estado == EstadoObjetivo.ACTIVO || o.Estado == EstadoObjetivo.EN_RIESGO) && o.Deadline <= proximaFecha),
+                PendientesRevision = misObjetivos.Count(o => o.Estado != EstadoObjetivo.CANCELADO && (o.Revisiones.Any(r => !r.Completada) || (o.Revisiones.Any(r => r.Completada) && o.EvaluacionFinal == null))),
+                EvaluacionesFinalizadas = misObjetivos.Count(o => o.EvaluacionFinal != null)
             };
         }
 
         // 2. Fetch Team/Org Data using centralized scope
         if (_currentUser.EsJefe || _dataScope.PuedeVerTodo(_currentUser))
         {
-            IQueryable<Objetivo> query = db.Objetivos.Include(o => o.Empleado).Where(o => o.Anio == hoy.Year);
-            IQueryable<RevisionCuatrimestral> revisionQuery = db.RevisionesCuatrimestrales.Where(r => r.Anio == hoy.Year && r.Objetivo.Estado != EstadoObjetivo.CANCELADO && !r.Completada);
+            IQueryable<Objetivo> query = db.Objetivos
+                .Include(o => o.Empleado)
+                .Include(o => o.Revisiones)
+                .Include(o => o.EvaluacionFinal)
+                .Where(o => o.Anio == hoy.Year && o.Empleado.Activo);
 
             query = _dataScope.AplicarScope(query, _currentUser);
-            revisionQuery = _dataScope.AplicarScope(revisionQuery, _currentUser);
 
             var teamObjetivos = await query.ToListAsync();
-            var pendingTeamRevision = await revisionQuery.CountAsync();
 
             result.Equipo = new DashboardData
             {
@@ -68,8 +71,9 @@ public class DashboardService
                 EnCurso = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO),
                 EnRiesgo = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.EN_RIESGO),
                 Completados = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
-                VencenPronto = teamObjetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO && o.Deadline <= proximaFecha),
-                PendientesRevision = pendingTeamRevision
+                VencenPronto = teamObjetivos.Count(o => (o.Estado == EstadoObjetivo.ACTIVO || o.Estado == EstadoObjetivo.EN_RIESGO) && o.Deadline <= proximaFecha),
+                PendientesRevision = teamObjetivos.Count(o => o.Estado != EstadoObjetivo.CANCELADO && (o.Revisiones.Any(r => !r.Completada) || (o.Revisiones.Any(r => r.Completada) && o.EvaluacionFinal == null))),
+                EvaluacionesFinalizadas = teamObjetivos.Count(o => o.EvaluacionFinal != null)
             };
         }
 
@@ -91,4 +95,5 @@ public class DashboardData
     public int Completados { get; set; }
     public int VencenPronto { get; set; }
     public int PendientesRevision { get; set; }
+    public int EvaluacionesFinalizadas { get; set; }
 }

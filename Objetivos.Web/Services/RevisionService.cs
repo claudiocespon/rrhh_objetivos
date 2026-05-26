@@ -73,6 +73,45 @@ public class RevisionService
         revision.SoftSkill2EscalaValoracionId = ss2EscalaValoracionId;
         revision.SoftSkill2Comentario = ss2Comentario ?? "";
 
+        if (escalaValoracionId.HasValue)
+        {
+            var escala = await db.EscalasValoracion.FindAsync(escalaValoracionId.Value);
+            if (escala != null && escala.ValorNumerico.HasValue)
+            {
+                revision.Puntaje = (int)Math.Round(escala.ValorNumerico.Value);
+            }
+        }
+        else
+        {
+            revision.Puntaje = null;
+        }
+
+        if (ss1EscalaValoracionId.HasValue)
+        {
+            var escala = await db.EscalasValoracion.FindAsync(ss1EscalaValoracionId.Value);
+            if (escala != null && escala.ValorNumerico.HasValue)
+            {
+                revision.SoftSkill1Puntaje = (int)Math.Round(escala.ValorNumerico.Value);
+            }
+        }
+        else
+        {
+            revision.SoftSkill1Puntaje = null;
+        }
+
+        if (ss2EscalaValoracionId.HasValue)
+        {
+            var escala = await db.EscalasValoracion.FindAsync(ss2EscalaValoracionId.Value);
+            if (escala != null && escala.ValorNumerico.HasValue)
+            {
+                revision.SoftSkill2Puntaje = (int)Math.Round(escala.ValorNumerico.Value);
+            }
+        }
+        else
+        {
+            revision.SoftSkill2Puntaje = null;
+        }
+
         db.AuditoriaLogs.Add(new AuditoriaLog
         {
             Entidad = "RevisionCuatrimestral",
@@ -123,6 +162,34 @@ public class RevisionService
             // Si resultado_final_manual es false, permitimos cálculo automático
             valoracionFinal = await _rendimiento.CalcularPonderadoAsync(objetivoId);
         }
+        else
+        {
+            var escala = await db.EscalasValoracion.FindAsync(escalaValoracionIdFinal.Value);
+            if (escala != null && escala.ValorNumerico.HasValue)
+            {
+                valoracionFinal = (double)escala.ValorNumerico.Value;
+            }
+        }
+
+        int? ss1Puntaje = null;
+        if (ss1EscalaValoracionId.HasValue)
+        {
+            var escala = await db.EscalasValoracion.FindAsync(ss1EscalaValoracionId.Value);
+            if (escala != null && escala.ValorNumerico.HasValue)
+            {
+                ss1Puntaje = (int)Math.Round(escala.ValorNumerico.Value);
+            }
+        }
+
+        int? ss2Puntaje = null;
+        if (ss2EscalaValoracionId.HasValue)
+        {
+            var escala = await db.EscalasValoracion.FindAsync(ss2EscalaValoracionId.Value);
+            if (escala != null && escala.ValorNumerico.HasValue)
+            {
+                ss2Puntaje = (int)Math.Round(escala.ValorNumerico.Value);
+            }
+        }
 
         var evalFinal = new EvaluacionFinal
         {
@@ -136,8 +203,10 @@ public class RevisionService
             EvaluadorId = _currentUser.UsuarioId,
             SoftSkill1EscalaValoracionId = ss1EscalaValoracionId,
             SoftSkill1Comentario = ss1Comentario ?? "",
+            SoftSkill1Puntaje = ss1Puntaje,
             SoftSkill2EscalaValoracionId = ss2EscalaValoracionId,
-            SoftSkill2Comentario = ss2Comentario ?? ""
+            SoftSkill2Comentario = ss2Comentario ?? "",
+            SoftSkill2Puntaje = ss2Puntaje
         };
         db.EvaluacionesFinales.Add(evalFinal);
 

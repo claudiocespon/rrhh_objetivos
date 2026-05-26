@@ -44,6 +44,19 @@
             var el = document.getElementById(id);
             if (el) el.scrollTop = el.scrollHeight;
         };
+
+        // MutationObserver to add HTML 'title' tooltips to all RadzenDataGrid cells
+        const observer = new MutationObserver((mutations) => {
+            document.querySelectorAll('.rz-cell-data').forEach(cell => {
+                if (!cell.hasAttribute('title')) {
+                    const text = cell.textContent.trim();
+                    if (text) {
+                        cell.setAttribute('title', text);
+                    }
+                }
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
     </script>
 </body>
 </html>
