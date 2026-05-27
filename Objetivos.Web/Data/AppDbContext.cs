@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Pais> Paises => Set<Pais>();
     public DbSet<Area> Areas => Set<Area>();
+    public DbSet<Puesto> Puestos => Set<Puesto>();
     public DbSet<Jefe> Jefes => Set<Jefe>();
     public DbSet<Empleado> Empleados => Set<Empleado>();
     public DbSet<Pilar> Pilares => Set<Pilar>();
@@ -64,6 +65,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(e => e.Jefe)
             .WithMany()
             .HasForeignKey(e => e.JefeId);
+
+        modelBuilder.Entity<Empleado>()
+            .HasOne(e => e.Puesto)
+            .WithMany()
+            .HasForeignKey(e => e.PuestoId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<Empleado>()
             .HasOne(e => e.Pais)

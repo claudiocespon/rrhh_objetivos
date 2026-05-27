@@ -5,7 +5,15 @@
 @inject NotificationService NotificationService
 @inject ConfiguracionService ConfigService
 
-<div>
+<div style="position: relative; min-height: 300px;">
+    @if (isUploading)
+    {
+        <div style="position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px; z-index: 1000; background-color: rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="width: 200px; margin-bottom: 1rem;" />
+            <RadzenText TextStyle="TextStyle.H6">Subiendo archivo...</RadzenText>
+        </div>
+    }
+
     @if (objetivo == null)
     {
         <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
@@ -51,7 +59,7 @@
                                        Placeholder="Rendí mas o menos..." />
                         <div style="position: absolute; bottom: 10px; right: 10px;">
                             <RadzenUpload Url="api/upload/autoevaluacion" Multiple="true" Accept="*/*" 
-                                          Complete=@OnUploadComplete Error=@OnUploadError 
+                                          Progress=@OnUploadProgress Complete=@OnUploadComplete Error=@OnUploadError 
                                           Style="display: inline-block;">
                                 <ChildContent>
                                     <RadzenButton Text="AGREGAR ARCHIVOS" Variant="Variant.Text" Size="ButtonSize.Small" Icon="attach_file" />
@@ -96,6 +104,7 @@
     Autoevaluacion autoevaluacion = new();
     List<string> adjuntos = new();
     bool guardando = false;
+    bool isUploading = false;
 
     // Escala selector backing fields
     int? scoreEscalaId;
@@ -154,8 +163,18 @@
         }
     }
 
+    void OnUploadProgress(UploadProgressArgs args)
+    {
+        if (!isUploading)
+        {
+            isUploading = true;
+            StateHasChanged();
+        }
+    }
+
     void OnUploadComplete(UploadCompleteEventArgs args)
     {
+        isUploading = false;
         var response = string.IsNullOrEmpty(args.RawResponse) ? null : JsonSerializer.Deserialize<UploadResponse>(args.RawResponse);
         if (response?.urls != null)
         {
@@ -166,6 +185,7 @@
 
     void OnUploadError(UploadErrorEventArgs args)
     {
+        isUploading = false;
         NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error al subir archivo: {args.Message}");
     }
 

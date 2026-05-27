@@ -20,7 +20,7 @@ namespace Objetivos.Web.Services
         public byte[] ExportObjetivosToCsv(List<Objetivo> objetivos)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("ID;Empleado;Email;Area;Pilar;Objetivo;Progreso;Estado;Deadline;Anio;SoftSkill1;SoftSkill2");
+            sb.AppendLine("ID;Empleado;Email;Area;Pilar;Objetivo;Progreso;Estado;Deadline;Año;Competencia1;Competencia2");
 
             foreach (var o in objetivos)
             {
@@ -69,7 +69,7 @@ namespace Objetivos.Web.Services
             sb.AppendLine($"Reporte de Empleado — {empleado.Apellido}, {empleado.Nombre} — Año {anio}");
             sb.AppendLine($"Área: {empleado.Area?.Nombre}");
             sb.AppendLine();
-            sb.AppendLine("Pilar;Objetivo;Progreso;Estado;Feedback Score;Resultado Final;Puntaje Ponderado;Semáforo;SoftSkill1;SoftSkill2");
+            sb.AppendLine("Pilar;Objetivo;Progreso;Estado;Feedback Score;Resultado Final;Puntaje Ponderado;Semáforo;Competencia1;Competencia2");
 
             foreach (var o in objetivos)
             {

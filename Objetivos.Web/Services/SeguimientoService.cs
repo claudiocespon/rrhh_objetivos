@@ -41,7 +41,10 @@ public class SeguimientoService
     public async Task<EmpleadoConPromedio?> GetEmpleadoPersonalAsync(string email, int anio)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var emp = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email.ToLower() && e.Activo);
+        var emp = await db.Empleados
+            .Include(e => e.Area)
+            .Include(e => e.Puesto)
+            .FirstOrDefaultAsync(e => e.Email.ToLower() == email.ToLower() && e.Activo);
         if (emp == null) return null;
 
         var objetivos = await db.Objetivos
@@ -64,7 +67,10 @@ public class SeguimientoService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
 
-        IQueryable<Empleado> query = db.Empleados.Where(e => e.Activo);
+        IQueryable<Empleado> query = db.Empleados
+            .Include(e => e.Area)
+            .Include(e => e.Puesto)
+            .Where(e => e.Activo);
         query = _dataScope.AplicarScope(query, user);
 
         var empleados = await query.ToListAsync();
@@ -106,6 +112,7 @@ public class SeguimientoService
 
         var empleado = await db.Empleados
             .Include(e => e.Area)
+            .Include(e => e.Puesto)
             .Include(e => e.Objetivos.Where(o => o.Anio == anio))
                 .ThenInclude(o => o.Pilar)
             .Include(e => e.Objetivos.Where(o => o.Anio == anio))

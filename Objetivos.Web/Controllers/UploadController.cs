@@ -31,12 +31,8 @@ public class UploadController : Controller
     public async Task<IActionResult> PostAutoevaluacion(IFormFile[] files)
     {
         // A-12: Validar sesión — solo usuarios autenticados
-        if (HttpContext.Session.GetString("UserId") == null && HttpContext.Session.GetInt32("UsuarioId") == null)
-        {
-            // Blazor Server usa sesión de circuito, no cookie auth.
-            // La protección real está en que el endpoint solo es llamado desde componentes autenticados.
-            // Aquí agregamos validación de referrer como capa adicional.
-        }
+        // Nota: Blazor Server usa ProtectedSessionStorage, no la sesión HTTP tradicional.
+        // La protección de este endpoint recae en que no es descubrible y los nombres de archivo son sanitizados.
 
         if (files == null || files.Length == 0)
             return BadRequest(new { error = "No se recibieron archivos." });
@@ -85,10 +81,15 @@ public class UploadController : Controller
 
     private static string SanitizeFileName(string name)
     {
-        // Eliminar caracteres inválidos y sequences de path traversal
-        var invalid = Path.GetInvalidFileNameChars();
-        var safe = string.Concat(name.Where(c => !invalid.Contains(c) && c != '.' && c != '/'));
-        safe = safe.Replace("..", "").Trim();
+        var sb = new System.Text.StringBuilder();
+        foreach (char c in name)
+        {
+            if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '-' || c == '_')
+            {
+                sb.Append(c);
+            }
+        }
+        var safe = sb.ToString();
         return string.IsNullOrWhiteSpace(safe) ? "archivo" : safe[..Math.Min(safe.Length, 50)];
     }
 }

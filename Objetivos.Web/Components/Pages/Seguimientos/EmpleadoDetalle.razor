@@ -24,7 +24,7 @@ else
                     </div>
                     <RadzenStack Gap="0" AlignItems="AlignItems.Center">
                         <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">@empleado.Nombre @empleado.Apellido</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">@empleado.Puesto</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">@(empleado.Puesto?.Nombre ?? "Sin Puesto")</RadzenText>
                     </RadzenStack>
                     <RadzenBadge Text="@empleado.Area.Nombre" BadgeStyle="BadgeStyle.Secondary" />
                 </RadzenStack>

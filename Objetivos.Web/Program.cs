@@ -38,6 +38,7 @@ builder.Services.AddScoped<RevisionService>();
 builder.Services.AddScoped<BitacoraService>();
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<AdminPuestoService>();
 builder.Services.AddScoped<ExportService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<CursoService>();

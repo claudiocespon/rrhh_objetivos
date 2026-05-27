@@ -103,7 +103,11 @@ else
                                 </RadzenStack>
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Empleado" Property="Puesto" Title="Puesto" />
+                        <RadzenDataGridColumn TItem="Empleado" Property="Puesto.Nombre" Title="Puesto">
+                            <Template Context="emp">
+                                @(emp.Puesto?.Nombre ?? "-")
+                            </Template>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Empleado" Title="Rendimiento General" Width="200px">
                             <Template Context="emp">
                                 <SemaforoIndicador Promedio="@GetPromedio(emp.Id)" />

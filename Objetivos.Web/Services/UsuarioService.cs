@@ -13,7 +13,8 @@ namespace Objetivos.Web.Services
         public string NombreCompleto => string.IsNullOrWhiteSpace(Apellido) ? Nombre : $"{Apellido}, {Nombre}";
         public string Email { get; set; } = "";
         public string Legajo { get; set; } = "";
-        public string Sector { get; set; } = "";
+        public int? PuestoId { get; set; }
+        public string PuestoNombre { get; set; } = "";
         public string Area { get; set; } = "";
         public int AreaId { get; set; }
         public string Rol { get; set; } = "";
@@ -63,6 +64,7 @@ namespace Objetivos.Web.Services
                 .Include(e => e.Area)
                 .Include(e => e.Pais)
                 .Include(e => e.Jefe)
+                .Include(e => e.Puesto)
                 .Select(e => new UsuarioDto
                 {
                     Id = e.Id,
@@ -71,7 +73,8 @@ namespace Objetivos.Web.Services
                     Apellido = e.Apellido,
                     Email = e.Email,
                     Legajo = e.Legajo,
-                    Sector = e.Puesto,
+                    PuestoId = e.PuestoId,
+                    PuestoNombre = e.Puesto != null ? e.Puesto.Nombre : "Sin Puesto",
                     Area = e.Area.Nombre,
                     AreaId = e.AreaId,
                     Rol = "COLABORADOR",
@@ -116,7 +119,7 @@ namespace Objetivos.Web.Services
                 emp.Apellido = dto.Apellido;
                 emp.Email = dto.Email;
                 emp.Legajo = dto.Legajo;
-                emp.Puesto = dto.Sector;
+                emp.PuestoId = dto.PuestoId;
                 emp.AreaId = dto.AreaId;
                 emp.PaisId = dto.PaisId;
                 emp.JefeId = dto.JefeId ?? emp.JefeId;
@@ -166,7 +169,7 @@ namespace Objetivos.Web.Services
                     Apellido = dto.Apellido,
                     Email = dto.Email,
                     Legajo = dto.Legajo,
-                    Puesto = dto.Sector,
+                    PuestoId = dto.PuestoId,
                     AreaId = dto.AreaId,
                     PaisId = dto.PaisId,
                     JefeId = dto.JefeId ?? 0, // Should be validated in UI

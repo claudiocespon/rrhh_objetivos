@@ -71,8 +71,8 @@
 
         <RadzenRow>
             <RadzenColumn Size="6">
-                <RadzenFormField Text="Sector / Puesto" Style="width: 100%;">
-                    <RadzenTextBox @bind-Value="Usuario.Sector" Style="width: 100%;" />
+                <RadzenFormField Text="Puesto" Style="width: 100%;">
+                    <RadzenDropDown TValue="int?" Data="@puestos" TextProperty="Nombre" ValueProperty="Id" @bind-Value="Usuario.PuestoId" Name="Puesto" Style="width: 100%;" AllowClear="true" />
                 </RadzenFormField>
             </RadzenColumn>
             <RadzenColumn Size="6">
@@ -113,6 +113,7 @@
     [Parameter] public bool IsEdit { get; set; }
     
     List<Area> areas = new();
+    List<Puesto> puestos = new();
     List<Pais> paises = new();
     List<string> roles = new() { "JEFE", "GERENTE", "DIRECTOR", "DIRECTOR_GENERAL", "RRHH" };
     List<JefeDto> jefes = new();
@@ -121,6 +122,7 @@
     {
         using var db = await DbFactory.CreateDbContextAsync();
         areas = await db.Areas.OrderBy(a => a.Nombre).ToListAsync();
+        puestos = await db.Puestos.Where(p => p.Activo).OrderBy(p => p.Nombre).ToListAsync();
         paises = await db.Paises.OrderBy(p => p.Nombre).ToListAsync();
         jefes = await db.Jefes.Select(j => new JefeDto { Id = j.Id, NombreCompleto = j.Apellido + ", " + j.Nombre }).OrderBy(j => j.NombreCompleto).ToListAsync();
         

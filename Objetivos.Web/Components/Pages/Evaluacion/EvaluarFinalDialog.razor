@@ -3,7 +3,7 @@
 @inject DialogService DialogService
 @inject ConfiguracionService ConfigService
 
-<RadzenTemplateForm TItem="FinalEvaluationModel" Data="@model" Submit="@OnSubmit">
+<div>
     <RadzenStack Gap="1.5rem">
         @if (objetivo != null)
         {
@@ -40,7 +40,6 @@
                 @if (resultadoFinalManual)
                 {
                     <EscalaSelector @bind-SelectedId="@model.EscalaValoracionId" />
-                    <RadzenRequiredValidator Component="ResultadoEscala" Text="Debe seleccionar una valoración final" Style="position: absolute" />
                 }
                 else
                 {
@@ -51,9 +50,8 @@
 
         <RadzenRow>
             <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2">Comentario de Cierre (Jefe)</RadzenText>
-                <RadzenTextArea @bind-Value="@model.Comentario" Style="width: 100%;" Rows="4" Name="Comentario" />
-                <RadzenRequiredValidator Component="Comentario" Text="El comentario de cierre es obligatorio" Style="position: absolute" />
+                <RadzenText TextStyle="TextStyle.Subtitle2">Comentario de Cierre (Jefe) *</RadzenText>
+                <RadzenTextArea @bind-Value="@model.Comentario" Style="width: 100%;" Rows="4" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -63,11 +61,11 @@
         }
 
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
-            <RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" Disabled="@isSubmitting" />
-            <RadzenButton ButtonType="ButtonType.Submit" Text="Completar Evaluación Final" ButtonStyle="ButtonStyle.Success" Disabled="@isSubmitting" IsBusy="@isSubmitting" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@(() => DialogService.Close(false))" Disabled="@isSubmitting" />
+            <RadzenButton Text="Completar Evaluación Final" ButtonStyle="ButtonStyle.Success" Click="@OnSubmit" Disabled="@isSubmitting" IsBusy="@isSubmitting" BusyText="Guardando..." />
         </RadzenStack>
     </RadzenStack>
-</RadzenTemplateForm>
+</div>
 
 @code {
     [Parameter] public int ObjetivoId { get; set; }
@@ -97,28 +95,54 @@
     async Task OnSubmit()
     {
         if (isSubmitting) return;
-        isSubmitting = true;
         errorMsg = null;
-        
-        var success = await RevisionService.CompletarEvaluacionFinalAsync(
-            ObjetivoId,
-            model.Comentario,
-            null,
-            model.SoftSkill1EscalaValoracionId,
-            model.SoftSkill1Comentario,
-            model.SoftSkill2EscalaValoracionId,
-            model.SoftSkill2Comentario,
-            resultadoFinalManual ? model.EscalaValoracionId : null
-        );
 
-        if (success)
+        // Manual validation
+        if (resultadoFinalManual && !model.EscalaValoracionId.HasValue)
         {
-            DialogService.Close(true);
+            errorMsg = "Debe seleccionar una valoración final.";
+            return;
         }
-        else
+
+        if (string.IsNullOrWhiteSpace(model.Comentario) || model.Comentario.Trim().Length < 10)
         {
-            errorMsg = "No se pudo completar la evaluación final. Verifique que todas las revisiones cuatrimestrales estén cerradas y que el deadline haya pasado.";
+            errorMsg = "El comentario de cierre es obligatorio y debe tener al menos 10 caracteres.";
+            return;
+        }
+
+        isSubmitting = true;
+        StateHasChanged();
+        
+        try
+        {
+            var success = await RevisionService.CompletarEvaluacionFinalAsync(
+                ObjetivoId,
+                model.Comentario,
+                null,
+                model.SoftSkill1EscalaValoracionId,
+                model.SoftSkill1Comentario,
+                model.SoftSkill2EscalaValoracionId,
+                model.SoftSkill2Comentario,
+                resultadoFinalManual ? model.EscalaValoracionId : null
+            );
+
+            if (success)
+            {
+                DialogService.Close(true);
+            }
+            else
+            {
+                errorMsg = "No se pudo completar la evaluación final. Verifique que todas las revisiones cuatrimestrales estén cerradas y que el deadline haya pasado.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMsg = $"Ocurrió un error al guardar: {ex.Message}";
+        }
+        finally
+        {
             isSubmitting = false;
+            StateHasChanged();
         }
     }
 

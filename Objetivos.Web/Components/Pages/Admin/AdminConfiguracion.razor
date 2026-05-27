@@ -5,6 +5,7 @@
 @inject AdminPilarService AdminPilarService
 @inject AdminSoftSkillService AdminSoftSkillService
 @inject AdminAreaService AdminAreaService
+@inject AdminPuestoService AdminPuestoService
 @inject AdminEscalaValoracionService AdminEscalaService
 @inject AdminEstadoService AdminEstadoService
 @inject AdminConfiguracionPlatformaService AdminConfigService
@@ -27,7 +28,7 @@
                 <RadzenTabsItem Text="Pilares Estratégicos">
                     @RenderPilares()
                 </RadzenTabsItem>
-                <RadzenTabsItem Text="Soft Skills">
+                <RadzenTabsItem Text="Competencias">
                     @RenderSoftSkills()
                 </RadzenTabsItem>
                 <RadzenTabsItem Text="Escala de Valoración">
@@ -42,6 +43,9 @@
                 <RadzenTabsItem Text="Áreas">
                     @RenderAreas()
                 </RadzenTabsItem>
+                <RadzenTabsItem Text="Puestos">
+                    @RenderPuestos()
+                </RadzenTabsItem>
                 <RadzenTabsItem Text="Configuraciones">
                     @RenderConfiguraciones()
                 </RadzenTabsItem>
@@ -54,6 +58,7 @@
     List<Pilar> pilares = new();
     List<SoftSkill> softSkills = new();
     List<Area> areas = new();
+    List<Puesto> puestos = new();
     List<EscalaValoracion> escalas = new();
     List<EstadoObjetivoConfig> estadosObjetivo = new();
     List<EstadoEvaluacionConfig> estadosEvaluacion = new();
@@ -77,6 +82,7 @@
         pilares = await AdminPilarService.ObtenerTodosAsync();
         softSkills = await AdminSoftSkillService.ObtenerTodosAsync();
         areas = await AdminAreaService.ObtenerTodosAsync();
+        puestos = await AdminPuestoService.GetAllPuestosAsync();
         escalas = await AdminEscalaService.ObtenerTodosAsync();
         estadosObjetivo = await AdminEstadoService.ObtenerEstadosObjetivoAsync();
         estadosEvaluacion = await AdminEstadoService.ObtenerEstadosEvaluacionAsync();
@@ -127,7 +133,7 @@
     private RenderFragment RenderSoftSkills() => __builder =>
     {
         <div class="pt-3">
-            <RadzenButton Icon="add" Text="Agregar Soft Skill" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarSoftSkill())" Style="margin-bottom: 1rem;" />
+            <RadzenButton Icon="add" Text="Agregar Competencia" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarSoftSkill())" Style="margin-bottom: 1rem;" />
             <RadzenDataGrid Data="@softSkills" TItem="SoftSkill" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
                     <RadzenDataGridColumn TItem="SoftSkill" Property="Nombre" Title="Nombre" />
@@ -254,6 +260,30 @@
         </div>
     };
 
+    private RenderFragment RenderPuestos() => __builder =>
+    {
+        <div class="pt-3">
+            <RadzenButton Icon="add" Text="Agregar Puesto" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OnAgregarPuesto())" Style="margin-bottom: 1rem;" />
+            <RadzenDataGrid Data="@puestos" TItem="Puesto" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Puesto" Property="Nombre" Title="Nombre" />
+                    <RadzenDataGridColumn TItem="Puesto" Property="Descripcion" Title="Descripción" Width="250px" />
+                    <RadzenDataGridColumn TItem="Puesto" Title="Activo" Width="80px">
+                        <Template Context="p">
+                            <RadzenCheckBox @bind-Value="@p.Activo" Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Puesto" Filterable="false" Sortable="false" Width="150px">
+                        <Template Context="p">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OnEditarPuesto(p))" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@(() => OnEliminarPuesto(p.Id))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    };
+
     private RenderFragment RenderConfiguraciones() => __builder =>
     {
         <div class="pt-3">
@@ -312,20 +342,20 @@
 
     async Task OnAgregarSoftSkill()
     {
-        var result = await DialogService.OpenAsync<Dialogs.EditarSoftSkillDialog>("Agregar Soft Skill",
+        var result = await DialogService.OpenAsync<Dialogs.EditarSoftSkillDialog>("Agregar Competencia",
             new Dictionary<string, object?> { { "SoftSkill", new SoftSkill() } },
             new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
 
         if (result == true)
         {
             await LoadAllData();
-            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Soft Skill creado correctamente");
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Competencia creada correctamente");
         }
     }
 
     async Task OnEditarSoftSkill(SoftSkill s)
     {
-        var result = await DialogService.OpenAsync<Dialogs.EditarSoftSkillDialog>("Editar Soft Skill",
+        var result = await DialogService.OpenAsync<Dialogs.EditarSoftSkillDialog>("Editar Competencia",
             new Dictionary<string, object?> { { "SoftSkill", s } },
             new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
 
@@ -337,14 +367,14 @@
 
     async Task OnEliminarSoftSkill(int id)
     {
-        var confirm = await DialogService.Confirm("¿Está seguro de que desea eliminar este Soft Skill?", "Confirmar eliminación",
+        var confirm = await DialogService.Confirm("¿Está seguro de que desea eliminar esta competencia?", "Confirmar eliminación",
             new ConfirmOptions { OkButtonText = "Sí", CancelButtonText = "No" });
 
         if (confirm == true)
         {
             await AdminSoftSkillService.EliminarAsync(id);
             await LoadAllData();
-            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Soft Skill eliminado correctamente");
+            NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Competencia eliminada correctamente");
         }
     }
 
@@ -445,6 +475,50 @@
             await AdminAreaService.EliminarAsync(id);
             await LoadAllData();
             NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Área eliminada correctamente");
+        }
+    }
+
+    async Task OnAgregarPuesto()
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarPuestoDialog>("Agregar Puesto",
+            new Dictionary<string, object?> { { "Puesto", new Puesto() } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+        }
+    }
+
+    async Task OnEditarPuesto(Puesto p)
+    {
+        var result = await DialogService.OpenAsync<Dialogs.EditarPuestoDialog>("Editar Puesto",
+            new Dictionary<string, object?> { { "Puesto", p } },
+            new DialogOptions { Width = "600px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            await LoadAllData();
+        }
+    }
+
+    async Task OnEliminarPuesto(int id)
+    {
+        var confirm = await DialogService.Confirm("¿Está seguro de que desea eliminar este puesto?", "Confirmar eliminación",
+            new ConfirmOptions { OkButtonText = "Sí", CancelButtonText = "No" });
+
+        if (confirm == true)
+        {
+            var success = await AdminPuestoService.DeletePuestoAsync(id);
+            if (success)
+            {
+                await LoadAllData();
+                NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Puesto eliminado correctamente");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "No se puede eliminar el puesto porque hay usuarios asignados a él.");
+            }
         }
     }
 

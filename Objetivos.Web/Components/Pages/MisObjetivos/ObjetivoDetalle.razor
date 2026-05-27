@@ -50,11 +50,11 @@ else
 
                 <div class="row mt-3">
                     <div class="col-md-6">
-                        <RadzenText TextStyle="TextStyle.Caption">Soft Skill 1</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption">Competencia 1</RadzenText>
                         <RadzenText TextStyle="TextStyle.Body2">@objetivo.SoftSkill1.Nombre</RadzenText>
                     </div>
                     <div class="col-md-6">
-                        <RadzenText TextStyle="TextStyle.Caption">Soft Skill 2</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption">Competencia 2</RadzenText>
                         <RadzenText TextStyle="TextStyle.Body2">@objetivo.SoftSkill2.Nombre</RadzenText>
                     </div>
                 </div>
@@ -71,23 +71,25 @@ else
                     <RadzenStack Gap="1rem">
                         @foreach (var rev in objetivo.Revisiones.Where(r => r.Completada))
                         {
-                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="false">
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat" ShowIcon="false">
                                 <RadzenStack>
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: bold;">Revisión: @rev.Periodo.ToString().Replace("_", " ")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: bold;">Revisión: @rev.Periodo.ToString().Replace("_", " ").Replace("ANIO", "AÑO")</RadzenText>
                                         <RadzenBadge Text="@(rev.EscalaValoracion?.Etiqueta ?? "Sin valoración")" BadgeStyle="BadgeStyle.Secondary" Variant="Variant.Flat" />
                                     </RadzenStack>
                                     
                                     <RadzenRow>
-                                        <RadzenColumn Size="6">
+                                        <RadzenColumn Size="12">
                                             <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill1.Nombre</RadzenText>
                                             <RadzenBadge Text="@(rev.SoftSkill1EscalaValoracion?.Etiqueta ?? "-")" IsPill="true" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" />
                                             @if (!string.IsNullOrEmpty(rev.SoftSkill1Comentario))
                                             {
-                                                <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@rev.SoftSkill1Comentario"</RadzenText>
+                                                <div style="margin-top: 0.25rem;">
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@rev.SoftSkill1Comentario"</RadzenText>
+                                                </div>
                                             }
                                         </RadzenColumn>
-                                        <RadzenColumn Size="6">
+                                        <RadzenColumn Size="12">
                                             <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill2.Nombre</RadzenText>
                                             <RadzenBadge Text="@(rev.SoftSkill2EscalaValoracion?.Etiqueta ?? "-")" IsPill="true" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" />
                                             @if (!string.IsNullOrEmpty(rev.SoftSkill2Comentario))
@@ -105,25 +107,25 @@ else
 
                         @if (objetivo.EvaluacionFinal != null)
                         {
-                            <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" ShowIcon="false">
+                            <RadzenAlert AlertStyle="AlertStyle.Success" Shade="Shade.Lighter" Variant="Variant.Flat" ShowIcon="false">
                                 <RadzenStack>
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                                         <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: bold;">EVALUACIÓN FINAL</RadzenText>
-                                        <RadzenBadge Text="@objetivo.EvaluacionFinal.ResultadoFinal.ToString()" BadgeStyle="BadgeStyle.Success" />
+                                        <RadzenBadge Text="@(objetivo.EvaluacionFinal.EscalaValoracionFinal?.Etiqueta ?? "Pendiente")" BadgeStyle="BadgeStyle.Success" />
                                     </RadzenStack>
 
-                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success)">Valoración Final: @(objetivo.EvaluacionFinal.EscalaValoracionFinal?.Etiqueta ?? "Pendiente")</RadzenText>
-
                                     <RadzenRow>
-                                        <RadzenColumn Size="6">
+                                        <RadzenColumn Size="12">
                                             <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill1.Nombre (Final)</RadzenText>
                                             <RadzenBadge Text="@(objetivo.EvaluacionFinal.SoftSkill1EscalaValoracion?.Etiqueta ?? "-")" IsPill="true" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" />
                                             @if (!string.IsNullOrEmpty(objetivo.EvaluacionFinal.SoftSkill1Comentario))
                                             {
-                                                <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@objetivo.EvaluacionFinal.SoftSkill1Comentario"</RadzenText>
+                                                <div style="margin-top: 0.25rem;">
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic;">"@objetivo.EvaluacionFinal.SoftSkill1Comentario"</RadzenText>
+                                                </div>
                                             }
                                         </RadzenColumn>
-                                        <RadzenColumn Size="6">
+                                        <RadzenColumn Size="12">
                                             <RadzenText TextStyle="TextStyle.Caption">@objetivo.SoftSkill2.Nombre (Final)</RadzenText>
                                             <RadzenBadge Text="@(objetivo.EvaluacionFinal.SoftSkill2EscalaValoracion?.Etiqueta ?? "-")" IsPill="true" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" />
                                             @if (!string.IsNullOrEmpty(objetivo.EvaluacionFinal.SoftSkill2Comentario))

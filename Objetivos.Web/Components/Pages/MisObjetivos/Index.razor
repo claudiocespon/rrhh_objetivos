@@ -160,7 +160,7 @@ else
                         Anio = g.Key.Anio,
                         Cantidad = objetivosEmpleado.Count,
                         Completados = objetivosEmpleado.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
-                        ProgresoPromedio = sumaPesos > 0 ? (int)Math.Round(objetivosEmpleado.Sum(o => (decimal)o.Progreso * o.PorcentajePilar) / sumaPesos) : 0,
+                        ProgresoPromedio = sumaPesos > 0 ? (int)Math.Round(objetivosEmpleado.Sum(o => (decimal)(o.Estado == EstadoObjetivo.COMPLETADO ? 100 : o.Progreso) * o.PorcentajePilar) / sumaPesos) : 0,
                         Objetivos = objetivosEmpleado
                     };
                 })
@@ -193,7 +193,7 @@ else
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Progreso" Width="100px">
                                     <Template Context="obj">
-                                        <RadzenProgressBar Value="@obj.Progreso" ShowValue="true" Max="100" />
+                                        <RadzenProgressBar Value="@(obj.Estado == EstadoObjetivo.COMPLETADO ? 100 : obj.Progreso)" ShowValue="true" Max="100" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
@@ -268,7 +268,7 @@ else
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Title="Progreso" Width="100px">
                             <Template Context="obj">
-                                <RadzenProgressBar Value="@obj.Progreso" ShowValue="true" Max="100" />
+                                <RadzenProgressBar Value="@(obj.Estado == EstadoObjetivo.COMPLETADO ? 100 : obj.Progreso)" ShowValue="true" Max="100" />
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">

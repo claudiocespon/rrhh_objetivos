@@ -16,6 +16,15 @@ public class Area {
     public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
 }
 
+public class Puesto {
+    public int Id { get; set; }
+    public string Nombre { get; set; } = "";
+    public string Descripcion { get; set; } = "";
+    public bool Activo { get; set; } = true;
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+    public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
+}
+
 public class Jefe {
     public int Id { get; set; }
     public string Nombre { get; set; } = "";
@@ -45,7 +54,8 @@ public class Empleado {
     public string Legajo { get; set; } = "";
     public string PasswordHash { get; set; } = "";
     public bool DebeCambiarPassword { get; set; } = true;
-    public string Puesto { get; set; } = "";
+    public int? PuestoId { get; set; }
+    public Puesto? Puesto { get; set; }
     public int AreaId { get; set; }
     public Area Area { get; set; } = null!;
     public int JefeId { get; set; }

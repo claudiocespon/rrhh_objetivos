@@ -17,6 +17,7 @@ public static class SeedData
         // Declarar fuera del if para que sean accesibles más abajo
         var rows = new List<NominaRow>();
         var areaMap = new Dictionary<string, Area>(StringComparer.OrdinalIgnoreCase);
+        var puestoMap = new Dictionary<string, Puesto>(StringComparer.OrdinalIgnoreCase);
         var superUserEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // SOLO si es BD NUEVA: cargar nómina y áreas
@@ -84,7 +85,23 @@ public static class SeedData
             }
             db.Areas.AddRange(areaMap.Values);
 
-            // Guardar nómina y áreas
+            // ─── Puestos (from Sector, deduplicated) ───
+            var puestoNames = rows.Select(r => r.Sector)
+                .Where(d => !string.IsNullOrWhiteSpace(d) && !d.Equals("No aplica", StringComparison.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x)
+                .ToList();
+
+            puestoNames.Insert(0, "Sin Puesto");
+            int puestoId = 1;
+            foreach (var name in puestoNames)
+            {
+                var puesto = new Puesto { Id = puestoId++, Nombre = name, Descripcion = name };
+                puestoMap[name] = puesto;
+            }
+            db.Puestos.AddRange(puestoMap.Values);
+
+            // Guardar nómina, áreas y puestos
             await db.SaveChangesAsync();
         }
 
@@ -370,7 +387,7 @@ public static class SeedData
                 Legajo = row.Legajo,
                 PasswordHash = AuthService.HashPassword(row.Legajo),
                 DebeCambiarPassword = true,
-                Puesto = row.Sector,
+                PuestoId = puestoMap.ContainsKey(row.Sector) ? puestoMap[row.Sector].Id : puestoMap["Sin Puesto"].Id,
                 AreaId = areaMap.ContainsKey(areaName) ? areaMap[areaName].Id : areaMap["Sin Asignar"].Id,
                 JefeId = jefeId,
                 PaisId = paisId,

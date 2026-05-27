@@ -4,6 +4,7 @@
 @inject ICurrentUserService CurrentUser
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
 
 <RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Autoevaluaciones</RadzenText>
 
@@ -206,7 +207,7 @@ else
                                         <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold; margin-top: 0.5rem; margin-bottom: 0.2rem;">Archivos:</RadzenText>
                                         @foreach (var adj in adjuntos)
                                         {
-                                            <RadzenLink Path="@adj" Target="_blank" Style="font-size: 0.75rem; display: block;">
+                                            <RadzenLink Path="@(NavigationManager.BaseUri + adj.TrimStart('/'))" Target="_blank" Style="font-size: 0.75rem; display: block;">
                                                 <RadzenIcon Icon="description" Style="font-size: 0.8rem; vertical-align: middle;" /> @Path.GetFileName(adj)
                                             </RadzenLink>
                                         }

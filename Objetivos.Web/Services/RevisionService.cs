@@ -211,6 +211,7 @@ public class RevisionService
         db.EvaluacionesFinales.Add(evalFinal);
 
         objetivo.Estado = EstadoObjetivo.COMPLETADO;
+        objetivo.Progreso = 100;
 
         db.AuditoriaLogs.Add(new AuditoriaLog
         {
