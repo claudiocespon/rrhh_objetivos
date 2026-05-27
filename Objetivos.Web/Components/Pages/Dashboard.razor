@@ -2,6 +2,20 @@
 @inject DashboardService DashboardService
 @inject CalendarioService CalendarioService
 @inject ICurrentUserService CurrentUser
+@inject NavigationManager NavigationManager
+
+<style>
+    .kpi-card {
+        flex: 1;
+        min-width: 200px;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+</style>
 
 <RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 1.5rem;">Dashboard</RadzenText>
 
@@ -16,21 +30,21 @@ else
         <RadzenTabs>
             <Tabs>
                 <RadzenTabsItem Text="Mi Equipo / Área">
-                    @RenderDashboard(roleData.Equipo, "Estado de Objetivos del Equipo")
+                    @RenderDashboard(roleData.Equipo, "Estado de Objetivos del Equipo", "seguimientos", "evaluacion")
                 </RadzenTabsItem>
                 <RadzenTabsItem Text="Mis Objetivos">
-                    @RenderDashboard(roleData.Personal, "Mi Estado Personal")
+                    @RenderDashboard(roleData.Personal, "Mi Estado Personal", "objetivos", "autoevaluacion")
                 </RadzenTabsItem>
             </Tabs>
         </RadzenTabs>
     }
     else if (roleData.Equipo != null)
     {
-        @RenderDashboard(roleData.Equipo, "Estado de Objetivos del Equipo")
+        @RenderDashboard(roleData.Equipo, "Estado de Objetivos del Equipo", "seguimientos", "evaluacion")
     }
     else if (roleData.Personal != null)
     {
-        @RenderDashboard(roleData.Personal, "Mi Estado Personal")
+        @RenderDashboard(roleData.Personal, "Mi Estado Personal", "objetivos", "autoevaluacion")
     }
     else
     {
@@ -48,7 +62,7 @@ else
         proximosEventos = await CalendarioService.GetProximosEventosAsync(CurrentUser);
     }
 
-    private RenderFragment RenderDashboard(DashboardData data, string title) => __builder =>
+    private RenderFragment RenderDashboard(DashboardData data, string title, string pathGeneral, string pathRevision) => __builder =>
     {
         // M-01: Mostrar distribución real de estados — "Vencen Pronto" es un subconjunto
         // de ACTIVO, no un estado; se muestra en su KPI card separado, no en el donut.
@@ -60,35 +74,35 @@ else
         }.Where(d => d.Cantidad > 0).ToList();
 
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" Style="margin-bottom: 2rem; flex-wrap: wrap;">
-            <RadzenCard Style="background-color: var(--rz-primary); color: white; flex: 1; min-width: 200px;">
+            <RadzenCard class="kpi-card" Style="background-color: var(--rz-primary); color: white;" @onclick="@(() => NavigationManager.NavigateTo(pathGeneral))">
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="assignment" Style="font-size: 2.5rem; opacity: 0.8;" />
                     <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0; text-align: center;">@data.TotalObjetivos</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0; text-align: center;">Total Objetivos</RadzenText>
                 </RadzenStack>
             </RadzenCard>
-            <RadzenCard Style="background-color: var(--rz-info); color: white; flex: 1; min-width: 200px;">
+            <RadzenCard class="kpi-card" Style="background-color: var(--rz-info); color: white;" @onclick="@(() => NavigationManager.NavigateTo(pathGeneral))">
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="trending_up" Style="font-size: 2.5rem; opacity: 0.8;" />
                     <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0; text-align: center;">@data.EnCurso</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0; text-align: center;">En Curso</RadzenText>
                 </RadzenStack>
             </RadzenCard>
-            <RadzenCard Style="background-color: var(--rz-warning); color: white; flex: 1; min-width: 200px;">
+            <RadzenCard class="kpi-card" Style="background-color: var(--rz-warning); color: white;" @onclick="@(() => NavigationManager.NavigateTo(pathGeneral))">
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; opacity: 0.8;" />
                     <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0; text-align: center;">@data.VencenPronto</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0; text-align: center;">Vencen Pronto</RadzenText>
                 </RadzenStack>
             </RadzenCard>
-            <RadzenCard Style="background-color: var(--rz-danger); color: white; flex: 1; min-width: 200px;">
+            <RadzenCard class="kpi-card" Style="background-color: var(--rz-danger); color: white;" @onclick="@(() => NavigationManager.NavigateTo(pathRevision))">
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="rule" Style="font-size: 2.5rem; opacity: 0.8;" />
                     <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0; text-align: center;">@data.PendientesRevision</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="color: white; opacity: 0.8; margin: 0; text-align: center;">Pendientes Revisión</RadzenText>
                 </RadzenStack>
             </RadzenCard>
-            <RadzenCard Style="background-color: var(--rz-success); color: white; flex: 1; min-width: 200px;">
+            <RadzenCard class="kpi-card" Style="background-color: var(--rz-success); color: white;" @onclick="@(() => NavigationManager.NavigateTo(pathGeneral))">
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="verified" Style="font-size: 2.5rem; opacity: 0.8;" />
                     <RadzenText TextStyle="TextStyle.H5" Style="color: white; margin: 0; text-align: center;">@data.EvaluacionesFinalizadas</RadzenText>
