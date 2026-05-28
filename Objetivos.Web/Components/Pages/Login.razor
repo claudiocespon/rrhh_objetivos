@@ -4,10 +4,12 @@
 @inject ICurrentUserService CurrentUser
 @inject NavigationManager Nav
 @inject NotificationService NotificationService
+@inject IJSRuntime JS
 
 <PageTitle>Iniciar Sesión - PQ-Talent</PageTitle>
 
 <div class="login-container">
+    <canvas id="login-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></canvas>
     <div class="login-card">
         <div class="login-header">
             <img src="Pqtalent.png" class="login-logo-img" alt="PQ-Talent Logo" />
@@ -132,48 +134,15 @@
         }
         else if (mostrarRecuperacion)
         {
-            <!-- Password Recovery Form -->
+            <!-- Password Recovery Info -->
             <RadzenStack Gap="1.5rem">
-                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small" Style="background: rgba(0,150,255,0.1); border: 1px solid rgba(0,150,255,0.3); color: #b3e0ff;">
-                    Ingrese su email y se le generará una nueva contraseña provisional.
+                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Medium" Style="background: rgba(0,150,255,0.1); border: 1px solid rgba(0,150,255,0.3); color: #b3e0ff;">
+                    Si olvidó su contraseña, por favor comuníquese con Recursos Humanos (RRHH) enviando un correo para solicitar el restablecimiento manual de la misma.
                 </RadzenAlert>
 
-                <RadzenTemplateForm TItem="RecuperacionModel" Data="@recuperacionModel" Submit="@OnRecuperar">
-                    <RadzenStack Gap="1.5rem">
-                        <div>
-                            <RadzenFormField Variant="Variant.Flat" class="login-input-field">
-                                <Start>
-                                    <RadzenIcon Icon="mail_outline" class="login-input-icon" />
-                                </Start>
-                                <ChildContent>
-                                    <RadzenTextBox @bind-Value="recuperacionModel.Email" Name="RecupEmail" Placeholder="nombre@permaquim.com" class="login-input" />
-                                </ChildContent>
-                            </RadzenFormField>
-                            <RadzenRequiredValidator Component="RecupEmail" Text="Debe ingresar su email" Style="color: #ffb3b3; display: block; font-size: 0.8rem; margin-top: 4px;" />
-                        </div>
-
-                        @if (recuperacionExitosa)
-                        {
-                            <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small" Style="background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); color: #a8e6cf;">
-                                Si el email existe en el sistema, recibirá instrucciones para restablecer su contraseña.
-                            </RadzenAlert>
-                        }
-
-                        @if (!string.IsNullOrEmpty(errorMessage))
-                        {
-                            <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" Size="AlertSize.Small" Style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); color: #ffb3b3;">
-                                @errorMessage
-                            </RadzenAlert>
-                        }
-
-                        <RadzenButton Text="Recuperar Contraseña" ButtonType="ButtonType.Submit" class="login-btn"
-                                      IsBusy="@isLoading" BusyText="Procesando..." />
-
-                        <div style="text-align: center;">
-                            <RadzenLink Text="Volver al inicio de sesión" @onclick="@(() => { mostrarRecuperacion = false; errorMessage = null; recuperacionExitosa = false; })" class="login-forgot-link" />
-                        </div>
-                    </RadzenStack>
-                </RadzenTemplateForm>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <RadzenLink Text="Volver al inicio de sesión" @onclick="@(() => { mostrarRecuperacion = false; errorMessage = null; })" class="login-forgot-link" />
+                </div>
             </RadzenStack>
         }
     </div>
@@ -182,9 +151,7 @@
 @code {
     LoginModel loginModel = new();
     CambioPasswordModel cambioModel = new();
-    RecuperacionModel recuperacionModel = new();
     string? errorMessage;
-    bool recuperacionExitosa;
     bool isLoading;
     bool mostrarCambioPassword;
     bool mostrarRecuperacion;
@@ -196,7 +163,18 @@
 
     class LoginModel { public string Email { get; set; } = ""; public string Password { get; set; } = ""; }
     class CambioPasswordModel { public string NuevaPassword { get; set; } = ""; public string ConfirmarPassword { get; set; } = ""; }
-    class RecuperacionModel { public string Email { get; set; } = ""; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try {
+                await JS.InvokeVoidAsync("initLoginAnimation");
+            } catch {
+                // Ignore JS errors on prerender or if script isn't loaded
+            }
+        }
+    }
 
     async Task OnLogin()
     {
@@ -261,22 +239,5 @@
         finally { isLoading = false; }
     }
 
-    async Task OnRecuperar()
-    {
-        isLoading = true;
-        errorMessage = null;
-        recuperacionExitosa = false;
-        try
-        {
-            var success = await AuthService.RecuperarPasswordAsync(recuperacionModel.Email);
-            if (!success)
-            {
-                // We show success even if email not found to avoid account enumeration
-                recuperacionExitosa = true;
-                return;
-            }
-            recuperacionExitosa = true;
-        }
-        finally { isLoading = false; }
-    }
+    // Recuperación automatica ha sido removida en favor del contacto manual con RRHH.
 }
