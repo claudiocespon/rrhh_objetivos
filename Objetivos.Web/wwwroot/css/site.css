@@ -254,3 +254,47 @@
     right: 0.75rem;
     top: 0.5rem;
 }
+
+/* Custom Notifications Fixes */
+.rz-notification-icon {
+    display: none !important;
+}
+
+.rz-notification-close {
+    font-size: 0 !important; /* Hides the "close" text if it's direct text */
+    text-decoration: none !important;
+}
+
+.rz-notification-close i,
+.rz-notification-close .rzi,
+.rz-notification-close .rz-icon {
+    display: none !important; /* Hides the icon element if "close" text is inside an icon */
+}
+
+.rz-notification-close::after {
+    content: "X" !important;
+    font-size: 1.2rem !important; /* Show "X" */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-style: normal;
+    color: inherit;
+    display: inline-block;
+}
+
+/* Custom Alert Fixes (used in Login) */
+.rz-alert-icon {
+    display: none !important;
+}
+
+.rz-alert button i.rzi,
+.rz-alert button .rz-icon {
+    display: none !important; /* Hides the "close" text */
+}
+
+.rz-alert button::after {
+    content: "X" !important;
+    font-size: 1.2rem !important; /* Show "X" */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-style: normal;
+    color: inherit;
+    display: inline-block;
+}
