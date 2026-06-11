@@ -25,28 +25,7 @@ public class Puesto {
     public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
 }
 
-public class Jefe {
-    public int Id { get; set; }
-    public string Nombre { get; set; } = "";
-    public string Apellido { get; set; } = "";
-    public string Email { get; set; } = "";
-    public string Legajo { get; set; } = "";
-    public string PasswordHash { get; set; } = "";
-    public bool DebeCambiarPassword { get; set; } = true;
-    public int AreaId { get; set; }
-    public Area Area { get; set; } = null!;
-    public int PaisId { get; set; }
-    public Pais Pais { get; set; } = null!;
-    /// <summary>
-    /// JEFE, LIDER, GERENTE, DIRECTOR, DIRECTOR_GENERAL, RRHH
-    /// </summary>
-    public string Rol { get; set; } = "JEFE";
-    public bool Activo { get; set; } = true;
-    public bool EsSuperusuario { get; set; } = false;
-    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
-}
-
-public class Empleado {
+public class Usuario {
     public int Id { get; set; }
     public string Nombre { get; set; } = "";
     public string Apellido { get; set; } = "";
@@ -58,13 +37,24 @@ public class Empleado {
     public Puesto? Puesto { get; set; }
     public int AreaId { get; set; }
     public Area Area { get; set; } = null!;
-    public int JefeId { get; set; }
-    public Jefe Jefe { get; set; } = null!;
     public int PaisId { get; set; }
     public Pais Pais { get; set; } = null!;
+    
+    // Jerarquía
+    public int? JefeId { get; set; }
+    public Usuario? Jefe { get; set; }
+    
+    /// <summary>
+    /// COLABORADOR, JEFE, LIDER, GERENTE, DIRECTOR, DIRECTOR_GENERAL, RRHH
+    /// </summary>
+    public string Rol { get; set; } = "COLABORADOR";
+    
     public bool Activo { get; set; } = true;
+    public DateTime? FechaBaja { get; set; }
     public bool EsSuperusuario { get; set; } = false;
+    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public DateTime FechaIngreso { get; set; }
+    
     public List<Objetivo> Objetivos { get; set; } = [];
 }
 
@@ -99,8 +89,8 @@ public class Objetivo {
     public string Descripcion { get; set; } = "";
     public int PilarId { get; set; }
     public Pilar Pilar { get; set; } = null!;
-    public int EmpleadoId { get; set; }
-    public Empleado Empleado { get; set; } = null!;
+    public int UsuarioId { get; set; }
+    public Usuario Usuario { get; set; } = null!;
     public int Anio { get; set; }
     public DateTime Deadline { get; set; }
     public int SoftSkill1Id { get; set; }
@@ -110,6 +100,7 @@ public class Objetivo {
     public EstadoObjetivo Estado { get; set; } = EstadoObjetivo.ACTIVO;
     public int Progreso { get; set; } = 0; // 0-100
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    public DateTime FechaIngreso { get; set; }
     public int CreadoPorId { get; set; }
     public decimal PorcentajePilar { get; set; } = 0;
     public bool AprobadoPorJefe { get; set; } = false;
@@ -135,6 +126,7 @@ public class RevisionCuatrimestral {
     public int? EscalaValoracionId { get; set; }
     public EscalaValoracion? EscalaValoracion { get; set; }
     public string ComentarioJefe { get; set; } = "";
+    public string ComentarioUsuario { get; set; } = "";
     public ResultadoEval? Resultado { get; set; }
     public string EvidenciasRevisadasJson { get; set; } = "[]";
     public bool Completada { get; set; } = false;
@@ -162,6 +154,7 @@ public class EvaluacionFinal {
     public int? EscalaValoracionIdFinal { get; set; }
     public EscalaValoracion? EscalaValoracionFinal { get; set; }
     public string ComentarioJefe { get; set; } = "";
+    public string ComentarioUsuario { get; set; } = "";
     public ResultadoEval ResultadoFinal { get; set; }
     public DateTime FechaEvaluacion { get; set; }
     public int EvaluadorId { get; set; }
@@ -182,7 +175,7 @@ public class Autoevaluacion {
     public int Id { get; set; }
     public int ObjetivoId { get; set; }
     public Objetivo Objetivo { get; set; } = null!;
-    public int EmpleadoId { get; set; }
+    public int UsuarioId { get; set; }
     public int Score { get; set; }
     public int? EscalaValoracionIdScore { get; set; }
     public EscalaValoracion? EscalaValoracionScore { get; set; }
@@ -208,21 +201,22 @@ public class BitacoraEntrada {
     public int Id { get; set; }
     public int ObjetivoId { get; set; }
     public Objetivo Objetivo { get; set; } = null!;
-    public int EmpleadoId { get; set; }
-    public Empleado Empleado { get; set; } = null!;
+    public int UsuarioId { get; set; }
+    public Usuario Usuario { get; set; } = null!;
     public DateTime Fecha { get; set; }
     public string Texto { get; set; } = "";
     public string AdjuntosJson { get; set; } = "[]"; // JSON array de strings
     public EstadoBitacora Estado { get; set; } = EstadoBitacora.PENDIENTE_REVISION;
     public string? FeedbackJefe { get; set; }
+    public string? FeedbackUsuario { get; set; }
     public DateTime? FechaFeedback { get; set; }
 }
 
 public class MensajeChat {
     public int Id { get; set; }
-    public int RemitenteId { get; set; }        // puede ser JefeId o EmpleadoId
-    public bool RemitenteEsJefe { get; set; }   // true = remitente es Jefe, false = Empleado
-    public int DestinatarioEmpleadoId { get; set; }
+    public int RemitenteId { get; set; }        // puede ser JefeId o UsuarioId
+    public bool RemitenteEsJefe { get; set; }   // true = remitente es Jefe, false = Usuario
+    public int DestinatarioUsuarioId { get; set; }
     public int JefeId { get; set; }             // siempre presente para filtrar conversaciones
     public string Texto { get; set; } = "";
     public DateTime Fecha { get; set; }
@@ -275,8 +269,8 @@ public class CursoAsignacion {
     public int Id { get; set; }
     public int CursoId { get; set; }
     public Curso Curso { get; set; } = null!;
-    public int EmpleadoId { get; set; }
-    public Empleado Empleado { get; set; } = null!;
+    public int UsuarioId { get; set; }
+    public Usuario Usuario { get; set; } = null!;
     public DateTime FechaAsignacion { get; set; } = DateTime.UtcNow;
     public DateTime? FechaCompletado { get; set; }
     public bool Completado { get; set; } = false;

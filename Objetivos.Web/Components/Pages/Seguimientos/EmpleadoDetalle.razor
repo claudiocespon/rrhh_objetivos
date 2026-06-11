@@ -1,10 +1,10 @@
-@page "/seguimientos/{EmpleadoId:int}"
+@page "/seguimientos/{UsuarioId:int}"
 @using Radzen.Blazor
 @using Radzen
 @inject SeguimientoService SeguimientoService
 @inject ICurrentUserService CurrentUser
 
-@if (empleado == null)
+@if (usuario == null)
 {
     <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
 }
@@ -20,23 +20,23 @@ else
             <RadzenCard>
                 <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
                     <div class="rz-avatar" style="width: 80px; height: 80px; font-size: 2rem; border-radius: 50%; background-color: var(--rz-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                        @($"{(string.IsNullOrEmpty(empleado.Nombre) ? "" : empleado.Nombre[0].ToString())}{(string.IsNullOrEmpty(empleado.Apellido) ? "" : empleado.Apellido[0].ToString())}".ToUpper())
+                        @($"{(string.IsNullOrEmpty(usuario.Nombre) ? "" : usuario.Nombre[0].ToString())}{(string.IsNullOrEmpty(usuario.Apellido) ? "" : usuario.Apellido[0].ToString())}".ToUpper())
                     </div>
                     <RadzenStack Gap="0" AlignItems="AlignItems.Center">
-                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">@empleado.Nombre @empleado.Apellido</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">@(empleado.Puesto?.Nombre ?? "Sin Puesto")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">@usuario.Nombre @usuario.Apellido</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.7;">@(usuario.Puesto?.Nombre ?? "Sin Puesto")</RadzenText>
                     </RadzenStack>
-                    <RadzenBadge Text="@empleado.Area.Nombre" BadgeStyle="BadgeStyle.Secondary" />
+                    <RadzenBadge Text="@usuario.Area.Nombre" BadgeStyle="BadgeStyle.Secondary" />
                 </RadzenStack>
                 <hr />
                 <RadzenStack Gap="0.5rem">
                     <div class="d-flex justify-content-between">
                         <RadzenText TextStyle="TextStyle.Caption">Email:</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2">@empleado.Email</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">@usuario.Email</RadzenText>
                     </div>
                     <div class="d-flex justify-content-between">
                         <RadzenText TextStyle="TextStyle.Caption">Ingreso:</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2">@empleado.FechaIngreso.ToString("dd/MM/yyyy")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">@usuario.FechaIngreso.ToString("dd/MM/yyyy")</RadzenText>
                     </div>
                 </RadzenStack>
             </RadzenCard>
@@ -54,13 +54,13 @@ else
 
     <RadzenCard>
         <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Objetivos del Año (@DateTime.Now.Year)</RadzenText>
-        @if (!empleado.Objetivos.Any(o => o.Anio == DateTime.Now.Year))
+        @if (!usuario.Objetivos.Any(o => o.Anio == DateTime.Now.Year))
         {
-            <EmptyState Message="Este empleado no tiene objetivos asignados" />
+            <EmptyState Message="Este usuario no tiene objetivos asignados" />
         }
         else
         {
-            <RadzenDataGrid Data="@empleado.Objetivos.Where(o => o.Anio == DateTime.Now.Year)" TItem="Objetivo">
+            <RadzenDataGrid Data="@usuario.Objetivos.Where(o => o.Anio == DateTime.Now.Year)" TItem="Objetivo" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
                     <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
                     <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar">
@@ -81,7 +81,7 @@ else
                     <RadzenDataGridColumn TItem="Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
                         <Template Context="obj">
                             <RadzenButton Icon="search" Text="Ver" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
-                                          Click="@(() => Nav.NavigateTo($"seguimientos/{EmpleadoId}/objetivo/{obj.Id}"))" />
+                                          Click="@(() => Nav.NavigateTo($"seguimientos/{UsuarioId}/objetivo/{obj.Id}"))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -91,8 +91,8 @@ else
 }
 
 @code {
-    [Parameter] public int EmpleadoId { get; set; }
-    Empleado? empleado;
+    [Parameter] public int UsuarioId { get; set; }
+    Usuario? usuario;
     List<RadarPilarItem> radarData = new();
     Dictionary<int, double> ponderados = new();
 
@@ -100,16 +100,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var detalle = await SeguimientoService.GetEmpleadoDetalleCompletoAsync(EmpleadoId, DateTime.Now.Year);
+        var detalle = await SeguimientoService.GetEmpleadoDetalleCompletoAsync(UsuarioId, DateTime.Now.Year);
 
         if (detalle != null)
         {
-            empleado = detalle.Empleado;
+            usuario = detalle.Usuario;
 
             // H-01: Validar acceso por URL
-            bool isOwnProfile = !CurrentUser.EsJefe && empleado.Id == CurrentUser.UsuarioId;
-            bool isDirectReport = CurrentUser.EsJefe && empleado.JefeId == CurrentUser.UsuarioId;
-            bool isAreaDirector = CurrentUser.Rol == "DIRECTOR" && empleado.AreaId == CurrentUser.AreaId;
+            bool isOwnProfile = !CurrentUser.EsJefe && usuario.Id == CurrentUser.UsuarioId;
+            bool isDirectReport = CurrentUser.EsJefe && usuario.JefeId == CurrentUser.UsuarioId;
+            bool isAreaDirector = CurrentUser.Rol == "DIRECTOR" && usuario.AreaId == CurrentUser.AreaId;
             bool isHighLevel = CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario;
 
             if (!isOwnProfile && !isDirectReport && !isAreaDirector && !isHighLevel)

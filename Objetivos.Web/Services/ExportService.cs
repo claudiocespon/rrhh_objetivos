@@ -20,15 +20,15 @@ namespace Objetivos.Web.Services
         public byte[] ExportObjetivosToCsv(List<Objetivo> objetivos)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("ID;Empleado;Email;Area;Pilar;Objetivo;Progreso;Estado;Deadline;Año;Competencia1;Competencia2");
+            sb.AppendLine("ID;Usuario;Email;Area;Pilar;Objetivo;Progreso;Estado;Deadline;Año;Competencia1;Competencia2");
 
             foreach (var o in objetivos)
             {
                 sb.AppendLine(string.Join(";",
                     o.Id,
-                    SanitizeCsvField($"{o.Empleado?.Apellido}, {o.Empleado?.Nombre}"),
-                    SanitizeCsvField(o.Empleado?.Email),
-                    SanitizeCsvField(o.Empleado?.Area?.Nombre),
+                    SanitizeCsvField($"{o.Usuario?.Apellido}, {o.Usuario?.Nombre}"),
+                    SanitizeCsvField(o.Usuario?.Email),
+                    SanitizeCsvField(o.Usuario?.Area?.Nombre),
                     SanitizeCsvField(o.Pilar?.Nombre),
                     SanitizeCsvField(o.Nombre),
                     o.Progreso,
@@ -43,17 +43,17 @@ namespace Objetivos.Web.Services
             return ToUtf8Bom(sb.ToString());
         }
 
-        // ── Etapa 8.1: Reporte por empleado (para jefes) ─────────────────────
+        // ── Etapa 8.1: Reporte por usuario (para jefes) ─────────────────────
 
-        public async Task<byte[]> ExportarReporteEmpleadoAsync(int empleadoId, int anio)
+        public async Task<byte[]> ExportarReporteEmpleadoAsync(int usuarioId, int anio)
         {
             using var db = await _dbFactory.CreateDbContextAsync();
 
-            var empleado = await db.Empleados
+            var usuario = await db.Usuarios
                 .Include(e => e.Area)
-                .FirstOrDefaultAsync(e => e.Id == empleadoId);
+                .FirstOrDefaultAsync(e => e.Id == usuarioId);
 
-            if (empleado == null) return ToUtf8Bom("");
+            if (usuario == null) return ToUtf8Bom("");
 
             var objetivos = await db.Objetivos
                 .Include(o => o.Pilar)
@@ -62,12 +62,12 @@ namespace Objetivos.Web.Services
                 .Include(o => o.Revisiones).ThenInclude(r => r.EscalaValoracion)
                 .Include(o => o.EvaluacionFinal).ThenInclude(e => e!.EscalaValoracionFinal)
                 .Include(o => o.Autoevaluacion)
-                .Where(o => o.EmpleadoId == empleadoId && o.Anio == anio)
+                .Where(o => o.UsuarioId == usuarioId && o.Anio == anio)
                 .ToListAsync();
 
             var sb = new StringBuilder();
-            sb.AppendLine($"Reporte de Empleado — {empleado.Apellido}, {empleado.Nombre} — Año {anio}");
-            sb.AppendLine($"Área: {empleado.Area?.Nombre}");
+            sb.AppendLine($"Reporte de Usuario — {usuario.Apellido}, {usuario.Nombre} — Año {anio}");
+            sb.AppendLine($"Área: {usuario.Area?.Nombre}");
             sb.AppendLine();
             sb.AppendLine("Pilar;Objetivo;Progreso;Estado;Feedback Score;Resultado Final;Puntaje Ponderado;Semáforo;Competencia1;Competencia2");
 
@@ -100,7 +100,7 @@ namespace Objetivos.Web.Services
         {
             using var db = await _dbFactory.CreateDbContextAsync();
 
-            var empleados = await db.Empleados
+            var usuarios = await db.Usuarios
                 .Include(e => e.Area)
                 .Include(e => e.Objetivos.Where(o => o.Anio == anio))
                     .ThenInclude(o => o.Revisiones)
@@ -113,9 +113,9 @@ namespace Objetivos.Web.Services
             var sb = new StringBuilder();
             sb.AppendLine($"Reporte de Área — Año {anio}");
             sb.AppendLine();
-            sb.AppendLine("Empleado;Email;Objetivos Activos;Objetivos Completados;En Riesgo;Promedio Ponderado;Semáforo");
+            sb.AppendLine("Usuario;Email;Objetivos Activos;Objetivos Completados;En Riesgo;Promedio Ponderado;Semáforo");
 
-            foreach (var emp in empleados)
+            foreach (var emp in usuarios)
             {
                 var activos = emp.Objetivos.Count(o => o.Estado == EstadoObjetivo.ACTIVO);
                 var completados = emp.Objetivos.Count(o => o.Estado == EstadoObjetivo.COMPLETADO);
@@ -142,11 +142,11 @@ namespace Objetivos.Web.Services
             return ToUtf8Bom(sb.ToString());
         }
 
-        // ── Etapa 8.1: Mis datos (para empleado) ─────────────────────────────
+        // ── Etapa 8.1: Mis datos (para usuario) ─────────────────────────────
 
-        public async Task<byte[]> ExportarMisDatosAsync(int empleadoId, int anio)
+        public async Task<byte[]> ExportarMisDatosAsync(int usuarioId, int anio)
         {
-            return await ExportarReporteEmpleadoAsync(empleadoId, anio);
+            return await ExportarReporteEmpleadoAsync(usuarioId, anio);
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────

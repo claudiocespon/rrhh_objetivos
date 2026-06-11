@@ -31,8 +31,8 @@ else
 }
 
 @code {
-    List<Empleado>? empleadosEquipo;
-    Empleado? empleadoPersonal;
+    List<Usuario>? empleadosEquipo;
+    Usuario? empleadoPersonal;
     Dictionary<int, double> promedios = new();
     Dictionary<int, int> mensajesPendientes = new();
     bool loading = true;
@@ -43,17 +43,17 @@ else
         var personalData = await SeguimientoService.GetEmpleadoPersonalAsync(CurrentUser.Email, DateTime.Now.Year);
         if (personalData != null)
         {
-            empleadoPersonal = personalData.Empleado;
-            promedios[personalData.Empleado.Id] = personalData.Promedio;
+            empleadoPersonal = personalData.Usuario;
+            promedios[personalData.Usuario.Id] = personalData.Promedio;
         }
 
         // 2. Fetch Equipo / Org (batch — sin N+1)
         if (CurrentUser.EsJefe || CurrentUser.Rol == "RRHH" || CurrentUser.EsSuperusuario)
         {
             var equipoData = await SeguimientoService.GetEmpleadosEquipoConPromediosAsync(CurrentUser, DateTime.Now.Year);
-            empleadosEquipo = equipoData.Select(x => x.Empleado).ToList();
+            empleadosEquipo = equipoData.Select(x => x.Usuario).ToList();
             foreach (var item in equipoData)
-                promedios[item.Empleado.Id] = item.Promedio;
+                promedios[item.Usuario.Id] = item.Promedio;
 
             // C-07: Cargar counts de mensajes no leídos para el jefe directo
             if (CurrentUser.EsJefe)
@@ -85,14 +85,14 @@ else
     {
         if (empleadosEquipo == null || !empleadosEquipo.Any())
         {
-            <EmptyState Message="No hay empleados asignados a su equipo o bajo su mando." />
+            <EmptyState Message="No hay usuarios asignados a su equipo o bajo su mando." />
         }
         else
         {
             <div class="pt-3">
-                <RadzenDataGrid Data="@empleadosEquipo" TItem="Empleado" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                <RadzenDataGrid Data="@empleadosEquipo" TItem="Usuario" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
-                        <RadzenDataGridColumn TItem="Empleado" Property="Nombre" Title="Nombre">
+                        <RadzenDataGridColumn TItem="Usuario" Property="Nombre" Title="Nombre">
                             <Template Context="emp">
                                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                     @emp.Nombre @emp.Apellido
@@ -103,17 +103,17 @@ else
                                 </RadzenStack>
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Empleado" Property="Puesto.Nombre" Title="Puesto">
+                        <RadzenDataGridColumn TItem="Usuario" Property="Puesto.Nombre" Title="Puesto">
                             <Template Context="emp">
                                 @(emp.Puesto?.Nombre ?? "-")
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Empleado" Title="Rendimiento General" Width="200px">
+                        <RadzenDataGridColumn TItem="Usuario" Title="Rendimiento General" Width="200px">
                             <Template Context="emp">
                                 <SemaforoIndicador Promedio="@GetPromedio(emp.Id)" />
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Empleado" Context="emp" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
+                        <RadzenDataGridColumn TItem="Usuario" Context="emp" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
                             <Template Context="emp">
                                 <RadzenButton Icon="visibility" Text="Ver Detalle" ButtonStyle="ButtonStyle.Info" Variant="Variant.Flat" Size="ButtonSize.Small" 
                                               Click="@(() => OnViewDetalle(emp.Id))" />
@@ -129,7 +129,7 @@ else
     {
         if (empleadoPersonal == null)
         {
-            <EmptyState Message="No se ha encontrado tu información de empleado." />
+            <EmptyState Message="No se ha encontrado tu información de usuario." />
         }
         else
         {

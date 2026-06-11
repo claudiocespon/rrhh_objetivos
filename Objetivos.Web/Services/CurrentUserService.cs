@@ -13,7 +13,7 @@ public interface ICurrentUserService {
     bool DebeCambiarPassword { get; }
     bool EsSuperusuario { get; }
     bool EsAdmin { get; }
-    Task SetUsuarioAsync(int id, string nombreCompleto, string email, string rol, int areaId, bool esJefe, bool debeCambiarPassword, bool esSuperusuario);
+    Task SetUsuarioAsync(int id, string nombreCompleto, string email, string rol, int areaId, bool esUsuario, bool debeCambiarPassword, bool esSuperusuario);
     Task CerrarSesionAsync();
     Task InitializeAsync();
 }
@@ -57,14 +57,14 @@ public class SessionCurrentUserService : ICurrentUserService {
         } catch { /* Ignorar si falla en prerendering */ }
     }
 
-    public async Task SetUsuarioAsync(int id, string nombreCompleto, string email, string rol, int areaId, bool esJefe, bool debeCambiarPassword, bool esSuperusuario)
+    public async Task SetUsuarioAsync(int id, string nombreCompleto, string email, string rol, int areaId, bool esUsuario, bool debeCambiarPassword, bool esSuperusuario)
     {
         UsuarioId = id;
         NombreCompleto = nombreCompleto;
         Email = email;
         Rol = rol;
         AreaId = areaId;
-        EsJefe = esJefe;
+        EsJefe = esUsuario;
         EstaAutenticado = true;
         DebeCambiarPassword = debeCambiarPassword;
         EsSuperusuario = esSuperusuario;
@@ -75,7 +75,7 @@ public class SessionCurrentUserService : ICurrentUserService {
             Email = email,
             Rol = rol,
             AreaId = areaId,
-            EsJefe = esJefe,
+            EsJefe = esUsuario,
             DebeCambiarPassword = debeCambiarPassword,
             EsSuperusuario = esSuperusuario
         });

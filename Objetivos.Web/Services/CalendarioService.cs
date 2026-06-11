@@ -39,7 +39,7 @@ public class CalendarioService
         var anio = hoy.Year;
 
         IQueryable<Domain.Entities.Objetivo> query = db.Objetivos
-            .Include(o => o.Empleado)
+            .Include(o => o.Usuario)
             .Where(o => o.Anio == anio && o.Estado != EstadoObjetivo.CANCELADO && o.Estado != EstadoObjetivo.COMPLETADO);
 
         if (user.EsJefe || _dataScope.PuedeVerTodo(user))
@@ -48,10 +48,10 @@ public class CalendarioService
         }
         else
         {
-            // Empleado regular: solo sus propios objetivos
-            var emp = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == user.Email.ToLower() && e.Activo);
+            // Usuario regular: solo sus propios objetivos
+            var emp = await db.Usuarios.FirstOrDefaultAsync(e => e.Email.ToLower() == user.Email.ToLower() && e.Activo);
             if (emp == null) return [];
-            query = query.Where(o => o.EmpleadoId == emp.Id);
+            query = query.Where(o => o.UsuarioId == emp.Id);
         }
 
         var objetivos = await query.ToListAsync();
@@ -66,7 +66,7 @@ public class CalendarioService
                 eventos.Add(new ProximoEvento
                 {
                     Titulo = obj.Nombre,
-                    Subtitulo = $"{obj.Empleado.Nombre} {obj.Empleado.Apellido}",
+                    Subtitulo = $"{obj.Usuario.Nombre} {obj.Usuario.Apellido}",
                     Fecha = obj.Deadline.Date,
                     Tipo = "DEADLINE"
                 });
@@ -76,7 +76,7 @@ public class CalendarioService
         // Revisiones pendientes no completadas (si el período ya comenzó)
         var revisionesPendientes = await db.RevisionesCuatrimestrales
             .Include(r => r.Objetivo)
-                .ThenInclude(o => o.Empleado)
+                .ThenInclude(o => o.Usuario)
             .Where(r => !r.Completada && r.Anio == anio)
             .ToListAsync();
 
@@ -91,7 +91,7 @@ public class CalendarioService
                 eventos.Add(new ProximoEvento
                 {
                     Titulo = $"Revisión: {rev.Objetivo.Nombre}",
-                    Subtitulo = $"{rev.Objetivo.Empleado.Nombre} {rev.Objetivo.Empleado.Apellido}",
+                    Subtitulo = $"{rev.Objetivo.Usuario.Nombre} {rev.Objetivo.Usuario.Apellido}",
                     Fecha = fechaRevision,
                     Tipo = "REVISION_PENDIENTE"
                 });
@@ -114,14 +114,14 @@ public class CalendarioService
 
         IQueryable<EventoCalendario> query = db.EventosCalendario
             .Include(e => e.Objetivo)
-                .ThenInclude(o => o!.Empleado)
+                .ThenInclude(o => o!.Usuario)
             .Where(e => e.Fecha.Year == anio);
 
         if (!_dataScope.PuedeVerTodo(user) && !user.EsJefe)
         {
-            var emp = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == user.Email.ToLower() && e.Activo);
+            var emp = await db.Usuarios.FirstOrDefaultAsync(e => e.Email.ToLower() == user.Email.ToLower() && e.Activo);
             if (emp != null)
-                query = query.Where(e => e.Objetivo != null && e.Objetivo.EmpleadoId == emp.Id);
+                query = query.Where(e => e.Objetivo != null && e.Objetivo.UsuarioId == emp.Id);
         }
         else if (user.EsJefe && !_dataScope.PuedeVerTodo(user))
         {

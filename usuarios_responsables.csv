@@ -1,0 +1,330 @@
+﻿Nombre;Apellido;Email;Legajo;Rol;Responsable
+Hector Martin;Cabrera;hcabrera@permaquim.com;71;JEFE;-
+Matias Mario Jose;Pioli;mpioli@permaquim.com;99;JEFE;-
+Eduardo Jeremias;Gallardo;jgallardo@permaquim.com;104;JEFE;-
+Hernan Manuel;Egel;hegel@permaquim.com;105;JEFE;-
+María Florencia;Bernadzki;fbernadzki@permaquim.com;116;JEFE;-
+Sebastian Rodolfo;Lopez;slopez@permaquim.com;118;JEFE;-
+Jose Daniel;Spada;jspada@permaquim.com;119;JEFE;-
+Yoslan;Chinique Rodriguez;ychinique@permaquim.com;149;JEFE;-
+Luis Matias;Herman;lherman@permaquim.com;170;JEFE;-
+Guillermo Andres;Berlincourt;gberlincourt@permaquim.com;277;JEFE;-
+Jose Ignacio;Petro;jpetro@permaquim.com;291;JEFE;-
+Ezequiel Alejandro;Olalla;eolalla@permaquim.com;270;JEFE;-
+Saurin Diego Hernan;;dsaurin@permaquim.com;587;JEFE;-
+Brites Edgardo Fernando;;fbrites@permaquim.com;419;JEFE;-
+Castellon Eduardo Alejandro;;acastellon@permaquim.com;484;GERENTE;-
+Nerina Vanesa;Cian;ncian@permaquim.com;368;JEFE;-
+Fernando;Mon;fmon@permaquim.com;257;JEFE;-
+Virga Natalia Verónica;;nvirga@permaquim.com;396;JEFE;-
+Guillermo Sebastian;Paoli;gpaoli@permaquim.com;148;JEFE;-
+Cassullo Leonardo Horacio;;lcassullo@permaquim.com;619;JEFE;-
+Santangelo Antonella;;asantangelo@permaquim.com;632;JEFE;-
+Jose Luis;Oddo;jloddo@permaquim.com;50;JEFE;-
+Martinez Jones Juan Ignacio;;jmartinez@permaquim.com;550;GERENTE;-
+Mattioz Walter David;;wmattioz@permaquim.com;452;JEFE;-
+Adrian Leonel Sassola;;asassola@permaquim.com;495;JEFE;-
+Marcelo Daniel;Vuagnoux;mvuagnoux@permaquim.com;157;JEFE;-
+Roggero Guillermo Jose;;groggero@permaquim.com;438;GERENTE;-
+Eduardo Antonio;Casal Santamarina;ecasal@permaquim.com;1004;DIRECTOR_GENERAL;-
+Alejandro Enrique;Malamud;amalamud@permaquim.com;1000;DIRECTOR;-
+Marcos;Casal;mcasal@permaquim.com;1001;GERENTE;-
+Martinez Riviere Christian;;cmartinez@permaquim.com;501;DIRECTOR;-
+Gimenez  Rocio Salome;;rgimenez@permaquim.com;589;GERENTE;-
+Pablo Damian;Tripodi;ptripodi@permaquim.com;18;GERENTE;-
+Alejandro Moises;Calabro;acalabro@permaquim.com;248;DIRECTOR;-
+Matias Pablo;Márquez;mmarquez@permaquim.com;236;GERENTE;-
+Hernan;Pontoriero;hpontoriero@permaquim.com;350;GERENTE;-
+Artoni Marianela Fernanda;;martoni@permaquim.com;10006 / 55;DIRECTOR;-
+Cristian Eduardo;Jara Muñoz;cjara@permaquim.com;45;GERENTE;-
+Jose David;Ojeda Nuñez;jojeda@permaquim.com;2;JEFE;-
+Mauricio Bernabe;Sandoval Sandoval;msandoval@permaquim.com;33;JEFE;-
+Miguel Angel;Mujica Mendoza;mmujica@permaquim.com;25;JEFE;-
+Pedro Esteban;Quila Catalan;equila@permaquim.com;4;JEFE;-
+Diego;Falco Dorrego;dfalco@permaquim.com;7;JEFE;-
+Robles Lucia Camila;;lrobles@permaquim.com;536;Colaborador;Cabrera, Hector Martin
+Caldiroli Nicolas Emiliano;;ncaldiroli@permaquim.com;560;Colaborador;Tripodi, Pablo Damian
+Morales Miguel Leonardo;;moraleja799705@gmail.com;575;Colaborador;Tripodi, Pablo Damian
+Pablo;Cirac;pcirac@permaquim.com;607;Colaborador;Tripodi, Pablo Damian
+Ruiz Soledad Andrea;;sruiz@permaquim.com;440;Colaborador;Tripodi, Pablo Damian
+Reinaldo Gastón;Avaca;gavaca@permaquim.com;16;Colaborador;Tripodi, Pablo Damian
+Vivot Romina Gisele;;rvivot@permaquim.com;644;Colaborador;Tripodi, Pablo Damian
+Fernandez Francisco Ezequiel;;fefernandez@permaquim.com;621;Colaborador;-
+Fabian David;Bazan;fbazan@permaquim.com;52;Colaborador;Oddo, Jose Luis
+Esteban;Zoroastro;ezoroastro@permaquim.com;56;Colaborador;Cabrera, Hector Martin
+Esteban David;Bazan;ebazan@permaquim.com;88;Colaborador;Oddo, Jose Luis
+Sandra Emilce;Cortez;scortez@permaquim.com;249;Colaborador;Oddo, Jose Luis
+Ignacio Martín;Pintucci;ipintucci@permaquim.com;332;Colaborador;Lopez, Sebastian Rodolfo
+Perlotti Nicolás Nahuel;;nperlotti@permaquim.com;395;Colaborador;Oddo, Jose Luis
+Cortez Juan Gabriel;;jcortez@permaquim.com;415;Colaborador;Oddo, Jose Luis
+Norberto Alexander;Falk;afalk@permaquim.com;126;Colaborador;Cabrera, Hector Martin
+Ariel Antonio;Artigas;aartigas@permaquim.com;145;Colaborador;Cabrera, Hector Martin
+Daniel Edgardo;Ontivero;dontivero@permaquim.com;184;Colaborador;Cabrera, Hector Martin
+Marcos Ivan;Viola;iviola@permaquim.com;383;Colaborador;Cabrera, Hector Martin
+Lucas Sebastian;Alarcon;lalarcon@permaquim.com;359;Colaborador;Cabrera, Hector Martin
+Alfredo Daniel;Pernas;apernas@permaquim.com;361;Colaborador;Cabrera, Hector Martin
+Hector Martín;Gomez;hmgomez@permaquim.com;378;Colaborador;Cabrera, Hector Martin
+Gaston;Rodriguez Zelaya;grodriguez@permaquim.com;345;Colaborador;Cabrera, Hector Martin
+Dario Emanuel;Acuña;dacunia@permaquim.com;297;Colaborador;Cabrera, Hector Martin
+Fernando Walter;Arriaga;farriaga@permaquim.com;311;Colaborador;Cabrera, Hector Martin
+Carlos Ariel Dario;Roa;croa@permaquim.com;278;Colaborador;Cabrera, Hector Martin
+Sigueti Ramon Nicolas;;rsigueti@permaquim.com;582;Colaborador;Cabrera, Hector Martin
+Quiroz Jorge Hernan;;hquiroz@permaquim.com;528;Colaborador;Cabrera, Hector Martin
+Diaz Guzman Juan David;;ddiazguzman@permaquim.com;446;Colaborador;Cabrera, Hector Martin
+Nagore Leonardo Francisco;;lnagore@permaquim.com;447;Colaborador;Cabrera, Hector Martin
+Guitian Nahuel Agustín;;nguitian@permaquim.com;450;Colaborador;Cabrera, Hector Martin
+Fernandez Ruben Angel;;rfernandez@permaquim.com;457;Colaborador;Cabrera, Hector Martin
+Gonzalez Cristian David;;cgonzalez@permaquim.com;512;Colaborador;Cabrera, Hector Martin
+Jodor Salim Adrian Selmen;;sjodor@permaquim.com;645;Colaborador;Cabrera, Hector Martin
+Leonardini Federico;;fleonardini@permaquim.com;640;Colaborador;Cabrera, Hector Martin
+Elortegui Federico Orlando;;felortegui@permaquim.com;631;Colaborador;Cabrera, Hector Martin
+Jadur  Jonathan Jorge;;jjadur@permaquim.com;609;Colaborador;Pioli, Matias Mario Jose
+Gonzalez Francisco Alejandro;;fgonzalez@permaquim.com;502;Colaborador;Pioli, Matias Mario Jose
+Diozquez Facundo Nicolas;;fdiozquez@permaquim.com;475;Colaborador;Pioli, Matias Mario Jose
+Massante Marco Lucas;;mmassante@permaquim.com;552;Colaborador;Pioli, Matias Mario Jose
+Federico Julian;Cacciola;fcacciola@permaquim.com;251;Colaborador;Pioli, Matias Mario Jose
+Fernando Jose;Bracho Cardoza;fbracho@permaquim.com;306;Colaborador;Pioli, Matias Mario Jose
+Eliceche Lupo Federico José;;feliceche@permaquim.com;397;Colaborador;Pioli, Matias Mario Jose
+Fernando Gabriel;Suarez;fsuarez@permaquim.com;207;Colaborador;Pioli, Matias Mario Jose
+Noelia Daiana;Lujan;nlujan@permaquim.com;82;Colaborador;Pioli, Matias Mario Jose
+Alberto Javier;Ocampo;jocampo@permaquim.com;66;Colaborador;Pioli, Matias Mario Jose
+Marcelo Ariel;Cordova Salina;mcordova@permaquim.com;40;Colaborador;Pioli, Matias Mario Jose
+Diego Juan;Forte;dforte@permaquim.com;70;Colaborador;Gallardo, Eduardo Jeremias
+Julian Matias;Fernandez;jfernandez@permaquim.com;62;Colaborador;Gallardo, Eduardo Jeremias
+Carlos Fabian;Fernandez;ffernandez@permaquim.com;94;Colaborador;Gallardo, Eduardo Jeremias
+Alejandro Nicolas;Curbelo;acurbelo@permaquim.com;223;Colaborador;Gallardo, Eduardo Jeremias
+Farias Diego Hernan;;dfarias@permaquim.com;400;Colaborador;Gallardo, Eduardo Jeremias
+Matías Pedro;Derrico;mderrico@permaquim.com;373;Colaborador;Gallardo, Eduardo Jeremias
+Eduardo Javier;Herrera;eherrera@permaquim.com;323;Colaborador;Gallardo, Eduardo Jeremias
+Sergio Rafael;Vergara;svergara@permaquim.com;263;Colaborador;Gallardo, Eduardo Jeremias
+Juan Pablo;Lepore;jlepore@permaquim.com;279;Colaborador;Gallardo, Eduardo Jeremias
+Adrian Antonio;Sanabria;asanabria@permaquim.com;255;Colaborador;Egel, Hernan Manuel
+Pablo Antonio Barrios;;pbarrios@permaquim.com;535;Colaborador;Gallardo, Eduardo Jeremias
+Vargas Maximiliano Alfonso;;mvargas@permaquim.com;518;Colaborador;Gallardo, Eduardo Jeremias
+Zerpa Paolo Ramon;;pzerpa@permaquim.com;499;Colaborador;Egel, Hernan Manuel
+Samaniego Lucas Hernan;;lsamaniego@permaquim.com;500;Colaborador;Egel, Hernan Manuel
+GALEANO JUAN MANUEL;;jgaleano@permaquim.com;409;Colaborador;Egel, Hernan Manuel
+Segovia Pablo Gustavo;;psegovia@permaquim.com;428;Colaborador;Egel, Hernan Manuel
+Torres Marcelo Javier;;mtorres@permaquim.com;448;Colaborador;Egel, Hernan Manuel
+Oscar Javier Eduardo;;joscar@permaquim.com;449;Colaborador;Egel, Hernan Manuel
+Gamarra Cabrera Julio Andres;;jgamarra@permaquim.com;531;Colaborador;Egel, Hernan Manuel
+Brito Lucas Nahuel;;lbrito@permaquim.com;595;Colaborador;Egel, Hernan Manuel
+Gonzalez Matias Ezequiel;;mgonzalez@permaquim.com;600;Colaborador;Egel, Hernan Manuel
+German Adolfo;Rosenffel;grosenffel@permaquim.com;250;Colaborador;Egel, Hernan Manuel
+Diego Federico;Ortiz;dortiz@permaquim.com;304;Colaborador;Egel, Hernan Manuel
+Adolfo Omar;Rodriguez;orodriguez@permaquim.com;370;Colaborador;Egel, Hernan Manuel
+Victor Hugo;Sequeira;vsequeira@permaquim.com;386;Colaborador;Egel, Hernan Manuel
+Emiliano Jorge;Vera;evera@permaquim.com;389;Colaborador;Egel, Hernan Manuel
+Matias Ezequiel;Gomez;mgomez@permaquim.com;142;Colaborador;Egel, Hernan Manuel
+Miguel Alberto;Antonelli;mantonelli@permaquim.com;27;Colaborador;Egel, Hernan Manuel
+Rodolfo José;Gomez;rgomez@permaquim.com;14;Colaborador;Egel, Hernan Manuel
+Luis Horacio;Soto;lsoto@permaquim.com;51;Colaborador;Lopez, Sebastian Rodolfo
+Nieto Gomez Marcos Valentin;;mnieto@permaquim.com;555;Colaborador;Lopez, Sebastian Rodolfo
+Chaile Amado Ramon;;achaile@permaquim.com;422;Colaborador;Lopez, Sebastian Rodolfo
+Moisio Juan;;jmoisio@permaquim.com;466;Colaborador;Lopez, Sebastian Rodolfo
+Mendiondo Andres Mariano;;amendiondo@permaquim.com;471;Colaborador;Spada, Jose Daniel
+Cardoso Eduardo Nicolas;;ecardoso@permaquim.com;424;Colaborador;Spada, Jose Daniel
+Gutierrez Tomas Agustin;;tgutierrez@permaquim.com;425;Colaborador;Spada, Jose Daniel
+Lang Kevin Gabriel Damian;;klang@permaquim.com;439;Colaborador;Spada, Jose Daniel
+Beccaria Francisco Alejo;;fbeccaria@permaquim.com;509;Colaborador;Spada, Jose Daniel
+Gonzalez Lombardi Christian Ruben;;cgonzalezl@permaquim.com;537;Colaborador;Spada, Jose Daniel
+Videla Pablo Exequiel;;pvidela@permaquim.com;534;Colaborador;Spada, Jose Daniel
+Juarez Augusto Cesar;;ajuarez@permaquim.com;546;Colaborador;Spada, Jose Daniel
+Galdamez Nicolas;;ngaldamez@permaquim.com;563;Colaborador;Spada, Jose Daniel
+Alberto;Scaine;ascaine@permaquim.com;122;Colaborador;Spada, Jose Daniel
+Daniel Ivan;Cingolani;dcingolani@permaquim.com;239;Colaborador;Spada, Jose Daniel
+Leonardo Ivan;Icazatti;licazatti@permaquim.com;198;Colaborador;Spada, Jose Daniel
+Esteban German;Acosta;gacosta@permaquim.com;347;Colaborador;Spada, Jose Daniel
+Carlos Andres;Fernandes;cfernandes@permaquim.com;294;Colaborador;Spada, Jose Daniel
+Nicolas Leandro Damian;Quispe;nquispe@permaquim.com;281;Colaborador;Spada, Jose Daniel
+Caceres Belen Rocio;;bcaceres@permaquim.com;633;Colaborador;Spada, Jose Daniel
+Lezcano Ugarte Tomas Nehuen;;tlezcano@permaquim.com;635;Colaborador;Spada, Jose Daniel
+Crosio Salvador;;scrosio@permaquim.com;557;Colaborador;Tripodi, Pablo Damian
+Ledesma Felix Ezequiel;;fledesma@permaquim.com;543;Colaborador;Chinique Rodriguez, Yoslan
+Escobar Eneas Jesus;;eescobar@permaquim.com;594;Colaborador;Chinique Rodriguez, Yoslan
+Cornu Alfredo Andrés;;acornu@permaquim.com;590;Colaborador;Chinique Rodriguez, Yoslan
+Mover Kevin;;kmover@permaquim.com;591;Colaborador;Chinique Rodriguez, Yoslan
+Ayala Jonatan;;jayala@permaquim.com;567;Colaborador;Chinique Rodriguez, Yoslan
+Toledo Goettig Anibal Santiago;;atoledog@permaquim.com;513;Colaborador;Chinique Rodriguez, Yoslan
+Bugnon Valentin Pablo;;vbugnon@permaquim.com;520;Colaborador;Chinique Rodriguez, Yoslan
+Raul Alejandro;Gavilan;rgavilan@permaquim.com;354;Colaborador;Chinique Rodriguez, Yoslan
+Gabriel Alberto;Molla;gmolla@permaquim.com;253;Colaborador;Chinique Rodriguez, Yoslan
+Arturo José;Sifontes Cotua;asifontes@permaquim.com;331;Colaborador;Chinique Rodriguez, Yoslan
+Ruben Jose Maria;Arquiel;rarquiel@permaquim.com;55;Colaborador;Chinique Rodriguez, Yoslan
+Manuel Alejandro;Lescano;mlescano@permaquim.com;75;Colaborador;Chinique Rodriguez, Yoslan
+Cesar Marcos;Zago;czago@permaquim.com;76;Colaborador;Chinique Rodriguez, Yoslan
+Piedrabuena Uriel Alejandro;;upiedrabuena@permaquim.com;626;Colaborador;Chinique Rodriguez, Yoslan
+Strottmann Matias Antonio;;mstrottmann@permaquim.com;639;Colaborador;Chinique Rodriguez, Yoslan
+Aguero Sergio Gustavo;;saguero@permaquim.com;392;Colaborador;Vuagnoux, Marcelo Daniel
+Del Rio Laura Elisabet;;ldelrio@permaquim.com;393;Colaborador;Vuagnoux, Marcelo Daniel
+Maffongelli Maria Fernanda;;fmaffongelli@permaquim.com;459;Colaborador;Vuagnoux, Marcelo Daniel
+Gonzalez Sandra;;sgonzalez@permaquim.com;432;Colaborador;Vuagnoux, Marcelo Daniel
+Garcia Jesus Rodrigo;;jgarcia@permaquim.com;521;Colaborador;Herman, Luis Matias
+Brusa Steve Gerald;;sbrusa@permaquim.com;491;Colaborador;Herman, Luis Matias
+Almeyra Matias Santiago;;malmeyra@permaquim.com;485;Colaborador;Herman, Luis Matias
+Medina Juan Pablo;;jmedina@permaquim.com;467;Colaborador;Herman, Luis Matias
+Abregu Gustavo Leandro;;gabregu@permaquim.com;463;Colaborador;Herman, Luis Matias
+Moyano Lucas Damian;;lmoyano@permaquim.com;464;Colaborador;Herman, Luis Matias
+Fernandez Lautaro Benjamín;;lfernandez@permaquim.com;592;Colaborador;Herman, Luis Matias
+Guzman German Daniel;;gguzman@permaquim.com;544;Colaborador;Herman, Luis Matias
+Asan Jose Carlos;;jcasan@permaquim.com;519;Colaborador;Herman, Luis Matias
+Ezequiel Miguel;Mojica;emojica@permaquim.com;377;Colaborador;Herman, Luis Matias
+Diego Arnaldo;Alvarez;dalvarez@permaquim.com;366;Colaborador;Herman, Luis Matias
+Kevin Aaron;Kaminski;kkaminski@permaquim.com;322;Colaborador;Herman, Luis Matias
+Leonardo German;Fazio;lfazio@permaquim.com;30;Colaborador;Herman, Luis Matias
+Sebastian Alberto;Belot;sbelot@permaquim.com;113;Colaborador;Herman, Luis Matias
+Mauro Alfredo;Guzzetta;mguzzetta@permaquim.com;106;Colaborador;Herman, Luis Matias
+Jose Eduardo;Zamorano;ezamorano@permaquim.com;144;Colaborador;Herman, Luis Matias
+Blanco Hasan David;;hblanco@permaquim.com;615;Colaborador;Herman, Luis Matias
+Soriano Rizzo Diego Ruben;;dsoriano@permaquim.com;622;Colaborador;Herman, Luis Matias
+Tomas Gonzalo;Ruiz Quispe;truiz@permaquim.com;652;Colaborador;Márquez, Matias Pablo
+Verna Russo  Guido Alejandro;;gverna@permaquim.com;596;Colaborador;Márquez, Matias Pablo
+Ortigoza Santiago Julian;;sortigoza@permaquim.com;497;Colaborador;Márquez, Matias Pablo
+Valdez Carlos Ezequiel;;evaldez@permaquim.com;504;Colaborador;Olalla, Ezequiel Alejandro
+Vinticola Mauro Gabriel;;mvinticola@permaquim.com;505;Colaborador;Olalla, Ezequiel Alejandro
+Oliva Juan Ignacio;;joliva@permaquim.com;522;Colaborador;-
+Sivit German Alejandro;;gsivit@permaquim.com;430;Colaborador;Márquez, Matias Pablo
+Laura Lorena;García;lgarcia@permaquim.com;360;Colaborador;-
+Gabriela Alejandra;Sciata;gsciata@permaquim.com;319;Colaborador;Calabro, Alejandro Moises
+Santiago Nicolas;Veiga Busto;sveiga@permaquim.com;312;Colaborador;-
+Rodger Max;;mrodger@permaquim.com;551;Colaborador;Mon, Fernando
+Ferh Perez Freddy Alejandro;;fferh@permaquim.com;641;Colaborador;Olalla, Ezequiel Alejandro
+Garrigo Federico Ignacio;;fgarrigo@permaquim.com;660;Colaborador;Olalla, Ezequiel Alejandro
+Muratore Mauro;;mmuratore@permaquim.com;613;Colaborador;Oddo, Jose Luis
+Orsi Veronica Andrea;;vorsi@permaquim.com;523;Colaborador;Oddo, Jose Luis
+Zerzer Sol Belen;;szerzer@permaquim.com;398;Colaborador;Cabrera, Hector Martin
+Miriam Graciela;Banegas;banegasgraciela70@gmail.com;72;Colaborador;Tripodi, Pablo Damian
+Roberto Ruben;Villarreal;rvillareal@permaquim.com;164;Colaborador;Petro, Jose Ignacio
+Andres Alberto;Machado;amachado@permaquim.com;214;Colaborador;Petro, Jose Ignacio
+Agüero Adolfo Rafael;;aaguero@permaquim.com;445;Colaborador;Petro, Jose Ignacio
+Poggi Matias;;matiaspoggi@permaquim.com;548;Colaborador;Petro, Jose Ignacio
+Reynoso Lazarte Luciano Dario;;lreynoso@permaquim.com;564;Colaborador;Petro, Jose Ignacio
+Neuvirt Gabriel Dario;;gneuvirt@permaquim.com;565;Colaborador;Petro, Jose Ignacio
+Coronel  Maximiliano Oscar;;mcoronel@permaquim.com;566;Colaborador;Petro, Jose Ignacio
+Montaño Chira Adrian Adalid;;amontano@permaquim.com;525;Colaborador;Petro, Jose Ignacio
+Monzon Leonel Jesus Dario;;lmonzon@permaquim.com;614;Colaborador;Petro, Jose Ignacio
+Fernandez Rodrigo Andres;;afernandez@permaquim.com;630;Colaborador;Petro, Jose Ignacio
+Maidana Lautaro Fabricio;;lmaidana@permaquim.com;658;Colaborador;Petro, Jose Ignacio
+Gustavo Eduardo;Teran;gteran@permaquim.com;1002;Colaborador;Petro, Jose Ignacio
+Maria Roberta;Telatinian;rtelatinian@permaquim.com;57;Colaborador;-
+Durand Leandro Raul;;ldurand@permaquim.com;435;Colaborador;Mon, Fernando
+Soto Romero Liset Fabiola;;fsoto@permaquim.com;474;Colaborador;Cabrera, Hector Martin
+Fernanda Belen;Rios;frios@permaquim.com;375;Colaborador;Cabrera, Hector Martin
+Alan Nahuel;Joho;ajoho@permaquim.com;355;Colaborador;Cian, Nerina Vanesa
+Medina Nahuel;;nmedina@permaquim.com;657;Colaborador;Cian, Nerina Vanesa
+Finlez Rodrigo Nicolas;;rfinlez@permaquim.com;572;Colaborador;Cabrera, Hector Martin
+Poggi Matias Ezequiel;;mpoggi@permaquim.com;469;Colaborador;-
+Vazquez Piedrabuena Bruno Martin;;bvazquez@permaquim.com;454;Colaborador;-
+Pablo Sergio;Quiroga;pquiroga@permaquim.com;111;Colaborador;-
+Daniela Alejandra;Aghazarian;daghazarian@permaquim.com;271;Colaborador;Mon, Fernando
+Salcedo Micaela;;msalcedo@permaquim.com;603;Colaborador;-
+Capasso Brenda Agustina;;bcapasso@permaquim.com;659;Colaborador;-
+Guillén Barreto Diego José;;dguillen@permaquim.com;620;Colaborador;-
+Cueva María José;;mcueva@permaquim.com;610;Colaborador;-
+Rocca Franco Maximiliano;;frocca@permaquim.com;636;Colaborador;-
+Perduca Feldman Rodrigo Matias;;rperduca@permaquim.com;654;Colaborador;-
+Cash Malcolm;;mcash@permaquim.com;493;Colaborador;Malamud, Alejandro Enrique
+Gabriel Antonio;Dalle Nogare;gdallenogare@permaquim.com;21;Colaborador;-
+Marcelo Ricardo;Leiva;mleiva@permaquim.com;46;Colaborador;-
+Fabian;Orlate;forlate@permaquim.com;78;Colaborador;-
+Matias Ezequiel;Morel;mmorel@permaquim.com;246;Colaborador;-
+Nicolas Ezequiel;Di Virgilio;ndivirgilio@permaquim.com;195;Colaborador;-
+Damian;Gaibazzi;dgaibazzi@permaquim.com;315;Colaborador;-
+Matías;Cacacci;despacho@permaquim.com;344;Colaborador;Paoli, Guillermo Sebastian
+Galarza Christian Oscar;;cgalarza@permaquim.com;559;Colaborador;-
+Palenque Dante Nicolas;;dpalenque@permaquim.com;571;Colaborador;Paoli, Guillermo Sebastian
+Infante Andrea Paola;;ainfante@permaquim.com;604;Colaborador;Paoli, Guillermo Sebastian
+Mendez Diogo Gael;;dmendez@permaquim.com;616;Colaborador;-
+Rojas Carlos José Alejandro;;crojas@permaquim.com;597;Colaborador;Cabrera, Hector Martin
+Cecilia Gabriela Brusco;;cbrusco@permaquim.com;524;Colaborador;-
+Muñoz Andres Fabian;;amunoz@permaquim.com;542;Colaborador;-
+Rodriguez Joaquin Andres;;jrodriguez@permaquim.com;526;Colaborador;-
+Mendez Gonzalo;;gmendez@permaquim.com;549;Colaborador;Lopez, Sebastian Rodolfo
+Tapia Martin Ignacio;;mtapia@permaquim.com;574;Colaborador;-
+Pepe Juan Martin;;mpepe@permaquim.com;577;Colaborador;-
+Musante Agustin;;amusante@permaquim.com;482;Colaborador;-
+Pogonza Dario Nicolas;;npogonza@permaquim.com;460;Colaborador;-
+Matías Tomás;Lennon;tlennon@permaquim.com;388;Colaborador;-
+Ojeda Alejo Matias;;aojeda@permaquim.com;618;Colaborador;-
+Zarlenga Marcelo Fabian;;mzarlenga@permaquim.com;1008;Colaborador;Malamud, Alejandro Enrique
+Victor Julio;Zanetti Gusman Herman;vzanetti@permaquim.com;172;Colaborador;-
+Kertesz Ignacio Ian;;ikertesz@permaquim.com;656;Colaborador;-
+Cespon Claudio Daniel;;ccespon@permaquim.com;421;Colaborador;-
+Rios Ezequiel;;erios@permaquim.com;643;Colaborador;-
+Eroles Enzo Adrian;;eeroles@permaquim.com;653;Colaborador;Cabrera, Hector Martin
+Ismael;Duarte;iduarte@permaquim.com;341;Colaborador;Cabrera, Hector Martin
+Alexis Ezequiel;Tanielian;atanielian@permaquim.com;274;Colaborador;-
+Matías Andrés;Jasper;mjasper@permaquim.com;385;Colaborador;-
+Cecilia Veronica;Baldacchino;cbaldacchino@permaquim.com;41;Colaborador;Vuagnoux, Marcelo Daniel
+Rodolfo Francisco;Moyano;rmoyano@permaquim.com;22;Colaborador;Vuagnoux, Marcelo Daniel
+Jorge Alberto;Cabral;jcabral@permaquim.com;4;Colaborador;Malamud, Alejandro Enrique
+Juan Pablo;Bottini;jpbottini@permaquim.com;19;Colaborador;-
+Emiliano Ariel;Igarteburu;eigarteburu@permaquim.com;59;Colaborador;Malamud, Alejandro Enrique
+Ruiz Mariana Soledad;;mruiz@permaquim.com;417;Colaborador;-
+Reda Andres;;areda@permaquim.com;442;Colaborador;Casal, Marcos
+Rodriguez Leandro Ariel;;lrodriguez@permaquim.com;507;Colaborador;-
+Lisoni Dario Hernan;;dlisoni@permaquim.com;508;Colaborador;-
+Russell Puig  Marcos;;mrussell@permaquim.com;651;Colaborador;Casal, Marcos
+Federico Horacio;Granato;fgranato@permaquim.com;1003;Colaborador;Casal Santamarina, Eduardo Antonio
+Breckon Debora;;dbreckon@permaquim.com;662;Colaborador;Mon, Fernando
+Luaiza Sergio Daniel;;sluaiza@permaquim.com;661;Colaborador;Malamud, Alejandro Enrique
+Zoilo;Jurado;zjurado@permaquim.com;664;Colaborador;Cabrera, Hector Martin
+Ivan Exequiel;Leyva;ileyva@permaquim.com;665;Colaborador;Spada, Jose Daniel
+Emilio Basualdo;Cibils;ebasualdo@permaquim.com;-;Colaborador;Cabrera, Hector Martin
+Andres Esteban;Peñailillo Suazo;apenailillo@permaquim.com;53;Colaborador;Quila Catalan, Pedro Esteban
+Catalina De Las Rosas;Muñoz González;cmunoz@permaquim.com;41;Colaborador;Cian, Nerina Vanesa
+Cecilia Fabiana;Espinosa Rojas;cespinosa@permaquim.com;40;Colaborador;Gallardo, Eduardo Jeremias
+Claudia Alejandra;Luna Aravena;cluna@permaquim.com;44;Colaborador;Cian, Nerina Vanesa
+Cristian Alejandro;Tupa Lovera;ctupa@permaquim.com;52;Colaborador;Quila Catalan, Pedro Esteban
+Cristian Andrés;Castro Aguillón;ccastro@permaquim.com;43;Colaborador;Quila Catalan, Pedro Esteban
+Cristian Orlando;Catalán Venegas;ccatalan@permaquim.com;4;Colaborador;Quila Catalan, Pedro Esteban
+Danilo;Sanches Vilchez;dsanchez@permaquim.com;51;Colaborador;Quila Catalan, Pedro Esteban
+Diego;Aravena Sandova;daravena@permaquim.com;42;Colaborador;Quila Catalan, Pedro Esteban
+Eduardo Andres;Hernandez Miranda;ehernandez@permaquim.com;17;Colaborador;Quila Catalan, Pedro Esteban
+Emanuel;Bauer Osorio;ebauer@permaquim.com;5;Colaborador;Quila Catalan, Pedro Esteban
+Fabian Alexi;Gallardo Moya;fgallardo@permaquim.com;15;Colaborador;Quila Catalan, Pedro Esteban
+Fabian Antonio;Montecinos Valdés;fmontecinos@permaquim.com;39;Colaborador;Quila Catalan, Pedro Esteban
+Fabian Cristobal;Villagra Pinar;fvillagra@permaquim.com;35;Colaborador;Quila Catalan, Pedro Esteban
+Francisco Andres;Montes Zuñiga;fmontes@permaquim.com;24;Colaborador;Quila Catalan, Pedro Esteban
+Gonzalo Andres;Arancibia Poblete;garancibia@permaquim.com;1;Colaborador;Pioli, Matias Mario Jose
+Gustavo;Silva Elgueta;gsilva@permaquim.com;34;Colaborador;Quila Catalan, Pedro Esteban
+Illiam Andrei;Mancilla Contreras;imancilla@permaquim.com;57;Colaborador;Quila Catalan, Pedro Esteban
+Javier Ignacio;Saavedra Muñoz;jsaavedra@permaquim.com;59;Colaborador;Quila Catalan, Pedro Esteban
+Jorge;Paillalef Cabrera;jpailafel@permaquim.com;27;Colaborador;Quila Catalan, Pedro Esteban
+Jose Emanuel;Diaz Moreno;jmoreno@permaquim.com;10;Colaborador;Quila Catalan, Pedro Esteban
+Juan;Monardes Contreras;jmonardes@permaquim.com;23;Colaborador;Quila Catalan, Pedro Esteban
+Juan Bautista;Lucena Pacheco;jlucena@permaquim.com;20;Colaborador;Quila Catalan, Pedro Esteban
+Juan Carlos;Meneses Godoy;jmeneses@permaquim.com;22;Colaborador;Quila Catalan, Pedro Esteban
+Juan Pablo;Carrero;jcarrera@permaquim.com;54;Colaborador;Quila Catalan, Pedro Esteban
+Luis Alejandro;Riquelme Vitale;lriquelme@permaquim.com;38;Colaborador;Quila Catalan, Pedro Esteban
+Martin Andres;Lopez Retamal;mlopez@permaquim.com;19;Colaborador;Quila Catalan, Pedro Esteban
+Matías Javier;Calderón Alvear;mcalderon@permaquim.com;7;Colaborador;Quila Catalan, Pedro Esteban
+Miguel Ismael;Vinet Perez;mvinet@permaquim.com;36;Colaborador;Quila Catalan, Pedro Esteban
+Nicolas Alexis;Fuentes Valencia;nfuentes@permaquim.com;13;Colaborador;Quila Catalan, Pedro Esteban
+Omar Antonio;Bautista Ramirez;oramirez@permaquim.com;6;Colaborador;Quila Catalan, Pedro Esteban
+Patricio Alexis;Ortiz Araya;portiz@permaquim.com;26;Colaborador;Quila Catalan, Pedro Esteban
+Ramon Alberto;Romero Romero;rromero@permaquim.com;32;Colaborador;Quila Catalan, Pedro Esteban
+Ramon Ernesto Jesus;Romero Carrera;rcarrera@permaquim.com;31;Colaborador;Quila Catalan, Pedro Esteban
+Richard Alex;Aliaga Lara;raliaga@permaquim.com;3;Colaborador;Quila Catalan, Pedro Esteban
+Sergio Ivan;Cordero Dinamarca;sdinamarca@permaquim.com;9;Colaborador;Quila Catalan, Pedro Esteban
+Waldo Antonio;Díaz Rojas;wdiazrojas@permaquim.com;10;Colaborador;Quila Catalan, Pedro Esteban
+Zeus José;Gomis Acuña;zacuna@permaquim.com;16;Colaborador;Quila Catalan, Pedro Esteban
+Cristian Alejandro;Almonacid Santana;calmonacid@permaquim.com;60;Colaborador;Sandoval Sandoval, Mauricio Bernabe
+Solange Edith;Tala Jury;stala@permaquim.com;61;Colaborador;Jara Muñoz, Cristian Eduardo
+Luis Alejandro;Lagos Acuña;alagos@permaquim.com;62;Colaborador;Jara Muñoz, Cristian Eduardo
+Matías Inan;Jamett Romero;mjamett@permaquim.com;63;Colaborador;Cabrera, Hector Martin
+Bruno;Conde Alvarez;bconde@permaquim.com;8;Colaborador;Cabrera, Hector Martin
+Carolina Isabel;Alonso Freitas;calonso@permaquim.com;11;Colaborador;Cian, Nerina Vanesa
+Fernanda Valeria;Fonseca Alvarez;fernanda.valeria.02.28@gmail.com;6;Colaborador;Falco Dorrego, Diego
+Gabriel Fernando;Mecoll Guzman;gmecoll@permaquim.com;15;Colaborador;Berlincourt, Guillermo Andres
+Gustavo Javier;Landeira Gonzalez;glandeira@permaquim.com;2;Colaborador;Cabrera, Hector Martin
+Leonardo Cirilo;Abreu Stratta;labreustratta@gmail.com;5;Colaborador;Cabrera, Hector Martin
+Lucas;Landeira Escames;llandeira@permaquim.com;9;Colaborador;Cian, Nerina Vanesa
+Marcelo Jose;Maio Cazzulli;mmaio@permaquim.com;10;Colaborador;Cabrera, Hector Martin
+Marcelo Ruben;Landeira Gonzalez;mlandeira@permaquim.com;1;Colaborador;Berlincourt, Guillermo Andres
+Martin Marcelo;Garay Rodriguez;mgaray@permaquim.com;4;Colaborador;Cabrera, Hector Martin
+Roberts Augusto;Lobo Araujo;rlobo@permaquim.com;14;Colaborador;Cabrera, Hector Martin
+Roger Gabriel;Larraura Lujan;rlarraura@permaquim.com;12;Colaborador;Cabrera, Hector Martin
+Sebastian Martin;Di Pólito Carretto;sdipolito@permaquim.com;17;Colaborador;Cabrera, Hector Martin
+Sergio Gustavo;Marin Nuñez;gmarin@permaquim.com;3;Colaborador;Cabrera, Hector Martin
+María Eugenia;Martins Farias;mmartins@permaquim.com;18;Colaborador;Berlincourt, Guillermo Andres

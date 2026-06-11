@@ -1,0 +1,96 @@
+@page "/admin/organigrama"
+@inject ICurrentUserService CurrentUser
+@inject UsuarioService UsuarioService
+@inject NavigationManager Nav
+
+<PageTitle>Organigrama - PQ-Talent</PageTitle>
+
+@if (CurrentUser.EstaAutenticado && CurrentUser.EsAdmin)
+{
+    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+        <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1" Style="margin: 0;">Organigrama de la Empresa</RadzenText>
+        
+        <RadzenCard Style="min-height: 500px;">
+            @if (isLoading)
+            {
+                <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            }
+            else
+            {
+                <RadzenTree Data="@roots" Style="width: 100%;">
+                    <RadzenTreeLevel TextProperty="NodeName" ChildrenProperty="Children" Expanded="e => true" HasChildren="e => ((OrgNode)e).Children.Any()" />
+                </RadzenTree>
+            }
+        </RadzenCard>
+    </RadzenStack>
+}
+
+@code {
+    bool isLoading;
+    List<UsuarioDto> allUsers = new();
+    List<OrgNode> roots = new();
+
+    public class OrgNode
+    {
+        public UsuarioDto User { get; set; } = new();
+        public string NodeName => $"{User.NombreCompleto} - {User.Rol}{(User.EsJefe ? "" : " (Colaborador)")}";
+        public List<OrgNode> Children { get; set; } = new();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.EsAdmin) 
+        {
+            Nav.NavigateTo("dashboard");
+            return;
+        }
+
+        isLoading = true;
+        allUsers = await UsuarioService.GetUsuariosAsync();
+        
+        // Build the tree
+        var lookup = new Dictionary<string, OrgNode>(StringComparer.OrdinalIgnoreCase); // Key: Email
+
+        // First pass: create all nodes (distinct by email, prioritize Jefes to avoid duplicates)
+        foreach (var u in allUsers.OrderByDescending(u => u.EsJefe))
+        {
+            var email = u.Email?.Trim() ?? "";
+            if (!string.IsNullOrEmpty(email) && !lookup.ContainsKey(email))
+            {
+                lookup[email] = new OrgNode { User = u };
+            }
+        }
+
+        // Second pass: link children to parents
+        foreach (var u in allUsers)
+        {
+            var email = u.Email?.Trim() ?? "";
+            if (string.IsNullOrEmpty(email) || !lookup.ContainsKey(email)) continue;
+
+            // If the user has a manager
+            if (u.JefeId.HasValue)
+            {
+                var parentUser = allUsers.FirstOrDefault(x => x.Id == u.JefeId.Value && x.EsJefe);
+                if (parentUser != null)
+                {
+                    var parentEmail = parentUser.Email?.Trim() ?? "";
+                    if (!string.IsNullOrEmpty(parentEmail) && lookup.ContainsKey(parentEmail))
+                    {
+                        var parentNode = lookup[parentEmail];
+                        var childNode = lookup[email];
+
+                        if (!parentNode.Children.Contains(childNode) && parentNode != childNode)
+                        {
+                            parentNode.Children.Add(childNode);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Roots are nodes without a JefeId assigned, or whose Usuario doesn't exist
+        roots = lookup.Values.Where(n => !n.User.JefeId.HasValue || allUsers.All(x => x.Id != n.User.JefeId.Value || !x.EsJefe)).ToList();
+
+        isLoading = false;
+    }
+}

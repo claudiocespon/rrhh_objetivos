@@ -21,14 +21,14 @@
 
 @code {
     [Parameter] public int ObjetivoId { get; set; }
-    [Parameter] public int EmpleadoId { get; set; }
+    [Parameter] public int UsuarioId { get; set; }
 
     BitacoraEntrada entrada = new();
 
     protected override void OnInitialized()
     {
         entrada.ObjetivoId = ObjetivoId;
-        entrada.EmpleadoId = EmpleadoId;
+        entrada.UsuarioId = UsuarioId;
     }
 
     async Task OnSubmit()

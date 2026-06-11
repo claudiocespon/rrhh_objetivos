@@ -41,6 +41,12 @@ else
                 <RadzenTabsItem Text="Objetivos de mi Equipo">
                     @RenderObjetivosEquipo(roleData.Equipo)
                 </RadzenTabsItem>
+                @if (roleData.Organizacion != null)
+                {
+                    <RadzenTabsItem Text="@(CurrentUser.Rol == "DIRECTOR" ? "Mi Área / Dirección" : "Toda la Organización")">
+                        @RenderObjetivosEquipo(roleData.Organizacion)
+                    </RadzenTabsItem>
+                }
                 <RadzenTabsItem Text="Mis Objetivos">
                     @RenderObjetivos(roleData.Personal, false)
                 </RadzenTabsItem>
@@ -96,9 +102,9 @@ else
 
     [Inject] NavigationManager Nav { get; set; } = null!;
 
-    void OnViewClick(int id, int empleadoId)
+    void OnViewClick(int id, int usuarioId)
     {
-        Nav.NavigateTo($"seguimientos/{empleadoId}/objetivo/{id}");
+        Nav.NavigateTo($"seguimientos/{usuarioId}/objetivo/{id}");
     }
 
     async Task OnCreateClick()
@@ -151,12 +157,12 @@ else
         else
         {
             var grupos = objetivosLista
-                .GroupBy(o => new { o.Empleado, o.Anio })
+                .GroupBy(o => new { o.Usuario, o.Anio })
                 .Select(g => {
                     var objetivosEmpleado = g.ToList();
                     decimal sumaPesos = objetivosEmpleado.Sum(o => o.PorcentajePilar);
                     return new UserYearGroup {
-                        Empleado = g.Key.Empleado,
+                        Usuario = g.Key.Usuario,
                         Anio = g.Key.Anio,
                         Cantidad = objetivosEmpleado.Count,
                         Completados = objetivosEmpleado.Count(o => o.Estado == EstadoObjetivo.COMPLETADO),
@@ -164,15 +170,15 @@ else
                         Objetivos = objetivosEmpleado
                     };
                 })
-                .OrderBy(g => g.Empleado.Apellido)
-                .ThenBy(g => g.Empleado.Nombre)
+                .OrderBy(g => g.Usuario.Apellido)
+                .ThenBy(g => g.Usuario.Nombre)
                 .ThenByDescending(g => g.Anio)
                 .ToList();
 
             <div class="pt-3">
-                <RadzenDataGrid Data="@grupos" TItem="UserYearGroup" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                <RadzenDataGrid Data="@grupos" TItem="UserYearGroup" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Template Context="grupo">
-                        <RadzenDataGrid Data="@grupo.Objetivos" TItem="Objetivos.Web.Domain.Entities.Objetivo" AllowPaging="false" AllowSorting="true" Responsive="true">
+                        <RadzenDataGrid Data="@grupo.Objetivos" TItem="Objetivos.Web.Domain.Entities.Objetivo" AllowPaging="false" AllowSorting="true" Responsive="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                             <Columns>
                                 <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Nombre" Title="Objetivo" />
                                 <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Pilar.Nombre" Title="Pilar">
@@ -199,7 +205,7 @@ else
                                 <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
                                     <Template Context="obj">
                                         <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
-                                                      Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
+                                                      Click="@(() => OnViewClick(obj.Id, obj.UsuarioId))" />
                                     </Template>
                                 </RadzenDataGridColumn>
                             </Columns>
@@ -208,7 +214,7 @@ else
                     <Columns>
                         <RadzenDataGridColumn TItem="UserYearGroup" Title="Usuario">
                             <Template Context="g">
-                                @(string.IsNullOrWhiteSpace(g.Empleado.Apellido) ? g.Empleado.Nombre : $"{g.Empleado.Apellido}, {g.Empleado.Nombre}")
+                                @(string.IsNullOrWhiteSpace(g.Usuario.Apellido) ? g.Usuario.Nombre : $"{g.Usuario.Apellido}, {g.Usuario.Nombre}")
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="UserYearGroup" Property="Anio" Title="Año" Width="100px" />
@@ -238,7 +244,7 @@ else
         else
         {
             <div class="pt-3">
-                <RadzenDataGrid Data="@objetivosLista" TItem="Objetivos.Web.Domain.Entities.Objetivo" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                <RadzenDataGrid Data="@objetivosLista" TItem="Objetivos.Web.Domain.Entities.Objetivo" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
                         <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Nombre" Title="Objetivo" />
                         <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Pilar.Nombre" Title="Pilar">
@@ -253,9 +259,9 @@ else
                         </RadzenDataGridColumn>
                         @if (showEmployee)
                         {
-                            <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Empleado.Nombre" Title="Empleado">
+                            <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Property="Usuario.Nombre" Title="Usuario">
                                 <Template Context="obj">
-                                    @obj.Empleado.Nombre @obj.Empleado.Apellido
+                                    @obj.Usuario.Nombre @obj.Usuario.Apellido
                                 </Template>
                             </RadzenDataGridColumn>
                         }
@@ -274,7 +280,7 @@ else
                         <RadzenDataGridColumn TItem="Objetivos.Web.Domain.Entities.Objetivo" Context="obj" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="160px">
                             <Template Context="obj">
                                 <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
-                                              Click="@(() => OnViewClick(obj.Id, obj.EmpleadoId))" />
+                                              Click="@(() => OnViewClick(obj.Id, obj.UsuarioId))" />
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
@@ -285,7 +291,7 @@ else
 
     class UserYearGroup 
     {
-        public Objetivos.Web.Domain.Entities.Empleado Empleado { get; set; } = null!;
+        public Objetivos.Web.Domain.Entities.Usuario Usuario { get; set; } = null!;
         public int Anio { get; set; }
         public int Cantidad { get; set; }
         public int Completados { get; set; }

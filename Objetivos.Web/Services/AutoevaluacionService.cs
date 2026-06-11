@@ -16,11 +16,13 @@ public class AutoevaluacionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly DataScopeService _dataScope;
+    private readonly RendimientoService _rendimiento;
 
-    public AutoevaluacionService(IDbContextFactory<AppDbContext> dbFactory, DataScopeService dataScope)
+    public AutoevaluacionService(IDbContextFactory<AppDbContext> dbFactory, DataScopeService dataScope, RendimientoService rendimiento)
     {
         _dbFactory = dbFactory;
         _dataScope = dataScope;
+        _rendimiento = rendimiento;
     }
 
     public async Task<AutoevaluacionPageData> GetAutoevaluacionesAsync(ICurrentUserService user)
@@ -28,7 +30,7 @@ public class AutoevaluacionService
         using var db = await _dbFactory.CreateDbContextAsync();
         var data = new AutoevaluacionPageData();
 
-        var empleadoPropio = await db.Empleados
+        var empleadoPropio = await db.Usuarios
             .FirstOrDefaultAsync(e => e.Email.ToLower() == user.Email.ToLower() && e.Activo);
 
         // Personal
@@ -36,7 +38,7 @@ public class AutoevaluacionService
         {
             data.Personal = await db.Autoevaluaciones
                 .Include(ae => ae.Objetivo)
-                    .ThenInclude(o => o.Empleado)
+                    .ThenInclude(o => o.Usuario)
                 .Include(ae => ae.Objetivo)
                     .ThenInclude(o => o.SoftSkill1)
                 .Include(ae => ae.Objetivo)
@@ -44,7 +46,7 @@ public class AutoevaluacionService
                 .Include(ae => ae.EscalaValoracionScore)
                 .Include(ae => ae.SoftSkill1EscalaValoracion)
                 .Include(ae => ae.SoftSkill2EscalaValoracion)
-                .Where(ae => ae.Objetivo.EmpleadoId == empleadoPropio.Id)
+                .Where(ae => ae.Objetivo.UsuarioId == empleadoPropio.Id)
                 .OrderByDescending(ae => ae.FechaAutoevaluacion)
                 .ToListAsync();
         }
@@ -54,7 +56,7 @@ public class AutoevaluacionService
         {
             var query = db.Autoevaluaciones
                 .Include(ae => ae.Objetivo)
-                    .ThenInclude(o => o.Empleado)
+                    .ThenInclude(o => o.Usuario)
                 .Include(ae => ae.Objetivo)
                     .ThenInclude(o => o.SoftSkill1)
                 .Include(ae => ae.Objetivo)
@@ -90,10 +92,10 @@ public class AutoevaluacionService
         return await db.Autoevaluaciones.FirstOrDefaultAsync(ae => ae.ObjetivoId == objetivoId);
     }
 
-    public async Task<int?> GetEmpleadoIdByEmailAsync(string email)
+    public async Task<int?> GetUsuarioIdByEmailAsync(string email)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var emp = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email.ToLower() && e.Activo);
+        var emp = await db.Usuarios.FirstOrDefaultAsync(e => e.Email.ToLower() == email.ToLower() && e.Activo);
         return emp?.Id;
     }
 
@@ -101,7 +103,7 @@ public class AutoevaluacionService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
 
-        var empleadoPropio = await db.Empleados
+        var empleadoPropio = await db.Usuarios
             .FirstOrDefaultAsync(e => e.Email.ToLower() == user.Email.ToLower() && e.Activo);
 
         if (empleadoPropio == null)
@@ -109,11 +111,11 @@ public class AutoevaluacionService
 
         // Objetivos activos sin autoevaluación completada
         var objetivosSinAutoev = await db.Objetivos
-            .Include(o => o.Empleado)
+            .Include(o => o.Usuario)
             .Include(o => o.Pilar)
             .Include(o => o.SoftSkill1)
             .Include(o => o.SoftSkill2)
-            .Where(o => o.EmpleadoId == empleadoPropio.Id &&
+            .Where(o => o.UsuarioId == empleadoPropio.Id &&
                         (o.Estado == EstadoObjetivo.ACTIVO || o.Estado == EstadoObjetivo.EN_RIESGO) &&
                         !db.Autoevaluaciones.Any(ae => ae.ObjetivoId == o.Id))
             .OrderBy(o => o.Deadline)
@@ -137,6 +139,10 @@ public class AutoevaluacionService
                 db.Entry(ae).State = EntityState.Modified;
 
             await db.SaveChangesAsync();
+            
+            // Recalcular progreso en base a la nueva etapa completada
+            await _rendimiento.RecalcularProgresoObjetivoAsync(ae.ObjetivoId);
+
             return (true, "");
         }
         catch (Exception ex)

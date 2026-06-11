@@ -30,14 +30,14 @@ public class DashboardService
         var diasProximoVencimiento = await _configuracion.ObtenerConfiguracionIntAsync("dias_proximo_vencimiento") ?? 7;
         var proximaFecha = hoy.AddDays(diasProximoVencimiento);
 
-        // 1. Fetch Personal Data (for Colaborador, or for Jefe/Gerente's own objectives)
-        var empleadoPropio = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == _currentUser.Email.ToLower() && e.Activo);
+        // 1. Fetch Personal Data (for Colaborador, or for Usuario/Gerente's own objectives)
+        var empleadoPropio = await db.Usuarios.FirstOrDefaultAsync(e => e.Email.ToLower() == _currentUser.Email.ToLower() && e.Activo);
         if (empleadoPropio != null)
         {
             var misObjetivos = await db.Objetivos
                 .Include(o => o.Revisiones)
                 .Include(o => o.EvaluacionFinal)
-                .Where(o => o.EmpleadoId == empleadoPropio.Id && o.Anio == hoy.Year)
+                .Where(o => o.UsuarioId == empleadoPropio.Id && o.Anio == hoy.Year)
                 .ToListAsync();
 
             result.Personal = new DashboardData
@@ -56,10 +56,10 @@ public class DashboardService
         if (_currentUser.EsJefe || _dataScope.PuedeVerTodo(_currentUser))
         {
             IQueryable<Objetivo> query = db.Objetivos
-                .Include(o => o.Empleado)
+                .Include(o => o.Usuario)
                 .Include(o => o.Revisiones)
                 .Include(o => o.EvaluacionFinal)
-                .Where(o => o.Anio == hoy.Year && o.Empleado.Activo);
+                .Where(o => o.Anio == hoy.Year && o.Usuario.Activo);
 
             query = _dataScope.AplicarScope(query, _currentUser);
 

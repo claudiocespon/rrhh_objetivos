@@ -55,14 +55,14 @@ public class RendimientoService
         return CalcularPonderadoInterno(objetivo);
     }
 
-    // Rendimiento de empleado por pilar (0-5) - RN-07
-    public async Task<double> RendimientoPorPilarAsync(int empleadoId, int pilarId, int anio)
+    // Rendimiento de usuario por pilar (0-5) - RN-07
+    public async Task<double> RendimientoPorPilarAsync(int usuarioId, int pilarId, int anio)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var objetivo = await db.Objetivos
             .Include(o => o.Revisiones)
             .Include(o => o.EvaluacionFinal)
-            .FirstOrDefaultAsync(o => o.EmpleadoId == empleadoId
+            .FirstOrDefaultAsync(o => o.UsuarioId == usuarioId
                                    && o.PilarId == pilarId
                                    && o.Anio == anio);
 
@@ -71,14 +71,14 @@ public class RendimientoService
         return CalcularPonderadoInterno(objetivo);
     }
 
-    // Promedio general del empleado (0-5) - RN-07 - AHORA PONDERADO POR PORCENTAJE DE OBJETIVO
-    public async Task<double> PromedioGeneralAsync(int empleadoId, int anio)
+    // Promedio general del usuario (0-5) - RN-07 - AHORA PONDERADO POR PORCENTAJE DE OBJETIVO
+    public async Task<double> PromedioGeneralAsync(int usuarioId, int anio)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var objetivos = await db.Objetivos
             .Include(o => o.Revisiones)
             .Include(o => o.EvaluacionFinal)
-            .Where(o => o.EmpleadoId == empleadoId && o.Anio == anio && o.Estado != EstadoObjetivo.CANCELADO)
+            .Where(o => o.UsuarioId == usuarioId && o.Anio == anio && o.Estado != EstadoObjetivo.CANCELADO)
             .ToListAsync();
         if (!objetivos.Any()) return 0;
 
@@ -120,21 +120,37 @@ public class RendimientoService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var objetivo = await db.Objetivos
+            .Include(o => o.Autoevaluacion)
             .Include(o => o.Revisiones)
+            .Include(o => o.EvaluacionFinal)
             .FirstOrDefaultAsync(o => o.Id == objetivoId);
 
         if (objetivo == null) return;
 
-        var revisionesCompletadas = objetivo.Revisiones.Where(r => r.Completada && r.Puntaje.HasValue);
-        if (!revisionesCompletadas.Any())
+        int progreso = 0;
+
+        // Etapa 1: Autoevaluación
+        if (objetivo.Autoevaluacion != null)
         {
-            objetivo.Progreso = 0;
+            progreso += 33;
         }
-        else
+
+        // Etapa 2: Revisión (Feedback Mitad de Año)
+        if (objetivo.Revisiones != null && objetivo.Revisiones.Any(r => r.Completada))
         {
-            double promedio = revisionesCompletadas.Average(r => r.Puntaje!.Value);
-            objetivo.Progreso = (int)Math.Round(promedio * 20);
+            progreso += 33;
         }
+
+        // Etapa 3: Evaluación Final
+        if (objetivo.EvaluacionFinal != null || objetivo.Estado == EstadoObjetivo.COMPLETADO)
+        {
+            progreso = 100;
+        }
+
+        // Evitar superar el 100% por cualquier eventualidad
+        if (progreso > 100) progreso = 100;
+
+        objetivo.Progreso = progreso;
 
         await db.SaveChangesAsync();
     }

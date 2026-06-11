@@ -115,9 +115,9 @@ else
             <div class="pt-3">
                 <RadzenDataGrid Data="@pendientes" TItem="RevisionCuatrimestral" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
-                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Empleado.Nombre" Title="Colaborador">
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Usuario.Nombre" Title="Colaborador">
                             <Template Context="rev">
-                                @rev.Objetivo.Empleado.Nombre @rev.Objetivo.Empleado.Apellido
+                                @rev.Objetivo.Usuario.Nombre @rev.Objetivo.Usuario.Apellido
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Nombre" Title="Objetivo" />
@@ -155,9 +155,9 @@ else
             <div class="pt-3">
                 <RadzenDataGrid Data="@finalesPendientes" TItem="Objetivo" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
-                        <RadzenDataGridColumn TItem="Objetivo" Property="Empleado.Nombre" Title="Colaborador">
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Usuario.Nombre" Title="Colaborador">
                             <Template Context="obj">
-                                @obj.Empleado.Nombre @obj.Empleado.Apellido
+                                @obj.Usuario.Nombre @obj.Usuario.Apellido
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
@@ -190,9 +190,9 @@ else
             <div class="pt-3">
                 <RadzenDataGrid Data="@realizadas" TItem="RevisionCuatrimestral" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
-                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Empleado.Nombre" Title="Colaborador">
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Usuario.Nombre" Title="Colaborador">
                             <Template Context="rev">
-                                @rev.Objetivo.Empleado.Nombre @rev.Objetivo.Empleado.Apellido
+                                @rev.Objetivo.Usuario.Nombre @rev.Objetivo.Usuario.Apellido
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="Objetivo.Nombre" Title="Objetivo" />
@@ -211,7 +211,7 @@ else
                                 @(rev.EscalaValoracion?.Etiqueta ?? "-")
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="ComentarioJefe" Title="Resumen de Evaluación" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="ComentarioUsuario" Title="Resumen de Evaluación" />
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="FechaEvaluacion" Title="Fecha" FormatString="{0:dd/MM/yyyy}" Width="150px" />
                     </Columns>
                 </RadzenDataGrid>
@@ -246,7 +246,7 @@ else
                                 @(rev.EscalaValoracion?.Etiqueta ?? "-")
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="ComentarioJefe" Title="Resumen de Evaluación" />
+                        <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="ComentarioUsuario" Title="Resumen de Evaluación" />
                         <RadzenDataGridColumn TItem="RevisionCuatrimestral" Property="FechaEvaluacion" Title="Fecha" FormatString="{0:dd/MM/yyyy}" Width="150px" />
                     </Columns>
                 </RadzenDataGrid>
@@ -265,9 +265,9 @@ else
             <div class="pt-3">
                 <RadzenDataGrid Data="@finalesRealizadas" TItem="Objetivo" AllowPaging="true" PageSize="10" Responsive="true" AllowFiltering="true" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
-                        <RadzenDataGridColumn TItem="Objetivo" Property="Empleado.Nombre" Title="Colaborador">
+                        <RadzenDataGridColumn TItem="Objetivo" Property="Usuario.Nombre" Title="Colaborador">
                             <Template Context="obj">
-                                @obj.Empleado.Nombre @obj.Empleado.Apellido
+                                @obj.Usuario.Nombre @obj.Usuario.Apellido
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
@@ -310,7 +310,7 @@ else
                                 <RadzenBadge Text="@(ef.EscalaValoracionFinal?.Etiqueta ?? "-")" BadgeStyle="BadgeStyle.Primary" />
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="EvaluacionFinal" Property="ComentarioJefe" Title="Resumen Final" />
+                        <RadzenDataGridColumn TItem="EvaluacionFinal" Property="ComentarioUsuario" Title="Resumen Final" />
                         <RadzenDataGridColumn TItem="EvaluacionFinal" Property="FechaEvaluacion" Title="Fecha" FormatString="{0:dd/MM/yyyy}" Width="150px" />
                     </Columns>
                 </RadzenDataGrid>

@@ -43,7 +43,7 @@
 
         <RadzenRow>
             <RadzenColumn Size="12">
-                <RadzenText TextStyle="TextStyle.Subtitle2">Comentario del Jefe * (mínimo 10 caracteres)</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle2">Comentario del Usuario * (mínimo 10 caracteres)</RadzenText>
                 <RadzenTextArea @bind-Value="@model.Comentario" Style="width: 100%;" Rows="3" Name="Comentario" />
             </RadzenColumn>
         </RadzenRow>
@@ -59,7 +59,7 @@
                 else if (!bitacora.Any())
                 {
                     <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true" AllowClose="false">
-                        El empleado aún no ha cargado entradas de bitácora para este objetivo.
+                        El usuario aún no ha cargado entradas de bitácora para este objetivo.
                     </RadzenAlert>
                 }
                 else

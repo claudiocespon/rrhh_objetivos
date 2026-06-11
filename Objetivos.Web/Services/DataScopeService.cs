@@ -19,12 +19,12 @@ public class DataScopeService
 
         if (user.Rol == "DIRECTOR")
         {
-            return query.Where(o => o.Empleado.AreaId == user.AreaId);
+            return query.Where(o => o.Usuario.AreaId == user.AreaId);
         }
 
         if (user.EsJefe)
         {
-            return query.Where(o => o.Empleado.JefeId == user.UsuarioId);
+            return query.Where(o => o.Usuario.JefeId == user.UsuarioId);
         }
 
         // Default to no access or just personal (handled in services usually by ID)
@@ -34,13 +34,13 @@ public class DataScopeService
     public IQueryable<RevisionCuatrimestral> AplicarScope(IQueryable<RevisionCuatrimestral> query, ICurrentUserService user)
     {
         if (PuedeVerTodo(user)) return query;
-        if (user.Rol == "DIRECTOR") return query.Where(r => r.Objetivo.Empleado.AreaId == user.AreaId);
-        if (user.EsJefe) return query.Where(r => r.Objetivo.Empleado.JefeId == user.UsuarioId);
+        if (user.Rol == "DIRECTOR") return query.Where(r => r.Objetivo.Usuario.AreaId == user.AreaId);
+        if (user.EsJefe) return query.Where(r => r.Objetivo.Usuario.JefeId == user.UsuarioId);
         return query.Where(r => false);
     }
 
-    // A-08: Overload para Empleados
-    public IQueryable<Empleado> AplicarScope(IQueryable<Empleado> query, ICurrentUserService user)
+    // A-08: Overload para Usuarios
+    public IQueryable<Usuario> AplicarScope(IQueryable<Usuario> query, ICurrentUserService user)
     {
         if (PuedeVerTodo(user)) return query;
         if (user.Rol == "DIRECTOR") return query.Where(e => e.AreaId == user.AreaId);
@@ -52,8 +52,8 @@ public class DataScopeService
     public IQueryable<Autoevaluacion> AplicarScope(IQueryable<Autoevaluacion> query, ICurrentUserService user)
     {
         if (PuedeVerTodo(user)) return query;
-        if (user.Rol == "DIRECTOR") return query.Where(ae => ae.Objetivo.Empleado.AreaId == user.AreaId);
-        if (user.EsJefe) return query.Where(ae => ae.Objetivo.Empleado.JefeId == user.UsuarioId);
+        if (user.Rol == "DIRECTOR") return query.Where(ae => ae.Objetivo.Usuario.AreaId == user.AreaId);
+        if (user.EsJefe) return query.Where(ae => ae.Objetivo.Usuario.JefeId == user.UsuarioId);
         return query.Where(ae => false);
     }
 }

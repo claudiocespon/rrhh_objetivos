@@ -6,7 +6,7 @@
         Asignar: <b>@CursoNombre</b>
     </RadzenAlert>
 
-    @if (empleados == null)
+    @if (usuarios == null)
     {
         <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
     }
@@ -14,7 +14,7 @@
     {
         <RadzenStack Gap="0.5rem">
             <RadzenText TextStyle="TextStyle.Subtitle2">Seleccionar Colaborador</RadzenText>
-            <RadzenDropDown @bind-Value="@empleadoSeleccionado" Data="@empleados"
+            <RadzenDropDown @bind-Value="@empleadoSeleccionado" Data="@usuarios"
                             TextProperty="NombreCompleto" ValueProperty="Id"
                             Placeholder="Buscar colaborador..." AllowFiltering="true"
                             Style="width: 100%;" />
@@ -45,7 +45,7 @@
     [Parameter] public string CursoNombre { get; set; } = "";
     [Parameter] public int AsignadoPorId { get; set; }
 
-    List<EmpleadoItem>? empleados;
+    List<EmpleadoItem>? usuarios;
     int empleadoSeleccionado = 0;
     string notas = "";
     string? errorMsg;
@@ -53,7 +53,7 @@
     protected override async Task OnInitializedAsync()
     {
         var lista = await CursoService.GetEmpleadosActivosAsync();
-        empleados = lista.Select(e => new EmpleadoItem
+        usuarios = lista.Select(e => new EmpleadoItem
         {
             Id = e.Id,
             NombreCompleto = $"{e.Nombre} {e.Apellido}"

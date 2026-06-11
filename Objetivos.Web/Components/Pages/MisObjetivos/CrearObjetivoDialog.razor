@@ -100,7 +100,7 @@
 
 @code {
     Objetivo objetivo = new() { Deadline = DateTime.Today.AddMonths(6) };
-    List<EmpleadoItem> empleados = new();
+    List<EmpleadoItem> usuarios = new();
     List<PilarConConfig> pilaresConConfig = new();
     List<SoftSkill> softSkills = new();
     List<Area> areas = new();
@@ -125,7 +125,7 @@
         areas = (await AdminAreaService.ObtenerTodosAsync()).Where(a => a.Activo).ToList();
         objetivoAreaHabilitado = await ConfigService.ObtenerConfiguracionBoolAsync("objetivo_area_habilitado") ?? false;
 
-        // Lista de empleados disponibles según rol (scope manejado en UsuarioService)
+        // Lista de usuarios disponibles según rol (scope manejado en UsuarioService)
         var todosUsuarios = await UsuarioService.GetUsuariosAsync();
         IEnumerable<UsuarioDto> empleadosFiltrados = todosUsuarios.Where(u => !u.EsJefe && u.Activo);
 
@@ -141,24 +141,38 @@
         var lista = empleadosFiltrados.OrderBy(e => e.Apellido).ToList();
         if (lista.Count == 0)
         {
-            errorMsg = "No hay empleados asignados a su área. Contacte a RRHH.";
+            errorMsg = "No hay usuarios asignados a su área. Contacte a RRHH.";
         }
-        empleados = lista.Select(e => new EmpleadoItem {
+        usuarios = lista.Select(e => new EmpleadoItem {
             Id = e.Id,
             NombreCompleto = e.NombreCompleto
         }).ToList();
 
-        objetivo.EmpleadoId = CurrentUser.UsuarioId;
+        if (CurrentUser.EsJefe)
+        {
+            var empId = await UsuarioService.GetUsuarioIdByEmailAsync(CurrentUser.Email);
+            if (empId.HasValue) {
+                objetivo.UsuarioId = empId.Value;
+            } else {
+                errorMsg = "No se encontró su registro de usuario para guardar el objetivo. Contacte a RRHH.";
+                return;
+            }
+        }
+        else
+        {
+            objetivo.UsuarioId = CurrentUser.UsuarioId;
+        }
+
         await OnEmpleadoChanged();
     }
 
     async Task OnEmpleadoChanged()
     {
-        if (objetivo.EmpleadoId > 0)
+        if (objetivo.UsuarioId > 0)
         {
-            pilaresConConfig = await ObjetivoService.GetPilaresDisponiblesAsync(objetivo.EmpleadoId);
-            // Pre-check VAL-05 count for el empleado actual
-            var (_, _) = await ValidacionService.ValidarSumaPesoAsync(objetivo.EmpleadoId, DateTime.Now.Year, 0);
+            pilaresConConfig = await ObjetivoService.GetPilaresDisponiblesAsync(objetivo.UsuarioId);
+            // Pre-check VAL-05 count for el usuario actual
+            var (_, _) = await ValidacionService.ValidarSumaPesoAsync(objetivo.UsuarioId, DateTime.Now.Year, 0);
             StateHasChanged();
         }
     }
@@ -191,7 +205,7 @@
 
         // VAL-06 centralizado (delegado a ValidacionObjetivoService)
         var (sumaOk, sumaActual) = await ValidacionService.ValidarSumaPesoAsync(
-            objetivo.EmpleadoId, DateTime.Now.Year, objetivo.PorcentajePilar);
+            objetivo.UsuarioId, DateTime.Now.Year, objetivo.PorcentajePilar);
         if (!sumaOk)
         {
             errorMsg = $"La suma total de pesos no puede exceder el 100%. Actualmente suma {sumaActual}%. Estás intentando agregar {objetivo.PorcentajePilar}%.";
@@ -202,7 +216,7 @@
 
         if (duplicado)
         {
-            errorMsg = "Ya existe un objetivo activo para este pilar/empleado/año. Cancele el existente o cambie el pilar.";
+            errorMsg = "Ya existe un objetivo activo para este pilar/usuario/año. Cancele el existente o cambie el pilar.";
             return;
         }
 

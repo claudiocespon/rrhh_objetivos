@@ -54,7 +54,7 @@ namespace Objetivos.Web.Services
             if (puesto == null) return false;
             
             // Check if it's used
-            bool hasUsers = await db.Empleados.AnyAsync(e => e.PuestoId == id);
+            bool hasUsers = await db.Usuarios.AnyAsync(e => e.PuestoId == id);
             if (hasUsers)
             {
                 // Soft delete or just return false

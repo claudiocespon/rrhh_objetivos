@@ -21,13 +21,13 @@ public class ValidacionObjetivoService
         if (porcentajePilar == null)
             return false;
 
-        // Por ahora, soportamos un solo objetivo por pilar y empleado/año
+        // Por ahora, soportamos un solo objetivo por pilar y usuario/año
         // La validación es que el porcentaje sea entre 0 y 100
         return porcentajePilar >= 0 && porcentajePilar <= 100;
     }
 
     // VAL-15: Validar suma de porcentajes en múltiples objetivos
-    // Si el empleado tiene varios objetivos (múltiples pilares), la suma debe ser 100%
+    // Si el usuario tiene varios objetivos (múltiples pilares), la suma debe ser 100%
     public bool ValidarSumaPorcentajesPilares(List<Objetivo> objetivosEmpleado, decimal tolerancia = 0.01m)
     {
         if (!objetivosEmpleado.Any())
@@ -58,18 +58,18 @@ public class ValidacionObjetivoService
     /// Centraliza VAL-06: consulta la BD para validar que la suma de pesos no exceda 100%.
     /// Único punto de verdad — usado por ObjetivoService, CrearObjetivoDialog y EditarObjetivoDialog.
     /// </summary>
-    /// <param name="empleadoId">Empleado dueño de los objetivos.</param>
+    /// <param name="usuarioId">Usuario dueño de los objetivos.</param>
     /// <param name="anio">Año del ejercicio.</param>
     /// <param name="nuevoPeso">Peso porcentual del nuevo/editado objetivo.</param>
     /// <param name="objetivoIdEditando">Id a excluir de la suma (caso edición). Null en creación.</param>
     /// <returns>Tupla (Ok, SumaActual) con suma actual sin contar el editado.</returns>
     public async Task<(bool Ok, decimal SumaActual)> ValidarSumaPesoAsync(
-        int empleadoId, int anio, decimal nuevoPeso, int? objetivoIdEditando = null)
+        int usuarioId, int anio, decimal nuevoPeso, int? objetivoIdEditando = null)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
 
         var sumaActual = await db.Objetivos
-            .Where(o => o.EmpleadoId == empleadoId
+            .Where(o => o.UsuarioId == usuarioId
                      && o.Anio == anio
                      && o.Estado != EstadoObjetivo.CANCELADO
                      && (objetivoIdEditando == null || o.Id != objetivoIdEditando.Value))

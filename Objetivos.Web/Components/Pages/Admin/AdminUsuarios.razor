@@ -7,7 +7,7 @@
 
 <PageTitle>Administración de Usuarios - PQ-Talent</PageTitle>
 
-@if (CurrentUser.EstaAutenticado && CurrentUser.EsSuperusuario)
+@if (CurrentUser.EstaAutenticado && CurrentUser.EsAdmin)
 {
     <RadzenStack Gap="1rem" Style="padding: 1rem;">
         <RadzenRow AlignItems="AlignItems.Center">
@@ -19,7 +19,16 @@
             </RadzenColumn>
         </RadzenRow>
 
-        <RadzenDataGrid Data="@usuarios" TItem="UsuarioDto" AllowFiltering="true" AllowColumnResize="true" AllowPaging="true" PageSize="15" AllowSorting="true" 
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenCheckBox @bind-Value="mostrarBajas" Name="MostrarBajas" />
+                    <RadzenLabel Text="Mostrar usuarios dados de baja (Histórico)" Component="MostrarBajas" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenDataGrid Data="@(usuarios.Where(u => mostrarBajas || !u.Baja))" TItem="UsuarioDto" AllowFiltering="true" AllowColumnResize="true" AllowPaging="true" PageSize="15" AllowSorting="true" 
                         FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" LogicalFilterOperator="LogicalFilterOperator.Or"
                         IsLoading="@isLoading">
             <Columns>
@@ -56,10 +65,11 @@
 @code {
     List<UsuarioDto> usuarios = new();
     bool isLoading;
+    bool mostrarBajas = false;
 
     protected override async Task OnInitializedAsync()
     {
-        if (!CurrentUser.EsSuperusuario) 
+        if (!CurrentUser.EsAdmin) 
         {
             Nav.NavigateTo("dashboard");
             return;

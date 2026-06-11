@@ -66,58 +66,33 @@ public class AuthService
 
         using var db = await _dbFactory.CreateDbContextAsync();
 
-        // Check Jefe first
-        var jefe = await db.Jefes
-            .Include(j => j.Area)
-            .FirstOrDefaultAsync(j => j.Email.ToLower() == email && j.Activo);
+        var usuario = await db.Usuarios
+            .Include(u => u.Area)
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.Activo);
 
-        if (jefe != null)
+        if (usuario != null)
         {
-            if (!VerifyPassword(password, jefe.PasswordHash))
+            if (!VerifyPassword(password, usuario.PasswordHash))
                 return new AuthResult { Exitoso = false, MensajeError = "Contraseña incorrecta" };
 
             return new AuthResult
             {
                 Exitoso = true,
-                EsJefe = true,
-                UsuarioId = jefe.Id,
-                NombreCompleto = $"{jefe.Nombre} {jefe.Apellido}",
-                Email = jefe.Email,
-                Rol = jefe.Rol,
-                AreaId = jefe.AreaId,
-                DebeCambiarPassword = jefe.DebeCambiarPassword,
-                EsSuperusuario = jefe.EsSuperusuario
+                EsJefe = usuario.Rol != "COLABORADOR",
+                UsuarioId = usuario.Id,
+                NombreCompleto = $"{usuario.Nombre} {usuario.Apellido}",
+                Email = usuario.Email,
+                Rol = usuario.Rol,
+                AreaId = usuario.AreaId,
+                DebeCambiarPassword = usuario.DebeCambiarPassword,
+                EsSuperusuario = usuario.EsSuperusuario
             };
         }
 
-        // Check Empleado
-        var empleado = await db.Empleados
-            .Include(e => e.Area)
-            .FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
-
-        if (empleado != null)
-        {
-            if (!VerifyPassword(password, empleado.PasswordHash))
-                return new AuthResult { Exitoso = false, MensajeError = "Contraseña incorrecta" };
-
-            return new AuthResult
-            {
-                Exitoso = true,
-                EsJefe = false,
-                UsuarioId = empleado.Id,
-                NombreCompleto = $"{empleado.Nombre} {empleado.Apellido}",
-                Email = empleado.Email,
-                Rol = "COLABORADOR",
-                AreaId = empleado.AreaId,
-                DebeCambiarPassword = empleado.DebeCambiarPassword,
-                EsSuperusuario = empleado.EsSuperusuario
-            };
-        }
-
-        return new AuthResult { Exitoso = false, MensajeError = "No se encontró un usuario con ese email" };
+        return new AuthResult { Exitoso = false, MensajeError = "Usuario no encontrado o inactivo" };
     }
 
-    public async Task<bool> CambiarPasswordAsync(int usuarioId, bool esJefe, string nuevaPassword)
+    public async Task<bool> CambiarPasswordAsync(int usuarioId, bool esUsuario, string nuevaPassword)
     {
         if (string.IsNullOrWhiteSpace(nuevaPassword) || nuevaPassword.Length < 8)
             return false;
@@ -128,24 +103,14 @@ public class AuthService
         if (!hasLetter || !hasNumber)
             return false;
 
+        using var db = await _dbFactory.CreateDbContextAsync();
         var hash = HashPassword(nuevaPassword);
 
-        using var db = await _dbFactory.CreateDbContextAsync();
+        var usuario = await db.Usuarios.FindAsync(usuarioId);
+        if (usuario == null) return false;
 
-        if (esJefe)
-        {
-            var jefe = await db.Jefes.FindAsync(usuarioId);
-            if (jefe == null) return false;
-            jefe.PasswordHash = hash;
-            jefe.DebeCambiarPassword = false;
-        }
-        else
-        {
-            var empleado = await db.Empleados.FindAsync(usuarioId);
-            if (empleado == null) return false;
-            empleado.PasswordHash = hash;
-            empleado.DebeCambiarPassword = false;
-        }
+        usuario.PasswordHash = hash;
+        usuario.DebeCambiarPassword = false;
 
         await db.SaveChangesAsync();
         return true;
@@ -159,26 +124,14 @@ public class AuthService
 
         using var db = await _dbFactory.CreateDbContextAsync();
 
-        var jefe = await db.Jefes.FirstOrDefaultAsync(j => j.Email.ToLower() == email && j.Activo);
-        if (jefe != null)
+        var usuario = await db.Usuarios.FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.Activo);
+        if (usuario != null)
         {
-            jefe.PasswordHash = hash;
-            jefe.DebeCambiarPassword = true;
+            usuario.PasswordHash = hash;
+            usuario.DebeCambiarPassword = true;
             await db.SaveChangesAsync();
             await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - PQ-Talent",
-                $"Hola {jefe.Nombre},<br/><br/>Tu nueva contraseña temporal es: <b>{randomPassword}</b><br/>" +
-                "Deberás cambiarla en tu próximo inicio de sesión.<br/><br/>Saludos,<br/>Equipo de RRHH");
-            return true;
-        }
-
-        var empleado = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
-        if (empleado != null)
-        {
-            empleado.PasswordHash = hash;
-            empleado.DebeCambiarPassword = true;
-            await db.SaveChangesAsync();
-            await _emailService.SendEmailAsync(email, "Recuperación de Contraseña - PQ-Talent",
-                $"Hola {empleado.Nombre},<br/><br/>Tu nueva contraseña temporal es: <b>{randomPassword}</b><br/>" +
+                $"Hola {usuario.Nombre},<br/><br/>Tu nueva contraseña temporal es: <b>{randomPassword}</b><br/>" +
                 "Deberás cambiarla en tu próximo inicio de sesión.<br/><br/>Saludos,<br/>Equipo de RRHH");
             return true;
         }

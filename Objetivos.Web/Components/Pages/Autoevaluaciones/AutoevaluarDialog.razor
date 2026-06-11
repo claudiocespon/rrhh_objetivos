@@ -143,16 +143,16 @@
             {
                 autoevaluacion.ObjetivoId = ObjetivoId;
 
-                // C-06: UsuarioId viene de la tabla Jefes cuando el usuario es un Jefe.
-                // Para EmpleadoId debemos buscar el registro en la tabla Empleados por email.
-                var empId = await AutoevaluacionService.GetEmpleadoIdByEmailAsync(CurrentUser.Email);
+                // C-06: UsuarioId viene de la tabla Jefes cuando el usuario es un Usuario.
+                // Para UsuarioId debemos buscar el registro en la tabla Usuarios por email.
+                var empId = await AutoevaluacionService.GetUsuarioIdByEmailAsync(CurrentUser.Email);
                 if (empId == null)
                 {
-                    NotificationService.Notify(NotificationSeverity.Error, "Error", "No se encontró un registro de empleado para su usuario. Contacte a RRHH.");
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "No se encontró un registro de usuario para su usuario. Contacte a RRHH.");
                     DialogService.Close(false);
                     return;
                 }
-                autoevaluacion.EmpleadoId = empId.Value;
+                autoevaluacion.UsuarioId = empId.Value;
                 autoevaluacion.FechaAutoevaluacion = DateTime.UtcNow;
             }
         }

@@ -91,9 +91,6 @@ namespace Objetivos.Web.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("EmpleadoId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int?>("EscalaValoracionIdScore")
                         .HasColumnType("INTEGER");
 
@@ -133,6 +130,9 @@ namespace Objetivos.Web.Migrations
                     b.Property<int>("SoftSkill2Score")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EscalaValoracionIdScore");
@@ -159,9 +159,6 @@ namespace Objetivos.Web.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("EmpleadoId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Estado")
                         .HasColumnType("INTEGER");
 
@@ -174,6 +171,9 @@ namespace Objetivos.Web.Migrations
                     b.Property<string>("FeedbackJefe")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("FeedbackUsuario")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ObjetivoId")
                         .HasColumnType("INTEGER");
 
@@ -181,11 +181,14 @@ namespace Objetivos.Web.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("EmpleadoId");
-
                     b.HasIndex("ObjetivoId");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("BitacoraEntradas");
                 });
@@ -266,9 +269,6 @@ namespace Objetivos.Web.Migrations
                     b.Property<int>("CursoId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("EmpleadoId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("FechaAsignacion")
                         .HasColumnType("TEXT");
 
@@ -278,80 +278,17 @@ namespace Objetivos.Web.Migrations
                     b.Property<string>("Notas")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("EmpleadoId");
+                    b.HasIndex("UsuarioId");
 
-                    b.HasIndex("CursoId", "EmpleadoId")
+                    b.HasIndex("CursoId", "UsuarioId")
                         .IsUnique();
 
                     b.ToTable("CursoAsignaciones");
-                });
-
-            modelBuilder.Entity("Objetivos.Web.Domain.Entities.Empleado", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Apellido")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("AreaId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("DebeCambiarPassword")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("EsSuperusuario")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("FechaIngreso")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("JefeId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Legajo")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("PaisId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("PuestoId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AreaId");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("JefeId");
-
-                    b.HasIndex("PaisId");
-
-                    b.HasIndex("PuestoId");
-
-                    b.ToTable("Empleados");
                 });
 
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.EscalaValoracion", b =>
@@ -473,6 +410,10 @@ namespace Objetivos.Web.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ComentarioUsuario")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("EscalaValoracionIdFinal")
                         .HasColumnType("INTEGER");
 
@@ -559,73 +500,13 @@ namespace Objetivos.Web.Migrations
                     b.ToTable("EventosCalendario");
                 });
 
-            modelBuilder.Entity("Objetivos.Web.Domain.Entities.Jefe", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Apellido")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("AreaId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("DebeCambiarPassword")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("EsSuperusuario")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Legajo")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("PaisId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Rol")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AreaId");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("PaisId");
-
-                    b.ToTable("Jefes");
-                });
-
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.MensajeChat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("DestinatarioEmpleadoId")
+                    b.Property<int>("DestinatarioUsuarioId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Fecha")
@@ -704,9 +585,6 @@ namespace Objetivos.Web.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("EmpleadoId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Estado")
                         .HasColumnType("INTEGER");
 
@@ -714,6 +592,9 @@ namespace Objetivos.Web.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FechaIngreso")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Nombre")
@@ -738,11 +619,12 @@ namespace Objetivos.Web.Migrations
                     b.Property<int>("SoftSkill2Id")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AreaEspecificaId");
-
-                    b.HasIndex("EmpleadoId");
 
                     b.HasIndex("EstadoObjetivoConfigId");
 
@@ -750,7 +632,9 @@ namespace Objetivos.Web.Migrations
 
                     b.HasIndex("SoftSkill2Id");
 
-                    b.HasIndex("PilarId", "EmpleadoId", "Anio");
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("PilarId", "UsuarioId", "Anio");
 
                     b.ToTable("Objetivos");
                 });
@@ -856,6 +740,10 @@ namespace Objetivos.Web.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ComentarioUsuario")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("Completada")
                         .HasColumnType("INTEGER");
 
@@ -955,6 +843,82 @@ namespace Objetivos.Web.Migrations
                     b.ToTable("SoftSkills");
                 });
 
+            modelBuilder.Entity("Objetivos.Web.Domain.Entities.Usuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Apellido")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("AreaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("DebeCambiarPassword")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("EsSuperusuario")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("FechaBaja")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FechaIngreso")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("JefeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Legajo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PaisId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PuestoId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AreaId");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("JefeId");
+
+                    b.HasIndex("PaisId");
+
+                    b.HasIndex("PuestoId");
+
+                    b.ToTable("Usuarios");
+                });
+
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.Autoevaluacion", b =>
                 {
                     b.HasOne("Objetivos.Web.Domain.Entities.EscalaValoracion", "EscalaValoracionScore")
@@ -996,21 +960,21 @@ namespace Objetivos.Web.Migrations
 
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.BitacoraEntrada", b =>
                 {
-                    b.HasOne("Objetivos.Web.Domain.Entities.Empleado", "Empleado")
-                        .WithMany()
-                        .HasForeignKey("EmpleadoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Objetivos.Web.Domain.Entities.Objetivo", "Objetivo")
                         .WithMany("Bitacora")
                         .HasForeignKey("ObjetivoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Empleado");
+                    b.HasOne("Objetivos.Web.Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Objetivo");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.CursoAsignacion", b =>
@@ -1021,49 +985,15 @@ namespace Objetivos.Web.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Objetivos.Web.Domain.Entities.Empleado", "Empleado")
+                    b.HasOne("Objetivos.Web.Domain.Entities.Usuario", "Usuario")
                         .WithMany()
-                        .HasForeignKey("EmpleadoId")
+                        .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Curso");
 
-                    b.Navigation("Empleado");
-                });
-
-            modelBuilder.Entity("Objetivos.Web.Domain.Entities.Empleado", b =>
-                {
-                    b.HasOne("Objetivos.Web.Domain.Entities.Area", "Area")
-                        .WithMany()
-                        .HasForeignKey("AreaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Objetivos.Web.Domain.Entities.Jefe", "Jefe")
-                        .WithMany()
-                        .HasForeignKey("JefeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Objetivos.Web.Domain.Entities.Pais", "Pais")
-                        .WithMany()
-                        .HasForeignKey("PaisId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Objetivos.Web.Domain.Entities.Puesto", "Puesto")
-                        .WithMany()
-                        .HasForeignKey("PuestoId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Area");
-
-                    b.Navigation("Jefe");
-
-                    b.Navigation("Pais");
-
-                    b.Navigation("Puesto");
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.EvaluacionFinal", b =>
@@ -1114,36 +1044,11 @@ namespace Objetivos.Web.Migrations
                     b.Navigation("Objetivo");
                 });
 
-            modelBuilder.Entity("Objetivos.Web.Domain.Entities.Jefe", b =>
-                {
-                    b.HasOne("Objetivos.Web.Domain.Entities.Area", "Area")
-                        .WithMany()
-                        .HasForeignKey("AreaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Objetivos.Web.Domain.Entities.Pais", "Pais")
-                        .WithMany()
-                        .HasForeignKey("PaisId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Area");
-
-                    b.Navigation("Pais");
-                });
-
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.Objetivo", b =>
                 {
                     b.HasOne("Objetivos.Web.Domain.Entities.Area", "AreaEspecifica")
                         .WithMany()
                         .HasForeignKey("AreaEspecificaId");
-
-                    b.HasOne("Objetivos.Web.Domain.Entities.Empleado", "Empleado")
-                        .WithMany("Objetivos")
-                        .HasForeignKey("EmpleadoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.HasOne("Objetivos.Web.Domain.Entities.EstadoObjetivoConfig", "EstadoObjetivoConfig")
                         .WithMany()
@@ -1168,9 +1073,13 @@ namespace Objetivos.Web.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("AreaEspecifica");
+                    b.HasOne("Objetivos.Web.Domain.Entities.Usuario", "Usuario")
+                        .WithMany("Objetivos")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("Empleado");
+                    b.Navigation("AreaEspecifica");
 
                     b.Navigation("EstadoObjetivoConfig");
 
@@ -1179,6 +1088,8 @@ namespace Objetivos.Web.Migrations
                     b.Navigation("SoftSkill1");
 
                     b.Navigation("SoftSkill2");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.Pilar", b =>
@@ -1230,14 +1141,41 @@ namespace Objetivos.Web.Migrations
                     b.Navigation("SoftSkill2EscalaValoracion");
                 });
 
+            modelBuilder.Entity("Objetivos.Web.Domain.Entities.Usuario", b =>
+                {
+                    b.HasOne("Objetivos.Web.Domain.Entities.Area", "Area")
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Objetivos.Web.Domain.Entities.Usuario", "Jefe")
+                        .WithMany()
+                        .HasForeignKey("JefeId");
+
+                    b.HasOne("Objetivos.Web.Domain.Entities.Pais", "Pais")
+                        .WithMany()
+                        .HasForeignKey("PaisId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Objetivos.Web.Domain.Entities.Puesto", "Puesto")
+                        .WithMany()
+                        .HasForeignKey("PuestoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Area");
+
+                    b.Navigation("Jefe");
+
+                    b.Navigation("Pais");
+
+                    b.Navigation("Puesto");
+                });
+
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.Curso", b =>
                 {
                     b.Navigation("Asignaciones");
-                });
-
-            modelBuilder.Entity("Objetivos.Web.Domain.Entities.Empleado", b =>
-                {
-                    b.Navigation("Objetivos");
                 });
 
             modelBuilder.Entity("Objetivos.Web.Domain.Entities.Objetivo", b =>
@@ -1249,6 +1187,11 @@ namespace Objetivos.Web.Migrations
                     b.Navigation("EvaluacionFinal");
 
                     b.Navigation("Revisiones");
+                });
+
+            modelBuilder.Entity("Objetivos.Web.Domain.Entities.Usuario", b =>
+                {
+                    b.Navigation("Objetivos");
                 });
 #pragma warning restore 612, 618
         }

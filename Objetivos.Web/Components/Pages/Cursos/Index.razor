@@ -46,7 +46,7 @@ else
         loading = true;
         cursos = await CursoService.GetCursosAsync();
 
-        // Buscar empleadoId del usuario actual
+        // Buscar usuarioId del usuario actual
         var asignaciones = await CursoService.GetAsignacionesPorEmailAsync(CurrentUser.Email);
         misAsignaciones = asignaciones;
 
@@ -98,7 +98,7 @@ else
         {
             <div class="pt-3">
                 <RadzenDataGrid Data="@cursos" TItem="Curso" AllowPaging="true" PageSize="10"
-                                AllowSorting="true" AllowFiltering="true" Responsive="true">
+                                AllowSorting="true" AllowFiltering="true" Responsive="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
                         <RadzenDataGridColumn TItem="Curso" Property="Nombre" Title="Curso" />
                         <RadzenDataGridColumn TItem="Curso" Property="Categoria" Title="Categoría" Width="160px" />
@@ -136,7 +136,7 @@ else
         {
             <div class="pt-3">
                 <RadzenDataGrid Data="@misAsignaciones" TItem="CursoAsignacion"
-                                AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                                AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
                         <RadzenDataGridColumn TItem="CursoAsignacion" Property="Curso.Nombre" Title="Curso" />
                         <RadzenDataGridColumn TItem="CursoAsignacion" Property="Curso.Categoria" Title="Categoría" Width="160px" />

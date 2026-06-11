@@ -60,7 +60,7 @@ public class RevisionService
         if (revision == null || revision.Completada) return false;
 
         revision.EscalaValoracionId = escalaValoracionId;
-        revision.ComentarioJefe = comentario;
+        revision.ComentarioUsuario = comentario;
         revision.Resultado = resultado;
         revision.EvidenciasRevisadasJson = JsonSerializer.Serialize(evidencias ?? new List<string>());
         revision.Completada = true;
@@ -197,7 +197,7 @@ public class RevisionService
             Anio = objetivo.Anio,
             PuntajeFinal = valoracionFinal,
             EscalaValoracionIdFinal = escalaValoracionIdFinal,
-            ComentarioJefe = comentario,
+            ComentarioUsuario = comentario,
             ResultadoFinal = resultado ?? ResultadoEval.CUMPLIDO,
             FechaEvaluacion = DateTime.UtcNow,
             EvaluadorId = _currentUser.UsuarioId,

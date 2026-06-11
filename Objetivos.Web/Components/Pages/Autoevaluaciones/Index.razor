@@ -18,6 +18,9 @@ else
     {
         <RadzenTabs>
             <Tabs>
+                <RadzenTabsItem Text="Pendientes de Autoevaluar">
+                    @RenderPendientes(objetivosPendientes)
+                </RadzenTabsItem>
                 <RadzenTabsItem Text="@(CurrentUser.Rol == "DIRECTOR_GENERAL" ? "Autoevaluaciones de la Organización" : "Autoevaluaciones de mi Equipo")">
                     @RenderAutoevaluaciones(autoevaluacionesEquipo, true)
                 </RadzenTabsItem>
@@ -56,11 +59,8 @@ else
             autoevaluacionesPersonal = data.Personal;
             autoevaluacionesEquipo = data.Equipo;
 
-            // T-07: Cargar objetivos pendientes de autoevaluación para empleados
-            if (!CurrentUser.EsJefe)
-            {
-                objetivosPendientes = await AutoevaluacionService.GetObjetivosPendientesAutoevAsync(CurrentUser);
-            }
+            // Cargar objetivos pendientes de autoevaluación para TODOS los usuarios (incluyendo jefes)
+            objetivosPendientes = await AutoevaluacionService.GetObjetivosPendientesAutoevAsync(CurrentUser);
         }
         catch (Exception ex)
         {
@@ -88,10 +88,7 @@ else
             var data = await AutoevaluacionService.GetAutoevaluacionesAsync(CurrentUser);
             autoevaluacionesPersonal = data.Personal;
             autoevaluacionesEquipo = data.Equipo;
-            if (!CurrentUser.EsJefe)
-            {
-                objetivosPendientes = await AutoevaluacionService.GetObjetivosPendientesAutoevAsync(CurrentUser);
-            }
+            objetivosPendientes = await AutoevaluacionService.GetObjetivosPendientesAutoevAsync(CurrentUser);
             StateHasChanged();
         }
     }
@@ -105,7 +102,7 @@ else
         else
         {
             <div class="pt-3">
-                <RadzenDataGrid Data="@lista" TItem="Objetivo" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                <RadzenDataGrid Data="@lista" TItem="Objetivo" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
                         <RadzenDataGridColumn TItem="Objetivo" Property="Nombre" Title="Objetivo" />
                         <RadzenDataGridColumn TItem="Objetivo" Property="Pilar.Nombre" Title="Pilar">
@@ -138,20 +135,20 @@ else
     {
         if (lista == null || !lista.Any())
         {
-            <EmptyState Message="El empleado aún no ha realizado autoevaluaciones" />
+            <EmptyState Message="El usuario aún no ha realizado autoevaluaciones" />
         }
         else
         {
             <div class="pt-3">
-                <RadzenDataGrid Data="@lista" TItem="Autoevaluacion" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true">
+                <RadzenDataGrid Data="@lista" TItem="Autoevaluacion" AllowPaging="true" PageSize="10" AllowSorting="true" Responsive="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
                         @if (showEmployee)
                         {
-                            <RadzenDataGridColumn TItem="Autoevaluacion" Property="Objetivo.Empleado.Nombre" Title="Colaborador">
+                            <RadzenDataGridColumn TItem="Autoevaluacion" Property="Objetivo.Usuario.Nombre" Title="Colaborador">
                                 <Template Context="ae">
-                                    @if (ae.Objetivo?.Empleado != null)
+                                    @if (ae.Objetivo?.Usuario != null)
                                     {
-                                        @ae.Objetivo.Empleado.Nombre @ae.Objetivo.Empleado.Apellido
+                                        @ae.Objetivo.Usuario.Nombre @ae.Objetivo.Usuario.Apellido
                                     }
                                     else
                                     {

@@ -79,7 +79,7 @@
                     <RadzenStack Gap="1.5rem" Style="padding: 1.5rem 0;">
                         @if (escalas != null && escalas.Any())
                         {
-                            <RadzenDataGrid Data="@escalas.Where(e => e.Activo).OrderBy(e => e.Orden).ToList()" TItem="EscalaValoracion" Responsive="true">
+                            <RadzenDataGrid Data="@escalas.Where(e => e.Activo).OrderBy(e => e.Orden).ToList()" TItem="EscalaValoracion" Responsive="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="EscalaValoracion" Property="Etiqueta" Title="Nivel" />
                                     <RadzenDataGridColumn TItem="EscalaValoracion" Property="ValorNumerico" Title="Valor" Width="100px" />

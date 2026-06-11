@@ -30,13 +30,13 @@ public class ObjetivoService
         var email = _currentUser.Email?.ToLower();
 
         // 1. Fetch Personal Data
-        var empleadoPropio = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
+        var empleadoPropio = await db.Usuarios.FirstOrDefaultAsync(e => e.Email.ToLower() == email && e.Activo);
         if (empleadoPropio != null)
         {
             result.Personal = await db.Objetivos
-                .Include(o => o.Empleado)
+                .Include(o => o.Usuario)
                 .Include(o => o.Pilar)
-                .Where(o => o.EmpleadoId == empleadoPropio.Id && (anio == null || o.Anio == anio))
+                .Where(o => o.UsuarioId == empleadoPropio.Id && (anio == null || o.Anio == anio))
                 .ToListAsync();
         }
         else
@@ -44,13 +44,23 @@ public class ObjetivoService
             result.Personal = new List<Objetivo>();
         }
 
-        // 2. Fetch Team/Org Data using centralized scope
+        // 2. Fetch Team (Direct Reports)
         var query = db.Objetivos
-            .Include(o => o.Empleado)
+            .Include(o => o.Usuario)
             .Include(o => o.Pilar)
             .Where(o => anio == null || o.Anio == anio);
 
-        result.Equipo = await _dataScope.AplicarScope(query, _currentUser).ToListAsync();
+        result.Equipo = await query.Where(o => o.Usuario.JefeId == _currentUser.UsuarioId).ToListAsync();
+
+        // 3. Fetch Organization (if applicable)
+        if (_dataScope.PuedeVerTodo(_currentUser))
+        {
+            result.Organizacion = await query.ToListAsync();
+        }
+        else if (_currentUser.Rol == "DIRECTOR")
+        {
+            result.Organizacion = await query.Where(o => o.Usuario.AreaId == _currentUser.AreaId).ToListAsync();
+        }
 
         return result;
     }
@@ -59,7 +69,7 @@ public class ObjetivoService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Objetivos
-            .Include(o => o.Empleado)
+            .Include(o => o.Usuario)
             .Include(o => o.Pilar)
             .Include(o => o.SoftSkill1)
             .Include(o => o.SoftSkill2)
@@ -82,7 +92,7 @@ public class ObjetivoService
 
     // RN-01: Crear Objetivo (transacción atómica)
     // Retorna (Ok=true, Duplicado=false) en éxito.
-    // Retorna (Ok=false, Duplicado=true) si ya existe pilar+empleado+año y reemplazar=false.
+    // Retorna (Ok=false, Duplicado=true) si ya existe pilar+usuario+año y reemplazar=false.
     // Con reemplazar=true cancela el existente y crea el nuevo (VAL-01 completo).
     public async Task<(bool Ok, bool Duplicado)> CrearObjetivoAsync(Objetivo nuevo, bool reemplazar = false)
     {
@@ -103,7 +113,7 @@ public class ObjetivoService
 
         // VAL-06: Validar que la suma total no exceda el 100% (delegado a ValidacionObjetivoService)
         var anio = DateTime.Now.Year;
-        var (sumaOk, _) = await _validacion.ValidarSumaPesoAsync(nuevo.EmpleadoId, anio, nuevo.PorcentajePilar);
+        var (sumaOk, _) = await _validacion.ValidarSumaPesoAsync(nuevo.UsuarioId, anio, nuevo.PorcentajePilar);
         if (!sumaOk)
             return (false, false);
 
@@ -114,7 +124,7 @@ public class ObjetivoService
         if (unPorPilar)
         {
             bool duplicado = await db.Objetivos.AnyAsync(o =>
-                o.EmpleadoId == nuevo.EmpleadoId &&
+                o.UsuarioId == nuevo.UsuarioId &&
                 o.PilarId == nuevo.PilarId &&
                 o.Anio == anio &&
                 o.Estado != EstadoObjetivo.CANCELADO);
@@ -236,7 +246,7 @@ public class ObjetivoService
         existing.Progreso = objetivo.Progreso;
 
         // VAL-06: Validar que la suma total no exceda el 100% en UPDATE (delegado a ValidacionObjetivoService)
-        var (sumaOk, _) = await _validacion.ValidarSumaPesoAsync(existing.EmpleadoId, existing.Anio, objetivo.PorcentajePilar, existing.Id);
+        var (sumaOk, _) = await _validacion.ValidarSumaPesoAsync(existing.UsuarioId, existing.Anio, objetivo.PorcentajePilar, existing.Id);
         if (!sumaOk)
             return false;
 
@@ -265,13 +275,13 @@ public class ObjetivoService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var objetivo = await db.Objetivos
-            .Include(o => o.Empleado)
+            .Include(o => o.Usuario)
             .FirstOrDefaultAsync(o => o.Id == objetivoId);
 
         if (objetivo == null) return false;
 
-        // Solo el jefe del empleado o superusuario puede aprobar
-        if (!_currentUser.EsSuperusuario && objetivo.Empleado.JefeId != _currentUser.UsuarioId)
+        // Solo el jefe del usuario o superusuario puede aprobar
+        if (!_currentUser.EsSuperusuario && objetivo.Usuario.JefeId != _currentUser.UsuarioId)
             return false;
 
         // Obtener estado "aprobado"
@@ -301,13 +311,13 @@ public class ObjetivoService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var objetivo = await db.Objetivos
-            .Include(o => o.Empleado)
+            .Include(o => o.Usuario)
             .FirstOrDefaultAsync(o => o.Id == objetivoId);
 
         if (objetivo == null) return false;
 
-        // Solo el jefe del empleado o superusuario puede rechazar
-        if (!_currentUser.EsSuperusuario && objetivo.Empleado.JefeId != _currentUser.UsuarioId)
+        // Solo el jefe del usuario o superusuario puede rechazar
+        if (!_currentUser.EsSuperusuario && objetivo.Usuario.JefeId != _currentUser.UsuarioId)
             return false;
 
         // Vuelve a "pendiente_aprobacion" sin cambiar AprobadoPorJefe (permanece false)
@@ -334,7 +344,7 @@ public class ObjetivoService
     public async Task<List<Objetivo>> GetObjetivosPendientesAprobacionAsync()
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var empleadosDelJefe = await db.Empleados
+        var empleadosDelUsuario = await db.Usuarios
             .Where(e => e.JefeId == _currentUser.UsuarioId && e.Activo)
             .Select(e => e.Id)
             .ToListAsync();
@@ -344,24 +354,24 @@ public class ObjetivoService
         if (estadoPendiente == null) return new();
 
         return await db.Objetivos
-            .Include(o => o.Empleado)
+            .Include(o => o.Usuario)
             .Include(o => o.Pilar)
             .Include(o => o.EstadoObjetivoConfig)
-            .Where(o => empleadosDelJefe.Contains(o.EmpleadoId)
+            .Where(o => empleadosDelUsuario.Contains(o.UsuarioId)
                     && o.EstadoObjetivoConfigId == estadoPendiente.Id
                     && o.Estado != EstadoObjetivo.CANCELADO)
             .OrderBy(o => o.FechaCreacion)
             .ToListAsync();
     }
 
-    public async Task<List<PilarConConfig>> GetPilaresDisponiblesAsync(int empleadoId)
+    public async Task<List<PilarConConfig>> GetPilaresDisponiblesAsync(int usuarioId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var empleado = await db.Empleados.FindAsync(empleadoId);
-        if (empleado == null) return new();
+        var usuario = await db.Usuarios.FindAsync(usuarioId);
+        if (usuario == null) return new();
 
         var pilares = await db.Pilares
-            .Where(p => p.Activo && (p.AreaId == null || p.AreaId == empleado.AreaId))
+            .Where(p => p.Activo && (p.AreaId == null || p.AreaId == usuario.AreaId))
             .OrderBy(p => p.Orden)
             .Select(p => new PilarConConfig {
                 Pilar = p,
@@ -385,4 +395,5 @@ public class RoleObjetivosData
 {
     public List<Objetivo>? Personal { get; set; }
     public List<Objetivo>? Equipo { get; set; }
+    public List<Objetivo>? Organizacion { get; set; }
 }

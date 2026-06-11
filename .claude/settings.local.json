@@ -19,7 +19,8 @@
       "PowerShell(Get-Process \"Objetivos.Web\" -ErrorAction SilentlyContinue)",
       "PowerShell(Stop-Process -Force)",
       "PowerShell(\"? Proceso detenido\")",
-      "Bash(ls -lah \"X:\\\\wwwroot\\\\Objetivos\\\\\" 2>/dev/null | head -5 && echo \"---\" && ls -lah \"X:\\\\wwwrootObjetivos\\\\\" 2>/dev/null | head -5)"
+      "Bash(ls -lah \"X:\\\\wwwroot\\\\Objetivos\\\\\" 2>/dev/null | head -5 && echo \"---\" && ls -lah \"X:\\\\wwwrootObjetivos\\\\\" 2>/dev/null | head -5)",
+      "Bash(Get-Content \"C:\\\\Development\\\\Antigravity\\\\RRHH_Objetivos\\\\Objetivos.Web\\\\Components\\\\Pages\\\\Seguimientos\\\\Index.razor\" -TotalCount 10)"
     ]
   }
 }

@@ -31,18 +31,18 @@ public class EvaluacionService
         using var db = await _dbFactory.CreateDbContextAsync();
         var data = new EvaluacionPageData();
 
-        var empleadoPropio = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == currentUser.Email.ToLower() && e.Activo);
+        var empleadoPropio = await db.Usuarios.FirstOrDefaultAsync(e => e.Email.ToLower() == currentUser.Email.ToLower() && e.Activo);
 
         // 1. Fetch Mis Evaluaciones Recibidas (Completadas)
         if (empleadoPropio != null)
         {
             data.Recibidas = await db.RevisionesCuatrimestrales
                 .Include(r => r.Objetivo)
-                    .ThenInclude(o => o.Empleado)
+                    .ThenInclude(o => o.Usuario)
                 .Include(r => r.Objetivo)
                     .ThenInclude(o => o.Pilar)
                 .Include(r => r.EscalaValoracion)
-                .Where(r => r.Completada && r.Objetivo.EmpleadoId == empleadoPropio.Id)
+                .Where(r => r.Completada && r.Objetivo.UsuarioId == empleadoPropio.Id)
                 .OrderByDescending(r => r.FechaEvaluacion)
                 .ToListAsync();
 
@@ -50,7 +50,7 @@ public class EvaluacionService
                 .Include(ef => ef.Objetivo)
                     .ThenInclude(o => o.Pilar)
                 .Include(ef => ef.EscalaValoracionFinal)
-                .Where(ef => ef.Objetivo.EmpleadoId == empleadoPropio.Id)
+                .Where(ef => ef.Objetivo.UsuarioId == empleadoPropio.Id)
                 .OrderByDescending(ef => ef.FechaEvaluacion)
                 .ToListAsync();
         }
@@ -61,21 +61,21 @@ public class EvaluacionService
             // Revisiones periódicas pendientes
             var queryRev = db.RevisionesCuatrimestrales
                 .Include(r => r.Objetivo)
-                    .ThenInclude(o => o.Empleado)
+                    .ThenInclude(o => o.Usuario)
                 .Include(r => r.Objetivo)
                     .ThenInclude(o => o.Pilar)
                 .Where(r => !r.Completada
-                         && r.Objetivo.Empleado.Activo
+                         && r.Objetivo.Usuario.Activo
                          && r.Objetivo.Estado != EstadoObjetivo.CANCELADO);
 
             // Objetivos para Evaluación Final
             var queryFinal = db.Objetivos
-                .Include(o => o.Empleado)
+                .Include(o => o.Usuario)
                 .Include(o => o.Pilar)
                 .Include(o => o.Revisiones)
                 .Include(o => o.EvaluacionFinal)
                 .Where(o => o.Estado != EstadoObjetivo.CANCELADO
-                         && o.Empleado.Activo
+                         && o.Usuario.Activo
                          && o.EvaluacionFinal == null
                          && o.Revisiones.Any(r => r.Completada));
 
@@ -87,12 +87,12 @@ public class EvaluacionService
             data.FinalesPendientes = await queryFinal.ToListAsync();
 
             var queryFinalesRealizadas = db.Objetivos
-                .Include(o => o.Empleado)
+                .Include(o => o.Usuario)
                 .Include(o => o.Pilar)
                 .Include(o => o.EvaluacionFinal)
                     .ThenInclude(ef => ef!.EscalaValoracionFinal)
                 .Where(o => o.Estado == EstadoObjetivo.COMPLETADO 
-                         && o.Empleado.Activo 
+                         && o.Usuario.Activo 
                          && o.EvaluacionFinal != null);
             
             queryFinalesRealizadas = _dataScope.AplicarScope(queryFinalesRealizadas, currentUser);
@@ -100,12 +100,12 @@ public class EvaluacionService
 
             var queryRevRealizadas = db.RevisionesCuatrimestrales
                 .Include(r => r.Objetivo)
-                    .ThenInclude(o => o.Empleado)
+                    .ThenInclude(o => o.Usuario)
                 .Include(r => r.Objetivo)
                     .ThenInclude(o => o.Pilar)
                 .Include(r => r.EscalaValoracion)
                 .Where(r => r.Completada
-                         && r.Objetivo.Empleado.Activo
+                         && r.Objetivo.Usuario.Activo
                          && r.Objetivo.Estado != EstadoObjetivo.CANCELADO);
 
             queryRevRealizadas = _dataScope.AplicarScope(queryRevRealizadas, currentUser);

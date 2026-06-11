@@ -36,25 +36,25 @@ public class BitacoraService(IDbContextFactory<AppDbContext> dbFactory, ICurrent
         if (entry != null)
         {
             entry.Estado = EstadoBitacora.COMENTADO_JEFE;
-            entry.FeedbackJefe = texto;
+            entry.FeedbackUsuario = texto;
             entry.FechaFeedback = DateTime.UtcNow;
             await db.SaveChangesAsync();
         }
     }
 
-    public async Task RequiereAjusteAsync(int entryId, string nota, int empleadoId)
+    public async Task RequiereAjusteAsync(int entryId, string nota, int usuarioId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var entry = await db.BitacoraEntradas.FindAsync(entryId);
         if (entry != null)
         {
             entry.Estado = EstadoBitacora.REQUIERE_AJUSTE;
-            entry.FeedbackJefe = nota;
+            entry.FeedbackUsuario = nota;
             entry.FechaFeedback = DateTime.UtcNow;
 
             db.Notificaciones.Add(new Notificacion
             {
-                UsuarioId = empleadoId,
+                UsuarioId = usuarioId,
                 Tipo = TipoNotificacion.SOLICITUD_ACTUALIZACION,
                 Mensaje = "El jefe solicita una actualización en la bitácora",
                 Fecha = DateTime.UtcNow
@@ -75,12 +75,12 @@ public class BitacoraService(IDbContextFactory<AppDbContext> dbFactory, ICurrent
         }
     }
 
-    public async Task SolicitarActualizacionAsync(int empleadoId)
+    public async Task SolicitarActualizacionAsync(int usuarioId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         db.Notificaciones.Add(new Notificacion
         {
-            UsuarioId = empleadoId,
+            UsuarioId = usuarioId,
             Tipo = TipoNotificacion.SOLICITUD_ACTUALIZACION,
             Mensaje = "El jefe solicita una actualización en la bitácora",
             Fecha = DateTime.UtcNow

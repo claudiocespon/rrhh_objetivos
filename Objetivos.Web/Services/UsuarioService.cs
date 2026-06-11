@@ -23,6 +23,8 @@ namespace Objetivos.Web.Services
         public string Responsable { get; set; } = "";
         public int? JefeId { get; set; }
         public bool Activo { get; set; }
+        public DateTime? FechaBaja { get; set; }
+        public bool Baja => FechaBaja.HasValue;
         public bool EsSuperusuario { get; set; }
     }
 
@@ -39,96 +41,57 @@ namespace Objetivos.Web.Services
         {
             using var db = await _dbFactory.CreateDbContextAsync();
             
-            var jefes = await db.Jefes
-                .Include(j => j.Area)
-                .Include(j => j.Pais)
-                .Select(j => new UsuarioDto
+            var usuarios = await db.Usuarios
+                .Include(u => u.Area)
+                .Include(u => u.Pais)
+                .Include(u => u.Jefe)
+                .Include(u => u.Puesto)
+                .Select(u => new UsuarioDto
                 {
-                    Id = j.Id,
-                    EsJefe = true,
-                    Nombre = j.Nombre,
-                    Apellido = j.Apellido,
-                    Email = j.Email,
-                    Legajo = j.Legajo,
-                    Area = j.Area.Nombre,
-                    AreaId = j.AreaId,
-                    Rol = j.Rol,
-                    Pais = j.Pais.Nombre,
-                    PaisId = j.PaisId,
-                    Activo = j.Activo,
-                    EsSuperusuario = j.EsSuperusuario,
-                    Responsable = "-" // Directors usually report to board or general director
+                    Id = u.Id,
+                    EsJefe = u.Rol != "COLABORADOR",
+                    Nombre = u.Nombre,
+                    Apellido = u.Apellido,
+                    Email = u.Email,
+                    Legajo = u.Legajo,
+                    PuestoId = u.PuestoId,
+                    PuestoNombre = u.Puesto != null ? u.Puesto.Nombre : "Sin Puesto",
+                    Area = u.Area.Nombre,
+                    AreaId = u.AreaId,
+                    Rol = u.Rol,
+                    Pais = u.Pais.Nombre,
+                    PaisId = u.PaisId,
+                    Activo = u.Activo,
+                    FechaBaja = u.FechaBaja,
+                    EsSuperusuario = u.EsSuperusuario,
+                    Responsable = u.Jefe != null ? (u.Jefe.Apellido + ", " + u.Jefe.Nombre) : "-",
+                    JefeId = u.JefeId
                 }).ToListAsync();
 
-            var empleados = await db.Empleados
-                .Include(e => e.Area)
-                .Include(e => e.Pais)
-                .Include(e => e.Jefe)
-                .Include(e => e.Puesto)
-                .Select(e => new UsuarioDto
-                {
-                    Id = e.Id,
-                    EsJefe = false,
-                    Nombre = e.Nombre,
-                    Apellido = e.Apellido,
-                    Email = e.Email,
-                    Legajo = e.Legajo,
-                    PuestoId = e.PuestoId,
-                    PuestoNombre = e.Puesto != null ? e.Puesto.Nombre : "Sin Puesto",
-                    Area = e.Area.Nombre,
-                    AreaId = e.AreaId,
-                    Rol = "COLABORADOR",
-                    Pais = e.Pais.Nombre,
-                    PaisId = e.PaisId,
-                    JefeId = e.JefeId,
-                    Responsable = e.Jefe.Apellido + ", " + e.Jefe.Nombre,
-                    Activo = e.Activo,
-                    EsSuperusuario = e.EsSuperusuario
-                }).ToListAsync();
-
-            return jefes.Concat(empleados).OrderBy(u => u.Apellido).ToList();
+            return usuarios.OrderBy(u => u.Apellido).ToList();
         }
 
         public async Task<bool> UpdateUsuarioAsync(UsuarioDto dto)
         {
             using var db = await _dbFactory.CreateDbContextAsync();
 
-            if (dto.EsJefe)
-            {
-                var jefe = await db.Jefes.FindAsync(dto.Id);
-                if (jefe == null) return false;
+            var usuario = await db.Usuarios.FindAsync(dto.Id);
+            if (usuario == null) return false;
 
-                jefe.Nombre = dto.Nombre;
-                jefe.Apellido = dto.Apellido;
-                jefe.Email = dto.Email;
-                jefe.Legajo = dto.Legajo;
-                jefe.Rol = dto.Rol;
-                jefe.AreaId = dto.AreaId;
-                jefe.PaisId = dto.PaisId;
-                jefe.Activo = dto.Activo;
-                jefe.EsSuperusuario = dto.EsSuperusuario;
+            usuario.Nombre = dto.Nombre;
+            usuario.Apellido = dto.Apellido;
+            usuario.Email = dto.Email;
+            usuario.Legajo = dto.Legajo;
+            usuario.PuestoId = dto.PuestoId;
+            usuario.AreaId = dto.AreaId;
+            usuario.PaisId = dto.PaisId;
+            usuario.JefeId = dto.JefeId;
+            usuario.Rol = dto.EsJefe && string.IsNullOrWhiteSpace(dto.Rol) ? "JEFE" : (dto.EsJefe ? dto.Rol : "COLABORADOR");
+            usuario.Activo = dto.Activo;
+            usuario.FechaBaja = dto.FechaBaja;
+            usuario.EsSuperusuario = dto.EsSuperusuario;
 
-                db.Jefes.Update(jefe);
-            }
-            else
-            {
-                var emp = await db.Empleados.FindAsync(dto.Id);
-                if (emp == null) return false;
-
-                emp.Nombre = dto.Nombre;
-                emp.Apellido = dto.Apellido;
-                emp.Email = dto.Email;
-                emp.Legajo = dto.Legajo;
-                emp.PuestoId = dto.PuestoId;
-                emp.AreaId = dto.AreaId;
-                emp.PaisId = dto.PaisId;
-                emp.JefeId = dto.JefeId ?? emp.JefeId;
-                emp.Activo = dto.Activo;
-                emp.EsSuperusuario = dto.EsSuperusuario;
-
-                db.Empleados.Update(emp);
-            }
-
+            db.Usuarios.Update(usuario);
             return await db.SaveChangesAsync() > 0;
         }
 
@@ -136,79 +99,54 @@ namespace Objetivos.Web.Services
         {
             using var db = await _dbFactory.CreateDbContextAsync();
 
-            if (!dto.EsJefe && dto.JefeId.HasValue)
+            if (dto.JefeId.HasValue)
             {
-                var jefeExiste = await db.Jefes.AnyAsync(j => j.Id == dto.JefeId.Value);
+                var jefeExiste = await db.Usuarios.AnyAsync(j => j.Id == dto.JefeId.Value);
                 if (!jefeExiste)
-                    throw new Exception($"El Jefe con ID {dto.JefeId} no existe.");
+                    throw new Exception($"El Responsable con ID {dto.JefeId} no existe.");
             }
             
-            if (dto.EsJefe)
+            var usuario = new Usuario
             {
-                var jefe = new Jefe
-                {
-                    Nombre = dto.Nombre,
-                    Apellido = dto.Apellido,
-                    Email = dto.Email,
-                    Legajo = dto.Legajo,
-                    Rol = dto.Rol,
-                    AreaId = dto.AreaId,
-                    PaisId = dto.PaisId,
-                    Activo = true,
-                    EsSuperusuario = dto.EsSuperusuario,
-                    DebeCambiarPassword = true,
-                    PasswordHash = AuthService.HashPassword(dto.Legajo)
-                };
-                db.Jefes.Add(jefe);
-            }
-            else
-            {
-                var emp = new Empleado
-                {
-                    Nombre = dto.Nombre,
-                    Apellido = dto.Apellido,
-                    Email = dto.Email,
-                    Legajo = dto.Legajo,
-                    PuestoId = dto.PuestoId,
-                    AreaId = dto.AreaId,
-                    PaisId = dto.PaisId,
-                    JefeId = dto.JefeId ?? 0, // Should be validated in UI
-                    Activo = true,
-                    EsSuperusuario = dto.EsSuperusuario,
-                    DebeCambiarPassword = true,
-                    PasswordHash = AuthService.HashPassword(dto.Legajo)
-                };
-                db.Empleados.Add(emp);
-            }
+                Nombre = dto.Nombre,
+                Apellido = dto.Apellido,
+                Email = dto.Email,
+                Legajo = dto.Legajo,
+                PuestoId = dto.PuestoId,
+                AreaId = dto.AreaId,
+                PaisId = dto.PaisId,
+                JefeId = dto.JefeId,
+                Rol = dto.EsJefe && string.IsNullOrWhiteSpace(dto.Rol) ? "JEFE" : (dto.EsJefe ? dto.Rol : "COLABORADOR"),
+                Activo = dto.Activo,
+                FechaBaja = dto.FechaBaja,
+                EsSuperusuario = dto.EsSuperusuario,
+                DebeCambiarPassword = true,
+                PasswordHash = AuthService.HashPassword(dto.Legajo)
+            };
+            db.Usuarios.Add(usuario);
 
             return await db.SaveChangesAsync() > 0;
         }
 
-        public async Task<bool> ResetPasswordAsync(int id, bool esJefe)
+        public async Task<bool> ResetPasswordAsync(int id, bool esUsuario)
         {
             using var db = await _dbFactory.CreateDbContextAsync();
-            string legajo;
-
-            if (esJefe)
-            {
-                var jefe = await db.Jefes.FindAsync(id);
-                if (jefe == null) return false;
-                legajo = jefe.Legajo;
-                jefe.PasswordHash = AuthService.HashPassword(legajo);
-                jefe.DebeCambiarPassword = true;
-                db.Jefes.Update(jefe);
-            }
-            else
-            {
-                var emp = await db.Empleados.FindAsync(id);
-                if (emp == null) return false;
-                legajo = emp.Legajo;
-                emp.PasswordHash = AuthService.HashPassword(legajo);
-                emp.DebeCambiarPassword = true;
-                db.Empleados.Update(emp);
-            }
+            var usuario = await db.Usuarios.FindAsync(id);
+            if (usuario == null) return false;
+            
+            usuario.PasswordHash = AuthService.HashPassword(usuario.Legajo);
+            usuario.DebeCambiarPassword = true;
+            db.Usuarios.Update(usuario);
 
             return await db.SaveChangesAsync() > 0;
+        }
+
+        public async Task<int?> GetUsuarioIdByEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return null;
+            using var db = await _dbFactory.CreateDbContextAsync();
+            var emp = await db.Usuarios.FirstOrDefaultAsync(e => e.Email.ToLower() == email.ToLower());
+            return emp?.Id;
         }
     }
 }

@@ -1,4 +1,4 @@
-@page "/seguimientos/{EmpleadoId:int}/objetivo/{ObjetivoId:int}"
+@page "/seguimientos/{UsuarioId:int}/objetivo/{ObjetivoId:int}"
 @implements IDisposable
 @inject ObjetivoService ObjetivoService
 @inject BitacoraService BitacoraService
@@ -61,7 +61,7 @@ else
             </RadzenCard>
 
             <RadzenCard Style="margin-top: 1.5rem;">
-                <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Evaluaciones del Jefe</RadzenText>
+                <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Evaluaciones del Usuario</RadzenText>
                 @if (!objetivo.Revisiones.Any(r => r.Completada) && objetivo.EvaluacionFinal == null)
                 {
                     <EmptyState Message="Aún no se han realizado evaluaciones para este objetivo." />
@@ -99,7 +99,7 @@ else
                                         </RadzenColumn>
                                     </RadzenRow>
 
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin-top: 0.5rem;">@rev.ComentarioJefe</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin-top: 0.5rem;">@rev.ComentarioUsuario</RadzenText>
                                     <RadzenText TextStyle="TextStyle.Caption" Style="text-align: right; opacity: 0.6;">Fecha: @rev.FechaEvaluacion?.ToString("dd/MM/yyyy")</RadzenText>
                                 </RadzenStack>
                             </RadzenAlert>
@@ -136,7 +136,7 @@ else
                                     </RadzenRow>
 
                                     <RadzenText TextStyle="TextStyle.Body2" Style="margin-top: 0.5rem; font-weight: bold;">Comentario de Cierre:</RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2">@objetivo.EvaluacionFinal.ComentarioJefe</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2">@objetivo.EvaluacionFinal.ComentarioUsuario</RadzenText>
                                     <RadzenText TextStyle="TextStyle.Caption" Style="text-align: right; opacity: 0.6;">Fecha Cierre: @objetivo.EvaluacionFinal.FechaEvaluacion.ToString("dd/MM/yyyy")</RadzenText>
                                 </RadzenStack>
                             </RadzenAlert>
@@ -177,11 +177,11 @@ else
                                         <RadzenButton Text="Cerrar" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Click="@(() => OnCerrar(entry))" />
                                     </RadzenStack>
                                 }
-                                else if (entry.FeedbackJefe != null)
+                                else if (entry.FeedbackUsuario != null)
                                 {
                                     <div class="p-2 mt-2" style="background-color: var(--rz-base-background-color); border-radius: 4px; border-left: 4px solid var(--rz-primary);">
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold;">Feedback del Jefe:</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Caption">@entry.FeedbackJefe</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: bold;">Feedback del Usuario:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption">@entry.FeedbackUsuario</RadzenText>
                                     </div>
                                 }
                             </RadzenCard>
@@ -249,7 +249,7 @@ else
 }
 
 @code {
-    [Parameter] public int EmpleadoId { get; set; }
+    [Parameter] public int UsuarioId { get; set; }
     [Parameter] public int ObjetivoId { get; set; }
 
     Objetivo? objetivo;
@@ -276,7 +276,7 @@ else
                 {
                     if (objetivo != null)
                     {
-                        mensajes = await ChatService.GetConversacionAsync(objetivo.Empleado.JefeId, EmpleadoId);
+                        mensajes = await ChatService.GetConversacionAsync(objetivo.Usuario.JefeId ?? 0, UsuarioId);
                         _scrollPending = true;
                         StateHasChanged();
                     }
@@ -306,9 +306,9 @@ else
         if (objetivo != null)
         {
             // H-02: Validar acceso por URL
-            bool isOwnObjetivo = !CurrentUser.EsJefe && objetivo.EmpleadoId == CurrentUser.UsuarioId;
-            bool isDirectReport = CurrentUser.EsJefe && objetivo.Empleado.JefeId == CurrentUser.UsuarioId;
-            bool isAreaDirector = CurrentUser.Rol == "DIRECTOR" && objetivo.Empleado.AreaId == CurrentUser.AreaId;
+            bool isOwnObjetivo = !CurrentUser.EsJefe && objetivo.UsuarioId == CurrentUser.UsuarioId;
+            bool isDirectReport = CurrentUser.EsJefe && objetivo.Usuario.JefeId == CurrentUser.UsuarioId;
+            bool isAreaDirector = CurrentUser.Rol == "DIRECTOR" && objetivo.Usuario.AreaId == CurrentUser.AreaId;
             bool isHighLevel = CurrentUser.Rol == "RRHH" || CurrentUser.Rol == "DIRECTOR_GENERAL" || CurrentUser.EsSuperusuario;
 
             if (!isOwnObjetivo && !isDirectReport && !isAreaDirector && !isHighLevel)
@@ -320,11 +320,11 @@ else
             bitacora = await BitacoraService.GetByObjetivoAsync(ObjetivoId);
 
             // H-04: Usar el JefeId del objetivo para la conversación, no el del usuario actual (si es colaborador)
-            int conversationJefeId = objetivo.Empleado.JefeId;
-            mensajes = await ChatService.GetConversacionAsync(conversationJefeId, EmpleadoId);
+            int conversationJefeId = objetivo.Usuario.JefeId ?? 0;
+            mensajes = await ChatService.GetConversacionAsync(conversationJefeId, UsuarioId);
 
             // C-07: Marcar como leídos los mensajes dirigidos al usuario actual
-            await ChatService.MarcarMensajesComoLeidosAsync(conversationJefeId, EmpleadoId, CurrentUser.EsJefe);
+            await ChatService.MarcarMensajesComoLeidosAsync(conversationJefeId, UsuarioId, CurrentUser.EsJefe);
             _scrollPending = true;
             
             evolucion = objetivo.Revisiones
@@ -354,7 +354,7 @@ else
             
         if (result is string reason && !string.IsNullOrWhiteSpace(reason))
         {
-            await BitacoraService.RequiereAjusteAsync(entry.Id, reason, EmpleadoId);
+            await BitacoraService.RequiereAjusteAsync(entry.Id, reason, UsuarioId);
             await LoadData();
             NotificationService.Notify(NotificationSeverity.Warning, "Bitácora", "Ajuste solicitado al colaborador");
         }
@@ -377,8 +377,8 @@ else
 
         var msg = new MensajeChat
         {
-            JefeId = CurrentUser.EsJefe ? CurrentUser.UsuarioId : objetivo!.Empleado.JefeId,
-            DestinatarioEmpleadoId = EmpleadoId,
+            JefeId = CurrentUser.EsJefe ? CurrentUser.UsuarioId : (objetivo!.Usuario.JefeId ?? 0),
+            DestinatarioUsuarioId = UsuarioId,
             RemitenteId = CurrentUser.UsuarioId,
             RemitenteEsJefe = CurrentUser.EsJefe,
             Texto = nuevoMensaje,
@@ -393,7 +393,7 @@ else
     bool IsOwnObjetivo()
     {
         if (objetivo == null) return false;
-        return !CurrentUser.EsJefe && objetivo.EmpleadoId == CurrentUser.UsuarioId;
+        return !CurrentUser.EsJefe && objetivo.UsuarioId == CurrentUser.UsuarioId;
     }
 
     async Task OnNuevaBitacora()
@@ -401,7 +401,7 @@ else
         var result = await DialogService.OpenAsync<BitacoraNuevaDialog>("Nueva Entrada de Bitácora",
             new Dictionary<string, object?> { 
                 { "ObjetivoId", ObjetivoId },
-                { "EmpleadoId", EmpleadoId }
+                { "UsuarioId", UsuarioId }
             },
             new DialogOptions { Width = "600px" });
 
@@ -416,7 +416,7 @@ else
     {
         if (objetivo == null) return false;
         // Super, RRHH or Direct Boss
-        return CurrentUser.EsSuperusuario || CurrentUser.Rol == "RRHH" || (CurrentUser.EsJefe && objetivo.Empleado.JefeId == CurrentUser.UsuarioId);
+        return CurrentUser.EsSuperusuario || CurrentUser.Rol == "RRHH" || (CurrentUser.EsJefe && objetivo.Usuario.JefeId == CurrentUser.UsuarioId);
     }
 
     bool CanCancel()
@@ -425,7 +425,7 @@ else
         if (objetivo.Estado == EstadoObjetivo.COMPLETADO || objetivo.Estado == EstadoObjetivo.CANCELADO) return false;
         if (CurrentUser.EsSuperusuario) return true;
         // Boss can cancel
-        return CurrentUser.EsJefe && objetivo.Empleado.JefeId == CurrentUser.UsuarioId;
+        return CurrentUser.EsJefe && objetivo.Usuario.JefeId == CurrentUser.UsuarioId;
     }
 
     async Task OnCancelClick()

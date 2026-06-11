@@ -16,12 +16,12 @@
     else
     {
         <div class="pt-2">
-            <RadzenDataGrid Data="@objetivos" TItem="Objetivo" AllowPaging="true" PageSize="10" Responsive="true">
+            <RadzenDataGrid Data="@objetivos" TItem="Objetivo" AllowPaging="true" PageSize="10" Responsive="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Objetivo" Property="Empleado.Nombre" Title="Colaborador" Width="150px">
+                    <RadzenDataGridColumn TItem="Objetivo" Property="Usuario.Nombre" Title="Colaborador" Width="150px">
                         <Template Context="obj">
                             <div style="white-space: normal;">
-                                @obj.Empleado.Nombre @obj.Empleado.Apellido
+                                @obj.Usuario.Nombre @obj.Usuario.Apellido
                             </div>
                         </Template>
                     </RadzenDataGridColumn>

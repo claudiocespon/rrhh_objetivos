@@ -67,27 +67,27 @@ public class CursoService
     public async Task<List<CursoAsignacion>> GetAsignacionesPorEmailAsync(string email)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var emp = await db.Empleados.FirstOrDefaultAsync(e => e.Email.ToLower() == email.ToLower() && e.Activo);
+        var emp = await db.Usuarios.FirstOrDefaultAsync(e => e.Email.ToLower() == email.ToLower() && e.Activo);
         if (emp == null) return [];
         return await db.CursoAsignaciones
             .Include(ca => ca.Curso)
-            .Where(ca => ca.EmpleadoId == emp.Id)
+            .Where(ca => ca.UsuarioId == emp.Id)
             .OrderByDescending(ca => ca.FechaAsignacion)
             .ToListAsync();
     }
 
-    public async Task<List<Empleado>> GetEmpleadosActivosAsync()
+    public async Task<List<Usuario>> GetEmpleadosActivosAsync()
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.Empleados.Where(e => e.Activo).OrderBy(e => e.Apellido).ToListAsync();
+        return await db.Usuarios.Where(e => e.Activo).OrderBy(e => e.Apellido).ToListAsync();
     }
 
-    public async Task<List<CursoAsignacion>> GetAsignacionesDeEmpleadoAsync(int empleadoId)
+    public async Task<List<CursoAsignacion>> GetAsignacionesDeEmpleadoAsync(int usuarioId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.CursoAsignaciones
             .Include(ca => ca.Curso)
-            .Where(ca => ca.EmpleadoId == empleadoId)
+            .Where(ca => ca.UsuarioId == usuarioId)
             .OrderByDescending(ca => ca.FechaAsignacion)
             .ToListAsync();
     }
@@ -96,28 +96,28 @@ public class CursoService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.CursoAsignaciones
-            .Include(ca => ca.Empleado)
+            .Include(ca => ca.Usuario)
             .Where(ca => ca.CursoId == cursoId)
-            .OrderBy(ca => ca.Empleado.Apellido)
+            .OrderBy(ca => ca.Usuario.Apellido)
             .ToListAsync();
     }
 
     /// <summary>
-    /// Asigna un curso a un empleado. Retorna false si ya estaba asignado (constraint único).
+    /// Asigna un curso a un usuario. Retorna false si ya estaba asignado (constraint único).
     /// </summary>
-    public async Task<(bool Ok, bool Duplicado)> AsignarCursoAsync(int cursoId, int empleadoId, int asignadoPorId, string? notas = null)
+    public async Task<(bool Ok, bool Duplicado)> AsignarCursoAsync(int cursoId, int usuarioId, int asignadoPorId, string? notas = null)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         try
         {
             var ya = await db.CursoAsignaciones
-                .AnyAsync(ca => ca.CursoId == cursoId && ca.EmpleadoId == empleadoId);
+                .AnyAsync(ca => ca.CursoId == cursoId && ca.UsuarioId == usuarioId);
             if (ya) return (false, true);
 
             db.CursoAsignaciones.Add(new CursoAsignacion
             {
                 CursoId = cursoId,
-                EmpleadoId = empleadoId,
+                UsuarioId = usuarioId,
                 AsignadoPorId = asignadoPorId,
                 FechaAsignacion = DateTime.UtcNow,
                 Notas = notas

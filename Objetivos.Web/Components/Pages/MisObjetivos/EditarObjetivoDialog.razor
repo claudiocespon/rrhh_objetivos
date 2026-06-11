@@ -83,7 +83,7 @@
     {
         // VAL-06 centralizado (delegado a ValidacionObjetivoService)
         var (sumaOk, sumaActual) = await ValidacionService.ValidarSumaPesoAsync(
-            Objetivo.EmpleadoId, Objetivo.Anio, Objetivo.PorcentajePilar, Objetivo.Id);
+            Objetivo.UsuarioId, Objetivo.Anio, Objetivo.PorcentajePilar, Objetivo.Id);
 
         if (!sumaOk)
         {
