@@ -17,3 +17,7 @@ Objetivos.Web/Data/*.xlsx
 .agents/
 brain/
 node_modules/
+
+# Added by Agent to avoid pushing heavy files
+Media/
+Data/
