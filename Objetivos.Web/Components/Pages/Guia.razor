@@ -1,6 +1,7 @@
 @page "/guia"
 @inject ConfiguracionService ConfiguracionService
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject Objetivos.Web.Services.ICurrentUserService CurrentUser
 
 <RadzenStack Gap="2rem">
     <RadzenText TextStyle="TextStyle.H4">Guía de Uso - PQ Talent</RadzenText>
@@ -60,17 +61,46 @@
 
                 <RadzenTabsItem Text="Manual de Uso">
                     <RadzenStack Gap="1.5rem" Style="padding: 1.5rem 0;">
+                        @if (CurrentUser.EsAdmin)
+                        {
+                            <RadzenCard>
+                                <RadzenStack Gap="1rem">
+                                    <RadzenText TextStyle="TextStyle.H6">Documentación para Administrador</RadzenText>
+                                    <a href="documentacion/Manual%20-%20Administrador%20-%20PQ%20Talent.pdf" target="_blank" download="Manual - Administrador - PQ Talent.pdf" class="rz-button rz-button-md rz-variant-filled rz-primary rz-shade-default" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; width: fit-content;">
+                                        <RadzenIcon Icon="description" />
+                                        <span class="rz-button-text">Descargar Manual de Administrador</span>
+                                    </a>
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-top: 1rem;">Video Tutorial - Administrador</RadzenText>
+                                    <video width="100%" controls style="border-radius: 8px; max-height: 500px;">
+                                        <source src="documentacion/Video%20-%20Administrador%20-%20PQ%20Talent.mp4" type="video/mp4">
+                                        Tu navegador no soporta el tag de video.
+                                    </video>
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+                        else
+                        {
+                            <RadzenCard>
+                                <RadzenStack Gap="1rem">
+                                    <RadzenText TextStyle="TextStyle.H6">Documentación para Usuario</RadzenText>
+                                    <a href="documentacion/Manual%20-%20Empleado%20-%20PQ%20Talent.pdf" target="_blank" download="Manual - Empleado - PQ Talent.pdf" class="rz-button rz-button-md rz-variant-filled rz-primary rz-shade-default" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; width: fit-content;">
+                                        <RadzenIcon Icon="description" />
+                                        <span class="rz-button-text">Descargar Manual de Usuario</span>
+                                    </a>
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-top: 1rem;">Video Tutorial - Usuario</RadzenText>
+                                    <video width="100%" controls style="border-radius: 8px; max-height: 500px;">
+                                        <source src="documentacion/Video%20-%20Empleado%20-%20PQ%20Talent.mp4" type="video/mp4">
+                                        Tu navegador no soporta el tag de video.
+                                    </video>
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+
                         @if (!string.IsNullOrEmpty(manualContenido))
                         {
                             <RadzenCard>
                                 <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap; line-height: 1.8;">@manualContenido</RadzenText>
                             </RadzenCard>
-                        }
-                        else
-                        {
-                            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
-                                El manual de uso aún no ha sido configurado. Contacta al equipo de RRHH para obtener más información.
-                            </RadzenAlert>
                         }
                     </RadzenStack>
                 </RadzenTabsItem>

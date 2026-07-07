@@ -34,6 +34,21 @@ public class AdminAreaService
         area.CreadoEn = DateTime.UtcNow;
         area.ActualizadoEn = DateTime.UtcNow;
         db.Areas.Add(area);
+
+        var pilar = new Pilar 
+        {
+            Nombre = $"Objetivos {area.Nombre}",
+            Descripcion = $"Pilar por defecto para el área {area.Nombre}",
+            ColorHex = "#3498db",
+            Activo = true,
+            Area = area,
+            EsObligatorio = false,
+            Orden = 0,
+            CreadoEn = DateTime.UtcNow,
+            ActualizadoEn = DateTime.UtcNow
+        };
+        db.Pilares.Add(pilar);
+
         await db.SaveChangesAsync();
         return true;
     }

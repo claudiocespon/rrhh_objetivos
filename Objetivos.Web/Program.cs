@@ -67,9 +67,21 @@ using (var scope = app.Services.CreateScope())
     // Para inicialización usamos el factory una vez (no hay Scoped<AppDbContext> ya)
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
     using var db = await factory.CreateDbContextAsync();
-    // H-10: Estrategia de inicialización robusta (Usa migraciones)
-    await db.Database.MigrateAsync();
-    await SeedData.InitializeAsync(db, app.Environment, app.Configuration);
+    
+    var dbPath = Path.Combine(app.Environment.ContentRootPath, "objetivos.db");
+    
+    if (File.Exists(dbPath))
+    {
+        // Backup de contingencia si el archivo ya existe
+        var backupPath = Path.Combine(app.Environment.ContentRootPath, $"objetivos_backup_{DateTime.Now:yyyyMMdd_HHmmss}.db");
+        File.Copy(dbPath, backupPath, true);
+    }
+    else
+    {
+        // Solo se genera la base de datos (y datos semilla) si el archivo de DB no existe
+        await db.Database.MigrateAsync();
+        await SeedData.InitializeAsync(db, app.Environment, app.Configuration);
+    }
 }
 
 // PathBase: soporta despliegue bajo subruta (ej: /objetivos) vía proxy inverso.
